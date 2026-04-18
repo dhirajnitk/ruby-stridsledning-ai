@@ -1,0 +1,28 @@
+# Environments
+.venv/
+.venv_saab/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Output Data / Benchmark Logs
+data/results/*.png
+data/results/*.csv
+data/results/sitrep_benchmark.log
+
+# Temporary and local files
+.DS_Store
+*.log

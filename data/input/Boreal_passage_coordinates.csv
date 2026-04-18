@@ -1,0 +1,21 @@
+record_type,feature_id,feature_name,side,subtype,location_context,geometry_type,notes,x_km,y_km,coordinates_km
+location,,Northern Vanguard Base,north,air_base,mainland,point,Western coastal military base.,198.3,335,
+location,,Highridge Command,north,air_base,mainland,point,Deep inland military base.,838.3,75,
+location,,Boreal Watch Post,north,air_base,island,point,Forward operating base.,1158.3,385,
+location,,Arktholm (Capital X),north,capital,mainland,point,Political capital of Country X.,418.3,95,
+location,,Valbrek,north,major_city,mainland,point,Eastern city near coast.,1423.3,213.3,
+location,,Nordvik,north,major_city,mainland,point,Major western coastal city.,140,323.3,
+location,,Firewatch Station,south,air_base,mainland,point,Eastern coastal military base.,1398.3,1071.7,
+location,,Southern Redoubt,south,air_base,mainland,point,Inland military base.,321.7,1238.3,
+location,,Spear Point Base,south,air_base,island,point,Forward military strike base.,918.3,835,
+location,,Meridia (Capital Y),south,capital,mainland,point,Political capital of Country Y.,1225,1208.3,
+location,,Callhaven,south,major_city,mainland,point,Major western city.,96.7,1150,
+location,,Solano,south,major_city,mainland,point,Inland major city.,576.7,1236.7,
+terrain,north_mainland,Northern Mainland,north,mainland,,polygon,,820,295,"[[0.0, 0.0], [1666.7, 0.0], [1666.7, 283.3], [1533.3, 313.3], [1433.3, 290.0], [1333.3, 283.3], [1236.7, 341.7], [1130.0, 316.7], [1026.7, 296.7], [926.7, 353.3], [813.3, 323.3], [713.3, 313.3], [610.0, 366.7], [503.3, 320.0], [393.3, 333.3], [296.7, 383.3], [196.7, 340.0], [90.0, 353.3], [0.0, 380.0]]"
+terrain,south_mainland,Southern Mainland,south,mainland,,polygon,,823.3,1075,"[[0.0, 1300.0], [1666.7, 1300.0], [1666.7, 1066.7], [1580.0, 1026.7], [1470.0, 1046.7], [1363.3, 1070.0], [1260.0, 1013.3], [1146.7, 1036.7], [1040.0, 1066.7], [933.3, 1010.0], [820.0, 1043.3], [713.3, 1076.7], [603.3, 1020.0], [490.0, 1036.7], [386.7, 1080.0], [280.0, 1030.0], [163.3, 1050.0], [50.0, 1080.0], [0.0, 1063.3]]"
+terrain,north_island_west,North Strait Island West,north,island,,polygon,,656.7,493.3,"[[591.7, 446.7], [630.0, 426.7], [683.3, 430.0], [706.7, 463.3], [726.7, 493.3], [710.0, 536.7], [676.7, 546.7], [643.3, 556.7], [603.3, 530.0], [590.0, 496.7]]"
+terrain,north_island_east,North Strait Island East,north,island,,polygon,,1156.7,388.3,"[[1130.0, 356.7], [1153.3, 340.0], [1183.3, 346.7], [1193.3, 373.3], [1203.3, 396.7], [1186.7, 423.3], [1160.0, 426.7], [1133.3, 430.0], [1113.3, 406.7], [1113.3, 380.0]]"
+terrain,north_remote_island,North Remote Island,north,island,,polygon,,303.3,626.7,"[[246.7, 591.7], [266.7, 570.0], [300.0, 563.3], [326.7, 576.7], [353.3, 590.0], [366.7, 620.0], [360.0, 650.0], [330.0, 693.3], [303.3, 690.0], [276.7, 686.7], [253.3, 663.3], [246.7, 633.3]]"
+terrain,south_forward_island,South Forward Island,south,island,,polygon,,1408.3,753.3,"[[1363.3, 713.3], [1403.3, 693.3], [1450.0, 703.3], [1460.0, 736.7], [1470.0, 766.7], [1443.3, 800.0], [1410.0, 800.0], [1376.7, 800.0], [1350.0, 773.3], [1353.3, 743.3]]"
+terrain,south_small_island,South Small Island,south,island,,polygon,,423.3,920,"[[396.7, 890.0], [426.7, 870.0], [460.0, 880.0], [466.7, 910.0], [473.3, 936.7], [450.0, 960.0], [421.7, 960.0], [393.3, 956.7], [373.3, 933.3], [376.7, 906.7]]"
+terrain,south_central_peninsula,South Central Peninsula,south,peninsula,,polygon,,898.3,828.3,"[[883.3, 893.3], [910.0, 866.7], [946.7, 843.3], [943.3, 806.7], [940.0, 773.3], [903.3, 760.0], [876.7, 783.3], [850.0, 806.7], [850.0, 863.3], [883.3, 893.3]]"

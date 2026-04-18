@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boreal Chessmaster - Tactical Display</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .controls button { background: #89b4fa; color: #11111b; border: none; padding: 10px 15px; margin-right: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .controls button:hover { background: #b4befe; }
+        .controls button.danger { background: #f38ba8; }
+        .controls button.danger:hover { background: #f5c2e7; }
+        .controls button.ai-btn { background: #a6e3a1; }
+        .controls button.ai-btn:hover { background: #94e2d5; }
+        .main-container { display: flex; gap: 20px; flex: 1; min-height: 0; flex-direction: column; }
+        .top-row { display: flex; gap: 20px; flex: 2; min-height: 0; }
+        .bottom-row { display: flex; gap: 20px; flex: 1; min-height: 0; }
+        .map-container { flex: 2; background: #181825; border: 2px solid #313244; border-radius: 10px; position: relative; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
+        .data-container { flex: 1; background: #11111b; border: 2px solid #313244; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; }
+        h3 { margin-top: 0; color: #a6e3a1; }
+        pre { background: #1e1e2e; padding: 10px; border-radius: 5px; overflow-y: auto; flex: 1; font-size: 13px; color: #f5c2e7; border: 1px solid #313244; white-space: pre-wrap;}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <h2>Boreal Passage - Tactical Dashboard</h2>
+        <div class="controls">
+            <span id="ammo-counter" style="color: #a6e3a1; font-weight: bold; margin-right: 15px; font-size: 14px;">Effectors Ready: 0</span>
+            <label for="threat-threshold" style="display:flex; align-items:center; gap:5px; font-size:14px; font-weight:bold;">Triage Threshold: <span id="threshold-val">0</span></label>
+            <input type="range" id="threat-threshold" min="0" max="100" value="0" style="margin-right: 15px;">
+            <button id="btn-toggle">Pause Simulation</button>
+            <button id="btn-threat" class="danger">Spawn Radar Threat</button>
+            <button id="btn-blind" class="danger">Ambush (Blind Spot)</button>
+            <button id="btn-ai" class="ai-btn">Request AI Orders</button>
+            <button id="btn-pitch" style="background: #cba6f7; color: #11111b; border: none; padding: 10px 15px; margin-right: 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">Pitch Guide</button>
+            <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: bold; cursor: pointer; color: #a6e3a1;">
+                <input type="checkbox" id="auto-poll" checked> Auto-Poll AI
+            </label>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="top-row">
+            <div class="map-container">
+                <canvas id="radarMap" width="1500" height="500"></canvas>
+            </div>
+            <div class="data-container">
+                <h3>Live Local State</h3>
+                <pre id="json-output">Initializing...</pre>
+            </div>
+        </div>
+        <div class="bottom-row">
+            <div class="data-container" style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="color: #f5a97f; margin: 0;">Live Engine Trace</h3>
+                    <button id="btn-clear-logs" style="background: #45475a; color: #cdd6f4; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; transition: background 0.2s;" onmouseover="this.style.background='#585b70'" onmouseout="this.style.background='#45475a'">Clear Logs</button>
+                </div>
+                <pre id="ws-output">Waiting for websocket stream...</pre>
+            </div>
+            <div class="data-container" style="flex: 1;">
+                <h3 style="color: #cba6f7;">AI Engine Evaluation & SITREP</h3>
+                <pre id="ai-output">Waiting for engine...</pre>
+            </div>
+            <div class="data-container" style="flex: 1;">
+                <h3 style="color: #89b4fa;">MCTS Score Trend</h3>
+                <div style="position: relative; flex: 1;">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pitch Guide Modal -->
+    <div id="pitch-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 30, 46, 0.9); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #181825; border: 2px solid #cba6f7; border-radius: 10px; padding: 30px; max-width: 800px; color: #cdd6f4; box-shadow: 0 0 20px rgba(203, 166, 247, 0.2);">
+            <h2 style="color: #cba6f7; margin-top: 0; border-bottom: 1px solid #313244; padding-bottom: 10px;">Saab Smart Stridsledning - Pitch Guide</h2>
+            
+            <h4 style="color: #89b4fa; margin-bottom: 5px;">1. Användarmål (User Goals)</h4>
+            <p style="margin-top: 0; font-size: 14px;"><strong>The Stridsledare (Combat Controller)</strong> needs to achieve tactical superiority without getting overwhelmed by noise. <br><em style="color: #a6adc8;">Live Demo:</em> Show the <strong>Triage Threshold Slider</strong> instantly filtering out low-value threats (turning them grey) so the AI ignores the noise.</p>
+
+            <h4 style="color: #a6e3a1; margin-bottom: 5px;">2. Oundvikliga aktiviteter (Unavoidable Activities)</h4>
+            <p style="margin-top: 0; font-size: 14px;">Controllers must track radar pings, calculate vectors, check ranges, guess hit probabilities, and fire. <br><em style="color: #a6adc8;">Live Demo:</em> The <strong>Live Engine Trace</strong> terminal shows the Hungarian Algorithm mathematically calculating $P_k$ and utility in milliseconds.</p>
+
+            <h4 style="color: #f38ba8; margin-bottom: 5px;">3. Högpåverkande suboptimaliteter (Sub-optimalities)</h4>
+            <p style="margin-top: 0; font-size: 14px;">Humans panic and fire expensive SAMs at cheap decoys, leaving the base empty for a follow-up hypersonic missile.<br><em style="color: #a6adc8;">Live Demo:</em> Spawn a <strong>Blind Spot Ambush</strong>. The MCTS trend chart proves the AI holds Capital SAMs in reserve specifically for these unpredictable threats.</p>
+
+            <h4 style="color: #fab387; margin-bottom: 5px;">4. Banbrytande lösningsstruktur (Groundbreaking Solution)</h4>
+            <p style="margin-top: 0; font-size: 14px;">Instead of simple "if/then" rules, we use a tripartite AI architecture:<br>
+            • <strong>Optimization (SciPy)</strong> for immediate tactical reflexes.<br>
+            • <strong>Game-Theory AI (MCTS)</strong> for strategic future-proofing and reserve management.<br>
+            • <strong>Generative AI (Gemini 2.5)</strong> for translating complex mathematical assignments into readable SITREPs.</p>
+
+            <button id="btn-close-pitch" style="background: #f38ba8; color: #11111b; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 20px;">Close Pitch Guide</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION & STATE ---
+        const canvas = document.getElementById('radarMap');
+        const ctx = canvas.getContext('2d');
+        const jsonOutput = document.getElementById('json-output');
+        const aiOutput = document.getElementById('ai-output');
+        const wsOutput = document.getElementById('ws-output');
+        
+        let ws;
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8000/ws/logs");
+            ws.onmessage = function(event) {
+                if(wsOutput.textContent.includes("Waiting for websocket stream...")) wsOutput.innerHTML = "";
+                
+                let line = event.data;
+                let color = "#cdd6f4"; // Default text color
+                
+                if (line.includes("[MCTS TRACE]")) {
+                    color = "#fab387"; // Orange for AI thought process
+                } else if (line.includes("[DEBUG TRIAGE REJECT]")) {
+                    color = "#6c7086"; // Grey for discarded options
+                } else if (line.includes("FATAL") || line.includes("CRITICAL") || line.includes("TIMEOUT")) {
+                    color = "#f38ba8"; // Red for failures
+                } else if (line.includes("SUCCESS") || line.includes("BONUS")) {
+                    color = "#a6e3a1"; // Green for successes
+                }
+                
+                const span = document.createElement("span");
+                span.style.color = color;
+                span.textContent = line + "\n";
+                wsOutput.appendChild(span);
+                
+                wsOutput.scrollTop = wsOutput.scrollHeight;
+            };
+            ws.onclose = function(e) { setTimeout(connectWebSocket, 2000); };
+        }
+        connectWebSocket();
+        
+        // --- CHART.JS INITIALIZATION ---
+        const chartCtx = document.getElementById('scoreChart').getContext('2d');
+        let evaluationCounter = 1;
+        const scoreChart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Strategic Score',
+                    data: [],
+                    borderColor: '#89b4fa',
+                    backgroundColor: 'rgba(137, 180, 250, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#cdd6f4' }, grid: { color: '#313244' } },
+                    y: { ticks: { color: '#cdd6f4' }, grid: { color: '#313244' }, suggestedMin: -200, suggestedMax: 100 }
+                },
+                plugins: {
+                    legend: { labels: { color: '#cdd6f4' } }
+                }
+            }
+        });
+        
+        let isRunning = true;
+        let tickCount = 0;
+        let threatIdCounter = 1;
+
+        // Coordinates matched to your CSV
+        const bases = [
+            { id: "Base A (Coastal)", x: 198.3, y: 335.0, color: "#89b4fa", inventory: { fighters: 4, sams: 10, drones: 10 } },
+            { id: "Base B (Inland)", x: 838.3, y: 75.0, color: "#89b4fa", inventory: { fighters: 6, sams: 2, drones: 10 } },
+            { id: "Capital X", x: 418.3, y: 95.0, color: "#a6e3a1", inventory: { sams: 5, drones: 0 } }
+        ];
+
+        // The Blind spot zone (Behind the islands)
+        const blindSpot = { x: 500, y: 150, width: 250, height: 150 };
+
+        let triageThreshold = 0;
+        document.getElementById('threat-threshold').addEventListener('input', (e) => {
+            triageThreshold = parseInt(e.target.value, 10);
+            document.getElementById('threshold-val').textContent = triageThreshold;
+        });
+
+        let activeThreats = [];
+        let explosions = [];
+        let engagementLines = [];
+
+        // --- 2. LOGIC FUNCTIONS ---
+        function spawnThreat(isAmbush) {
+            // Clear the chart when a new threat appears
+            scoreChart.data.labels = [];
+            scoreChart.data.datasets[0].data = [];
+            evaluationCounter = 1;
+            scoreChart.update();
+
+            let startX, startY;
+            if (isAmbush) {
+                startX = blindSpot.x + Math.random() * blindSpot.width;
+                startY = blindSpot.y + Math.random() * blindSpot.height;
+            } else {
+                startX = 1400;
+                startY = 50 + Math.random() * 400;
+            }
+
+            const target = bases[2]; // Capital X
+            const dx = target.x - startX;
+            const dy = target.y - startY;
+            const angle = Math.atan2(dy, dx);
+            const speed = 2 + Math.random() * 2; 
+
+            // Dynamically assign threat properties for filtering
+            let t_val = 40.0;
+            let t_type = "fast-mover";
+            if (isAmbush) {
+                t_val = 95.0;
+                t_type = "bomber";
+            } else if (Math.random() > 0.5) {
+                t_val = 15.0;
+                t_type = "decoy";
+            }
+
+            activeThreats.push({
+                id: `T-${String(threatIdCounter).padStart(3, '0')}`,
+                type: t_type,
+                x: startX,
+                y: startY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                speed: Math.round(speed * 300),
+                threat_value: t_val
+            });
+            threatIdCounter++;
+        }
+
+        function updatePhysics() {
+            activeThreats.forEach(t => { t.x += t.vx; t.y += t.vy; });
+            activeThreats = activeThreats.filter(t => t.x > -100 && t.y > -100 && t.y < 600);
+            
+            // Expand and fade out explosions
+            explosions.forEach(exp => {
+                exp.radius += 2;
+                exp.alpha -= 0.04;
+            });
+            explosions = explosions.filter(exp => exp.alpha > 0);
+            
+            // Fade out engagement lines
+            engagementLines.forEach(line => {
+                line.alpha -= 0.02; // Fades out slightly slower than explosions
+            });
+            engagementLines = engagementLines.filter(line => line.alpha > 0);
+        }
+
+        function getVisibleThreats() {
+            return activeThreats.filter(t => 
+                !(t.x >= blindSpot.x && t.x <= blindSpot.x + blindSpot.width &&
+                  t.y >= blindSpot.y && t.y <= blindSpot.y + blindSpot.height) &&
+                t.threat_value >= triageThreshold
+            );
+        }
+
+        // --- 3. API COMMUNICATION ---
+        async function requestAIOrders() {
+            const visibleThreats = getVisibleThreats();
+            if(visibleThreats.length === 0) {
+                aiOutput.textContent = "No visible threats to evaluate.";
+                return;
+            }
+            
+            wsOutput.textContent = "--- Initiating Engine Request ---\n";
+            aiOutput.textContent = "Calculating tactical response...";
+            
+            // Format to match FastAPI schema
+            const payload = visibleThreats.map(t => ({
+                id: t.id,
+                x: t.x,
+                y: t.y,
+                speed_kmh: t.speed,
+                heading: "Arktholm",
+                estimated_type: t.type,
+                threat_value: t.threat_value
+            }));
+
+            try {
+                const response = await fetch('http://localhost:8000/api/evaluate-threats', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+            
+            // Extract SITREP to make it stand out
+            let sitrepHTML = "";
+            if (data.human_sitrep) {
+                sitrepHTML = `<div style="color: #f9e2af; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 15px; border-bottom: 1px dashed #45475a; padding-bottom: 10px;">${data.human_sitrep}</div>`;
+                delete data.human_sitrep; // Remove from raw JSON so it doesn't print twice
+            }
+            
+            aiOutput.innerHTML = sitrepHTML + `<div style="color: #a6adc8;">${JSON.stringify(data, null, 2)}</div>`;
+                
+                // Update the live chart with the new score
+                if(data.strategic_consequence_score !== undefined) {
+                    scoreChart.data.labels.push(`Eval ${evaluationCounter++}`);
+                    scoreChart.data.datasets[0].data.push(data.strategic_consequence_score);
+                    scoreChart.update();
+                }
+                
+                // Deduct local inventory based on tactical assignments
+                if(data.tactical_assignments) {
+                    data.tactical_assignments.forEach(assignment => {
+                        let targetBase = null;
+                        if (assignment.base.includes("Northern")) targetBase = bases[0];
+                        else if (assignment.base.includes("Highridge")) targetBase = bases[1];
+                        else if (assignment.base.includes("Capital") || assignment.base.includes("Arktholm")) targetBase = bases[2];
+                        
+                        // Find the threat's exact coordinates before we remove it
+                        let targetThreat = activeThreats.find(t => t.id === assignment.threat_id);
+                        
+                        if (targetBase) {
+                            let effKey = assignment.effector.toLowerCase() + "s"; // "Fighter" -> "fighters"
+                            if (targetBase.inventory[effKey] !== undefined && targetBase.inventory[effKey] > 0) {
+                                targetBase.inventory[effKey]--;
+                            }
+                            
+                            if (targetThreat) {
+                                engagementLines.push({
+                                    startX: targetBase.x,
+                                    startY: targetBase.y,
+                                    endX: targetThreat.x,
+                                    endY: targetThreat.y,
+                                    alpha: 1.0,
+                                    effector: assignment.effector
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Remove intercepted threats from the radar map
+                    const assignedThreatIds = data.tactical_assignments.map(a => a.threat_id);
+                    
+                    // Add explosion visual effects where the threats were intercepted
+                    activeThreats.forEach(t => {
+                        if (assignedThreatIds.includes(t.id)) {
+                            explosions.push({ x: t.x, y: t.y, radius: 5, alpha: 1.0 });
+                        }
+                    });
+                    
+                    activeThreats = activeThreats.filter(t => !assignedThreatIds.includes(t.id));
+                    
+                    updateAmmoCounter(); // Refresh the top bar counter immediately
+                }
+            } catch(e) {
+                aiOutput.textContent = "API Error. Is agent_backend.py running?\n\n" + e;
+            }
+        }
+
+        // --- 4. RENDERING & MAIN LOOP ---
+        function drawMap() {
+            ctx.fillStyle = "#181825"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "rgba(243, 139, 168, 0.1)"; ctx.strokeStyle = "#f38ba8"; ctx.setLineDash([5, 5]);
+            ctx.fillRect(blindSpot.x, blindSpot.y, blindSpot.width, blindSpot.height); ctx.strokeRect(blindSpot.x, blindSpot.y, blindSpot.width, blindSpot.height);
+            ctx.setLineDash([]); ctx.fillStyle = "#f38ba8"; ctx.font = "14px sans-serif"; ctx.fillText("Radar Blind Spot", blindSpot.x + 10, blindSpot.y + 20);
+
+            bases.forEach(base => { ctx.fillStyle = base.color; ctx.beginPath(); ctx.arc(base.x, base.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#cdd6f4"; ctx.fillText(base.id, base.x - 20, base.y - 15); });
+            
+            // Draw engagement lines from base to threat
+            engagementLines.forEach(line => {
+                ctx.beginPath();
+                ctx.moveTo(line.startX, line.startY);
+                ctx.lineTo(line.endX, line.endY);
+                
+                if (line.effector === "SAM") ctx.strokeStyle = `rgba(250, 179, 135, ${line.alpha})`;
+                else if (line.effector === "Fighter") ctx.strokeStyle = `rgba(137, 180, 250, ${line.alpha})`;
+                else ctx.strokeStyle = `rgba(166, 227, 161, ${line.alpha})`;
+                
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]); // Creates a dashed "laser/tracking" effect
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset dash for other drawing operations
+            });
+            
+            activeThreats.forEach(t => { 
+                const isHidden = (t.x >= blindSpot.x && t.x <= blindSpot.x + blindSpot.width && t.y >= blindSpot.y && t.y <= blindSpot.y + blindSpot.height);
+                if (!isHidden) { 
+                    ctx.fillStyle = t.threat_value < triageThreshold ? "#585b70" : "#eba0ac"; 
+                    ctx.beginPath(); ctx.arc(t.x, t.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.font = "10px sans-serif"; ctx.fillText(`${t.id} (${t.threat_value}%)`, t.x + 8, t.y + 4); 
+                }
+            });
+            
+            // Draw explosion rings
+            explosions.forEach(exp => {
+                ctx.beginPath();
+                ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(250, 179, 135, ${exp.alpha})`; // Peach core
+                ctx.fill();
+                ctx.strokeStyle = `rgba(243, 139, 168, ${exp.alpha})`; // Red outer ring
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+        
+        function updateAmmoCounter() {
+            let total = 0;
+            bases.forEach(base => {
+                Object.values(base.inventory).forEach(val => total += val);
+            });
+            document.getElementById('ammo-counter').textContent = `Effectors Ready: ${total}`;
+        }
+
+        function loop() {
+            if (isRunning) { updatePhysics(); drawMap(); updateAmmoCounter(); jsonOutput.textContent = JSON.stringify(getVisibleThreats(), null, 2); tickCount++; }
+            requestAnimationFrame(loop);
+        }
+
+        document.getElementById('btn-toggle').addEventListener('click', (e) => { isRunning = !isRunning; e.target.textContent = isRunning ? "Pause Simulation" : "Resume Simulation"; });
+        document.getElementById('btn-threat').addEventListener('click', () => spawnThreat(false));
+        document.getElementById('btn-blind').addEventListener('click', () => spawnThreat(true));
+        document.getElementById('btn-ai').addEventListener('click', requestAIOrders);
+        document.getElementById('btn-clear-logs').addEventListener('click', () => { wsOutput.innerHTML = ""; });
+        document.getElementById('btn-pitch').addEventListener('click', () => { document.getElementById('pitch-modal').style.display = 'flex'; });
+        document.getElementById('btn-close-pitch').addEventListener('click', () => { document.getElementById('pitch-modal').style.display = 'none'; });
+
+        // --- AUTO-POLL AI ---
+        // Automatically request AI orders every 3 seconds while the simulation is running
+        setInterval(() => {
+            const autoPoll = document.getElementById('auto-poll').checked;
+            if (isRunning && autoPoll && getVisibleThreats().length > 0) {
+                requestAIOrders();
+            }
+        }, 3000);
+
+        loop();
+    </script>
+</body>
+</html>

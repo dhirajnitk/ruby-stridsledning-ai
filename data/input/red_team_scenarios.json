@@ -1,0 +1,702 @@
+[
+  {
+    "scenario_id": "001",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Decoy Drones (Speed: 200), 2 Hypersonic Missiles (Speed: 800). Coastal Base A (x:198, y:335) is heavily defended. Radar blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Create a 2-wave attack. Wave 1 draws fire from Base A. Wave 2 launches hypersonics from the blind spot.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "002",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Decoy Drones (Speed: 300), 1 Heavy Bomber (Speed: 600). Inland Base B (x:838, y:75) is active.",
+    "Your_Task": "Send 10 decoys to Base B to exhaust its SAMs. Wait 15 ticks, then send the Bomber directly to the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "003",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "4 Fast-Mover Jets (Speed: 2200), 4 Decoys (Speed: 400). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Execute a simultaneous Time-on-Target strike. All 8 units must reach the Capital at the exact same tick, originating from 8 different map edges.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "004",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "20 Decoys (Speed: 200). You have no heavy weapons.",
+    "Your_Task": "Create a 'Wave Starvation' tactic. Spawn 1 decoy every 2 ticks targeting Base A to lock up their target tracking system.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "005",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "5 Bombers (Speed: 900), 5 Jets (Speed: 2500).",
+    "Your_Task": "Design a 'Shield Wall' attack. Spawn Bombers first, then spawn Jets from the exact same coordinates 5 ticks later to overtake and shield them.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "006",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "3 Hypersonic Missiles (Speed: 3500). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn all 3 missiles inside the blind spot, but stagger them by 1 tick to prevent a single SAM from taking them all out.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "007",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Bombers (Speed: 800), 10 Decoys (Speed: 200). Base A (x:198, y:335) and Base B (x:838, y:75) are active.",
+    "Your_Task": "Pincer attack: Send 5 decoys to Base A, 5 decoys to Base B. The 2 Bombers must strike the Capital straight down the middle.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "008",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "30 Decoys (Speed: 100), 2 Jets (Speed: 2000).",
+    "Your_Task": "Swarm Base A with 30 extremely slow decoys to bait fighter launches. Spawn the 2 Jets 30 ticks later to destroy the defenseless base.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "009",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Hypersonics (Speed: 4000). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn the hypersonics at x:1500, y:200. Ensure their flight path directly crosses through the blind spot to break radar lock before hitting the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "010",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Bomber (Speed: 900), 1 Jet (Speed: 2200), 1 Decoy (Speed: 400).",
+    "Your_Task": "Deception attack: Target the Bomber at Base A, the Jet at Base B. Send ONLY the single Decoy to the Capital to see if Triage ignores it.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "011",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "8 Jets (Speed: 2000). Target coordinates: x:838, y:75.",
+    "Your_Task": "Spawn 4 Jets from the North (y:1200) and 4 Jets from the South (y:0) to crush Base B in a vertical pincer.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "012",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "15 Decoys (Speed: 300). Base A is heavily defended.",
+    "Your_Task": "Spawn all 15 decoys directly on top of Base A's coordinates to simulate a radar malfunction/ghosting, targeting the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "013",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Hypersonic (Speed: 3000), 1 Bomber (Speed: 800), 1 Decoy (Speed: 200).",
+    "Your_Task": "Create a 3-wave attack. Tick 0: Decoy. Tick 20: Bomber. Tick 40: Hypersonic. Force the engine to re-evaluate threats.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "014",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "50 Decoys (Speed: 100).",
+    "Your_Task": "The 'Wall of Noise'. Spawn 50 decoys in a vertical line from y:0 to y:1000 at x:1500, all moving West at the same speed.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "015",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "2 Bombers (Speed: 700), 2 Hypersonics (Speed: 3800).",
+    "Your_Task": "Feint the Capital. Aim the Bombers at Capital X. Once Blue Team responds (Tick 10), spawn Hypersonics aimed at Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "016",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "4 Jets (Speed: 2100). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 4 Jets inside the blind spot. Aim 2 at Base A and 2 at Base B to force the Capital's SAMs to remain idle.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "017",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "6 Decoys (Speed: 250), 3 Bombers (Speed: 950).",
+    "Your_Task": "Escort formation: Spawn each Bomber with 2 Decoys slightly ahead of it to absorb the first wave of SAMs.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "018",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "10 Hypersonic Missiles (Speed: 4000).",
+    "Your_Task": "The 'Sledgehammer'. Spawn all 10 Hypersonics at tick 0 targeting Base B from the extreme East (x:1600).",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "019",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Decoys (Speed: 300). Base A and Base B are active.",
+    "Your_Task": "Zig-zag threat generation. Spawn threats targeting Base A, Base B, Capital, Base A, Capital on ticks 1, 2, 3, 4, 5.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "020",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Bomber (Speed: 500), 1 Jet (Speed: 1500), 1 Hypersonic (Speed: 4500).",
+    "Your_Task": "Delay spawns based on speed so that all 3 radically different units hit the Capital at exactly tick 50.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "021",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "8 Decoys (Speed: 400). Target: x:198, y:335.",
+    "Your_Task": "Spawn the decoys directly behind Base A (x:0, y:335) flying East, simulating an unexpected flank from the ocean.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "022",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "12 Jets (Speed: 2300).",
+    "Your_Task": "Split the Jets into 4 waves of 3. Target Capital X exclusively. Spawn waves at ticks 0, 10, 20, 30.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "023",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "6 Bombers (Speed: 850), Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn the Bombers inside the blind spot, but fly them East towards Base B instead of West towards the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "024",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "20 Decoys (Speed: 150), 2 Bombers (Speed: 900).",
+    "Your_Task": "Send 20 Decoys to Capital X. Wait until tick 40. Then spawn the 2 Bombers targeting Coastal Base A to exploit emptied reserves.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "025",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Hypersonics (Speed: 3800). Base A and Base B active.",
+    "Your_Task": "The 'Sniper'. Spawn 1 Hypersonic targeting Base A, and 1 targeting Base B on tick 0. Ignore the Capital entirely.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "026",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Jets (Speed: 2100). Target: x:418, y:95.",
+    "Your_Task": "Spawn all 5 Jets at the exact same starting coordinates (x:1500, y:500) but stagger them by 5 ticks each.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "027",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "10 Bombers (Speed: 800).",
+    "Your_Task": "Form a wide arc. Spawn 10 Bombers in a semi-circle from the North to the East, all converging on Base A simultaneously.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "028",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Decoys (Speed: 200), 1 Hypersonic (Speed: 5000). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Bait the Capital's SAMs with 10 Decoys from the North. Spawn the Hypersonic in the blind spot at tick 25.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "029",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "15 Jets (Speed: 2400).",
+    "Your_Task": "Create three waves of 5 Jets. Wave 1 hits Base A. Wave 2 hits Base B. Wave 3 hits Capital X. Stagger by 10 ticks.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "030",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "4 Decoys (Speed: 200), 4 Bombers (Speed: 750), 4 Jets (Speed: 2000), 4 Hypersonics (Speed: 3000).",
+    "Your_Task": "The 'Escalator'. Send Decoys first, Bombers second, Jets third, Hypersonics fourth. All aimed at Base B.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "031",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "7 Decoys (Speed: 300). Base A (x:198, y:335).",
+    "Your_Task": "Spawn decoys originating from the Capital's own coordinates, flying outward towards Base A to simulate a friendly fire glitch.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "032",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Hypersonics (Speed: 4500). Base B (x:838, y:75).",
+    "Your_Task": "Spawn one Hypersonic at x:0, y:0 and another at x:1600, y:1200. Aim both at the Capital to force a split defense.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "033",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "8 Bombers (Speed: 900). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 4 Bombers perfectly aligned with the top edge of the blind spot, and 4 perfectly aligned with the bottom edge.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "034",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "25 Decoys (Speed: 150), 5 Jets (Speed: 2500).",
+    "Your_Task": "Spawn all 25 Decoys aiming at Base B to draw Capital fighters East. Then spawn 5 Jets aiming at Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "035",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Hypersonic Missile (Speed: 5000).",
+    "Your_Task": "The 'Lone Wolf'. Spawn a single Hypersonic at the furthest point (x:1600, y:1200) targeting the Capital to test intercept kinematics.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "036",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "10 Decoys (Speed: 300), 2 Bombers (Speed: 800).",
+    "Your_Task": "Fly 10 Decoys past Base B towards the Capital. Fly the 2 Bombers directly into Base B.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "037",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "12 Jets (Speed: 2200). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Funnel tactic. Spawn all 12 jets far East, but give them coordinates that force them to fly sequentially through the blind spot.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "038",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "4 Bombers (Speed: 950), 4 Decoys (Speed: 950).",
+    "Your_Task": "Speed masking. Spawn 4 Bombers and 4 Decoys overlapping perfectly and flying at the exact same speed to confuse the Engine's P_k logic.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "039",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "3 Hypersonics (Speed: 4200).",
+    "Your_Task": "Spawn 3 Hypersonics from the South (y:1200) targeting Base A, spaced 2 ticks apart.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "040",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Decoys (Speed: 50), 5 Bombers (Speed: 900).",
+    "Your_Task": "Ultra-slow bait. Spawn 5 Decoys at speed 50. Wait 50 ticks, then spawn 5 Bombers. See if the Engine wastes SAMs on crawlers.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "041",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Jets (Speed: 2500), 2 Bombers (Speed: 850). Base A and B are active.",
+    "Your_Task": "Spawn 1 Jet and 1 Bomber aimed at Base A. Spawn 1 Jet and 1 Bomber aimed at Base B. Nothing targets the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "042",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "20 Decoys (Speed: 300).",
+    "Your_Task": "Surround Base B. Spawn 5 decoys North, 5 South, 5 East, 5 West of Base B, all converging simultaneously.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "043",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Hypersonic (Speed: 4000). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn a Hypersonic inside the blind spot at tick 0, giving the Engine absolutely zero warning time to spin up defenses.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "044",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Jets (Speed: 2100).",
+    "Your_Task": "The 'Line Astern'. Spawn 10 Jets in a perfect horizontal line (same Y, varying X) flying directly South towards the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "045",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "6 Decoys (Speed: 200), 2 Hypersonics (Speed: 3800).",
+    "Your_Task": "Spawn Decoys targeting the Capital to pull Base A's fighters away. Once fighters leave (Tick 15), spawn Hypersonics targeting Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "046",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "4 Bombers (Speed: 800). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 2 Bombers flying parallel above the blind spot, and 2 flying parallel below it, bracketing the zone.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "047",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "15 Decoys (Speed: 250), 3 Jets (Speed: 2200).",
+    "Your_Task": "Divide the map. Send 5 Decoys to Base A, 5 to Base B, 5 to Capital. Embed 1 Jet inside each Decoy wave.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "048",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "5 Hypersonics (Speed: 3500).",
+    "Your_Task": "Spawn 5 Hypersonics simultaneously from the Capital's location, targeting Base B (simulating hacked friendly missiles).",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "049",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "8 Decoys (Speed: 400).",
+    "Your_Task": "Spawn all 8 Decoys aiming at empty ocean coordinates (x:0, y:1000) to see if the Engine ignores non-threatening trajectories.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "050",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Bombers (Speed: 850), 2 Jets (Speed: 2100), 2 Hypersonics (Speed: 4000).",
+    "Your_Task": "Spawn 1 of each unit type targeting Base A, and 1 of each targeting Base B. Provide no direct threat to the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "051",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "10 Jets (Speed: 2300).",
+    "Your_Task": "Spawn 10 Jets in a tight cluster from the North, all targeting Base A at tick 0 to test raw throughput.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "052",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "30 Decoys (Speed: 200).",
+    "Your_Task": "Spawn 30 Decoys in a perfect circle around the Capital, moving inward to test 360-degree radar triage.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "053",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Bombers (Speed: 700). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 1 Bomber inside the blind spot targeting the Capital, and 1 Bomber far East targeting Base B.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "054",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "4 Hypersonics (Speed: 4500).",
+    "Your_Task": "Spawn 4 Hypersonics aimed at Base B, spaced exactly 10 ticks apart to prevent a single SAM splash radius from killing multiple.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "055",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Decoys (Speed: 400), 5 Jets (Speed: 2000).",
+    "Your_Task": "Target Base A with 5 Jets. Target Capital X with 5 Decoys. Swap the typical speed roles to confuse the MCTS engine.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "056",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Bomber (Speed: 900), 1 Hypersonic (Speed: 3800).",
+    "Your_Task": "Spawn the Bomber at tick 0. Calculate the exact tick the Hypersonic must spawn to reach the Capital at the identical millisecond.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "057",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "15 Bombers (Speed: 800).",
+    "Your_Task": "Spawn 15 Bombers in 3 waves of 5, originating from the extreme North (y:0) to test Base A's northern radar arc.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "058",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "8 Decoys (Speed: 250). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn all 8 Decoys inside the blind spot to simulate a massive ghost anomaly, all targeting Base B.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "059",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Jets (Speed: 2200), 2 Bombers (Speed: 950), 2 Hypersonics (Speed: 4000).",
+    "Your_Task": "The 'V-Formation'. Spawn the Hypersonics at the front, Jets on the wings, Bombers in the rear. All target the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "060",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "20 Decoys (Speed: 200), 1 Jet (Speed: 2500).",
+    "Your_Task": "Send 20 Decoys to Base A. Send 1 Jet to Base B. The Engine must not waste resources on Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "061",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "6 Bombers (Speed: 850). Target: Capital X.",
+    "Your_Task": "Spawn 3 Bombers from the North and 3 from the South, synchronizing their paths to cross the Capital perfectly.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "062",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "4 Hypersonics (Speed: 3800).",
+    "Your_Task": "Spawn 4 Hypersonics on tick 0 targeting Base A from x:1500, y:335 to test pure horizontal intercept kinematics.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "063",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Decoys (Speed: 300). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 5 Decoys targeting the Capital. Spawn 5 Decoys inside the blind spot targeting Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "064",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Jets (Speed: 2100), 5 Bombers (Speed: 900).",
+    "Your_Task": "Spawn all 10 units at tick 0 aimed at the Capital to force a massive Hungarian Algorithm cost-matrix calculation.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "065",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "10 Bombers (Speed: 750).",
+    "Your_Task": "Create a staggered line. Spawn 1 Bomber every 5 ticks targeting Base B from the deep South.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "066",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Decoys (Speed: 200), 1 Hypersonic (Speed: 4200).",
+    "Your_Task": "Minimalist threat. Spawn 2 Decoys at tick 0 aiming at Base A. Wait until tick 60, then spawn the Hypersonic aimed at Capital X.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "067",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "15 Jets (Speed: 2400).",
+    "Your_Task": "Spawn 15 Jets spread out across the entire Eastern edge of the map, all converging diagonally on Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "068",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Decoys (Speed: 100). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 10 ultra-slow decoys inside the blind spot. Aim them nowhere near the Capital to test False Positive filtering.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "069",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "3 Bombers (Speed: 800), 3 Hypersonics (Speed: 3500).",
+    "Your_Task": "Pairing tactic. Spawn 1 Bomber and 1 Hypersonic together on ticks 0, 10, and 20. Target the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "070",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "20 Decoys (Speed: 400).",
+    "Your_Task": "Spawn 20 Decoys aimed at Base A. When the Engine runs MCTS, it should naturally preserve Base B's reserves.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "071",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "6 Jets (Speed: 2000). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 3 Jets inside the blind spot targeting Base A, and 3 Jets far North targeting Base B. The Capital is ignored.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "072",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Bombers (Speed: 900), 10 Decoys (Speed: 900).",
+    "Your_Task": "Identical speeds. Spawn 10 Bombers and 10 Decoys mixed together randomly so speed cannot be used to triage.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "073",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "2 Hypersonics (Speed: 4500).",
+    "Your_Task": "Spawn 1 Hypersonic at x:0, y:0 and 1 at x:0, y:1000. Both target Base A to strike from the rear.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "074",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "15 Decoys (Speed: 200). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn all 15 Decoys inside the blind spot, but give them a speed of 0 so they act as stationary radar jammers.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "075",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "8 Jets (Speed: 2500), 2 Bombers (Speed: 850).",
+    "Your_Task": "Spawn 8 Jets targeting Capital X. Spawn 2 Bombers targeting Base B. Overwhelm the core to protect the flanks.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "076",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "1 Hypersonic (Speed: 5000), 1 Decoy (Speed: 5000).",
+    "Your_Task": "The ultimate test. Spawn 1 Hypersonic and 1 Decoy at the exact same location, speed, and tick. Only the threat_value distinguishes them.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "077",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "12 Bombers (Speed: 750).",
+    "Your_Task": "Spawn 12 Bombers targeting Base A. Stagger their spawns by 2 ticks each to create a continuous pressure wave.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "078",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "20 Decoys (Speed: 300). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 10 Decoys North of the blind spot and 10 South of it. Target them to criss-cross over the blind spot.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "079",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "6 Jets (Speed: 2100), 6 Bombers (Speed: 800).",
+    "Your_Task": "Spawn 6 Jets targeting Base A. Spawn 6 Bombers targeting Base B. The Capital is completely ignored.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "080",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "3 Hypersonics (Speed: 3800).",
+    "Your_Task": "Spawn 3 Hypersonics from the extreme North (y:0), targeting Base B to test pure vertical intercept kinematics.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "081",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Decoys (Speed: 100), 10 Decoys (Speed: 500).",
+    "Your_Task": "Mixed speed swarm. Spawn 10 slow decoys and 10 fast decoys simultaneously targeting the Capital to confuse the assignment logic.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "082",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "4 Bombers (Speed: 900). Base A (x:198, y:335).",
+    "Your_Task": "Spawn 4 Bombers at Base A's coordinates but aim them at the Capital to simulate a hijacked friendly base.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "083",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "8 Jets (Speed: 2400). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 8 Jets inside the blind spot targeting Base A to test sudden short-range intercepts.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "084",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "25 Decoys (Speed: 250).",
+    "Your_Task": "Spawn all 25 Decoys aimed at a random point in the ocean (x:1000, y:1000). Do not attack any bases.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "085",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "5 Bombers (Speed: 800), 5 Jets (Speed: 2100).",
+    "Your_Task": "Target Base B. Spawn Bombers from the West and Jets from the East to hit Base B in a horizontal pincer.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "086",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Hypersonics (Speed: 3600), 2 Decoys (Speed: 400).",
+    "Your_Task": "Send 2 Decoys to Base A at tick 0. Wait exactly 3 ticks, then spawn the 2 Hypersonics targeting the Capital.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "087",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "15 Bombers (Speed: 850). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 15 Bombers entirely outside the map bounds (x:2000, y:2000) targeting the Capital to test extreme long-range intercept logic.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "088",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "10 Decoys (Speed: 200). Target: Base A.",
+    "Your_Task": "Spawn 10 Decoys targeting Base A, but give them a massive threat_value of 99 to try and trick the engine's triage system.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "089",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "6 Jets (Speed: 2300).",
+    "Your_Task": "Spawn 6 Jets targeting the Capital. Put 3 on exactly the same vector, and the other 3 on a 90-degree offset vector.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "090",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "4 Bombers (Speed: 900), 4 Hypersonics (Speed: 4000).",
+    "Your_Task": "Spawn Bombers targeting Capital X. Spawn Hypersonics targeting Base B. Both groups must spawn at tick 0.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "091",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "10 Decoys (Speed: 350). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 5 Decoys targeting Base A, 5 targeting Base B. Ensure they all fly directly over the blind spot.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "092",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "2 Jets (Speed: 2500), 2 Bombers (Speed: 800), 2 Decoys (Speed: 200).",
+    "Your_Task": "Target the Capital with all units. Spawn Jets at tick 0, Bombers at tick 10, Decoys at tick 20.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "093",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "5 Hypersonics (Speed: 4500).",
+    "Your_Task": "Spawn all 5 Hypersonics at the exact same location (x:1400, y:335) targeting Base A on tick 0.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "094",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "30 Decoys (Speed: 100).",
+    "Your_Task": "Spawn 30 Decoys targeting the Capital from x:418, y:1200 (directly south).",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "095",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "8 Bombers (Speed: 850). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 4 Bombers targeting Base B, and 4 Bombers inside the blind spot targeting Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "096",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "3 Jets (Speed: 2100), 3 Hypersonics (Speed: 4000).",
+    "Your_Task": "Spawn Jets at tick 0 targeting the Capital. Spawn Hypersonics at tick 5 targeting Base A.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "097",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Coastal Base A (x:198, y:335).",
+    "Your_Constraints": "10 Decoys (Speed: 200), 2 Bombers (Speed: 700).",
+    "Your_Task": "Target Base A with the Decoys at tick 0. Target the Capital with the Bombers at tick 0.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "098",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "20 Jets (Speed: 2200).",
+    "Your_Task": "Spawn 20 Jets targeting the Capital in a tight cluster from the East at tick 0.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "099",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Inland Base B (x:838, y:75).",
+    "Your_Constraints": "1 Hypersonic (Speed: 5000). Blind spot: x:500-700, y:150-300.",
+    "Your_Task": "Spawn 1 Hypersonic inside the blind spot targeting Base B.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  },
+  {
+    "scenario_id": "100",
+    "System_Prompt": "You are the Red Team Commander in a wargame. Your objective is to overwhelm Capital X (x:418, y:95).",
+    "Your_Constraints": "5 Decoys, 5 Bombers, 5 Jets, 5 Hypersonics. The entire map is open.",
+    "Your_Task": "The Grand Finale. Throw everything at the Capital simultaneously from every possible angle.",
+    "Output": "Respond ONLY with a JSON array of threat objects containing id, type, start_x, start_y, target_x, target_y, speed, and spawn_tick."
+  }
+]

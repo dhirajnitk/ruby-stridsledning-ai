@@ -1,0 +1,79 @@
+[
+  {
+    "id": "RED-DECOY-01",
+    "type": "decoy",
+    "start_x": 1200.0,
+    "start_y": 400.0,
+    "target_x": 198.3,
+    "target_y": 335.0,
+    "speed": 200.0,
+    "threat_value": 15.0,
+    "spawn_tick": 0
+  },
+  {
+    "id": "RED-DECOY-02",
+    "type": "decoy",
+    "start_x": 1250.0,
+    "start_y": 380.0,
+    "target_x": 198.3,
+    "target_y": 335.0,
+    "speed": 200.0,
+    "threat_value": 15.0,
+    "spawn_tick": 5
+  },
+  {
+    "id": "RED-DECOY-03",
+    "type": "decoy",
+    "start_x": 1200.0,
+    "start_y": 350.0,
+    "target_x": 198.3,
+    "target_y": 335.0,
+    "speed": 200.0,
+    "threat_value": 15.0,
+    "spawn_tick": 10
+  },
+  {
+    "id": "RED-DECOY-04",
+    "type": "decoy",
+    "start_x": 1150.0,
+    "start_y": 300.0,
+    "target_x": 418.3,
+    "target_y": 95.0,
+    "speed": 200.0,
+    "threat_value": 15.0,
+    "spawn_tick": 12
+  },
+  {
+    "id": "RED-DECOY-05",
+    "type": "decoy",
+    "start_x": 1100.0,
+    "start_y": 280.0,
+    "target_x": 418.3,
+    "target_y": 95.0,
+    "speed": 200.0,
+    "threat_value": 15.0,
+    "spawn_tick": 15
+  },
+  {
+    "id": "RED-HYPER-01",
+    "type": "bomber",
+    "start_x": 550.0,
+    "start_y": 250.0,
+    "target_x": 418.3,
+    "target_y": 95.0,
+    "speed": 800.0,
+    "threat_value": 95.0,
+    "spawn_tick": 35
+  },
+  {
+    "id": "RED-HYPER-02",
+    "type": "bomber",
+    "start_x": 650.0,
+    "start_y": 180.0,
+    "target_x": 418.3,
+    "target_y": 95.0,
+    "speed": 800.0,
+    "threat_value": 95.0,
+    "spawn_tick": 40
+  }
+]

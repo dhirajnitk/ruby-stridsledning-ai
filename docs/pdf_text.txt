@@ -1,0 +1,145 @@
+
+Välkomna, 
+Och Tack För 
+Att Du Är 
+Med!
+
+
+
+
+
+Utmaningen: Bygg en prototyp av ett ledningssystem för 
+framtidens luftförsvar 
+Ett luftförsvar behöver inte bara detektera hot – det kräver även snabba, intelligenta beslut om hur varje hot ska 
+mötas. I en värld där lägesbilden förändras från sekund till sekund är förmågan att optimera resurser i realtid en 
+kritisk komponent för att säkerställa luftförsvarets överlägsenhet och förmåga att skydda nationens intressen. 
+Omedelbara beslut krävs: 
+När ett hot detekteras: Vilka ﬂygplan ska skickas från vilka 
+baser? Vilken effektor är rätt - robot, luftvärn eller drönare? 
+Hur säkerställs fortsatt förmåga när resurser förbrukas och 
+nya hot dyker upp? Systemet måste inte bara lösa den 
+omedelbara krisen – det ska tänka ﬂera steg framåt. Uppgiften: 
+Att bygga en prototyp av ett intelligent beslutsstöd som 
+revolutionerar luftförsvarets förmåga att uppnå taktisk 
+överlägsenhet med effektiv resursallokering och hög 
+operativ ﬂexibilitet. 
+Alternativ uppgift:  En alternativ uppgift är att bygga en prototyp av simuleringsmotor för att kunna utvärdera ovan nämnda 
+beslutsstödssystem. 
+Juryns bedömningskriterier 
+Hur övertygad är du att … 
+◯  … lösningen hjälper användare att lyckas bättre med något som är mycket verksamhetskritisk? 
+◯  … lösningen verkligen skulle hjälpa användarna att lyckas mycket bättre med detta? 
+Program 
+Närvaro-Hackdag, 25 April 
+08:30  Registrering & Frukost 
+09:00  V älkomsthälsning & Kortpresentation 
+09:30  Hackingen börjar 
+12:00  Lunch 
+14:30  Fika 
+16:30  Deadline för demo, avslutande diskussion 
+17:00  Avslut Grand Finale och prisutdelning, 27 
+April
+16:30  Ankomst av Finalister 
+17:10  Presentationer Saab 
+17:30  Final T eam Presentations & Omröstning 
+19:00  Mingel-Middag med beslutsfattare och 
+rekryterande chefer från Saab 
+20:30  Slut 
+Hackdagens förberedelser 
+VARFÖR FÖRBEREDA SIG 
+Hackdagen är kort och går snabbt! 
+T eam som förbereder sig ordentligt har mycket större 
+chans att lyckas och får mycket mer ut av hackathonet. 
+Det ﬁnns inget bättre sätt att förbättra dina 
+utvecklingsfärdigheter än att delta i ett hackathon. 
+Detta är en fantastisk möjlighet att knyta nya kontakter 
+och visa upp din förmåga och drivkraft för både kollegor 
+och ledning. 
+Det här är din chans att göra skillnad! FÖRBEREDELSESTEG 
+1. Starta teammötena 
+Bestäm direkt en tid som passar alla för ett första möte. 
+2. Kom igång med tekniken 
+Bekanta dig med de verktyg och den infrastruktur ni ska 
+använda genom att bygga en enkel “hello world” -app. Se till att 
+den fungerar på allas datorer . 
+3. Var aktiv 
+V ar aktiv i er privata T eam-kanal på Discord. 
+Training Sessioner 
+AI-Assisted Coding Lab 
+Måndag 20 April 
+12:00 - 13:30 Insikter och Q&A med Saab 
+T orsdag 16 April 
+15:00 - 16:00 
+Tekniska resurser & support 
+OpenRouter 
+Vi kommer att posta en OpenRouter API-nyckel i er 
+privata teamkanal med 50 USD i LLM-krediter som ni kan 
+använda under hackathonet. 
+Tillgängliga modeller: Google Gemini 
+RADERA K ONTEXT FÖR V ARJE SEP ARA T K ODUPPGIFT . 
+LÄGG INTE ER API-NYCKEL I ER OFFENTLIGA GIT -REPO! 
+ERT TEAMS NYCKEL K OMMER A TT A V AKTIVERAS. 
+Skicka ett direktmeddelande på Discord till @Ellinor 
+Nilsson (2Hero ) om ni behöver ﬂer krediter . Support 
+Tillgängligt från 2Hero & Saab 
+Posta dina frågor eller problem i #support-kanalen. 
+Eller tagga @2Hero eller @Saab 
+Bestäm vad som ska byggas & presentation 
+NYCKELFRÅGOR ATT BESVARA I DIN DEMO 
+Användarmål:  Vilka är användarna och vad försöker de 
+uppnå? 
+Påverkan:  Hur kritiskt är detta för verksamheten och varför? 
+Oundvikliga aktiviteter:  Vilka steg måste användaren 
+oundvikligen gå igenom för att nå sitt mål, oavsett process 
+eller verktyg? 
+Högpåverkande suboptimaliteter:  Hur optimerar din 
+lösning dessa aktiviteter eller koordineringen av dem? 
+Banbrytande lösningsstruktur: Vilka banbrytande 
+lösningar använder du och hur har du strukturerat din 
+lösning? 
+Funktionalitet: Visa hur användaren nu kan utföra de 
+oundvikliga aktiviteterna mycket bättre än tidigare. BEGRÄNSA OMFÅNGET 
+Tiden på ett hackathon är mycket begränsad, både för 
+att bygga och för presentationen. 
+Fokusera på att bygga bara en av de mest intressanta 
+delarna av en komplett lösning — du hinner ändå inte 
+demonstrera mer än så. 
+Det är bra att först presentera idén för hela lösningen 
+och sedan säga att du nu kommer att demonstrera den 
+mest intressanta delen. 
+Discord & TeamFormering 
+TEAMFORMERING 
+Du blir placerad i ett team när du ansluter till Discord och får 
+tillgång till ditt teams privata kanal. 
+VAR AKTIV OCH RESPONSIV 
+En av de viktigaste faktorerna för framgång på ett hackathon är 
+att vara kommunikativ och snabb i responsen. Långsamma svar 
+bromsar teamet och minskar inspirationen. Kontrollera gärna 
+din teamkanal minst en gång per dag. 
+ALL KOMMUNIKATION OCH SUPPORT 
+All vår kommunikation och support sker via Discord-servern, så 
+du riskerar att missa viktig information om du inte är aktiv där . 
+Använd ditt riktiga namn som visningsnamn. Lägg till ditt 
+företagsnamn om du vill representera det, t.ex.: “Peder Linder 
+(2Hero )” TAGGAR 
+@2Hero:  Använd för att uppmärksamma 2Hero-personal 
+angående allmän support, teamformering eller andra 
+frågor och funderingar . 
+@<team-namn>:  Använd för att få uppmärksamhet från 
+alla i ditt team. 
+SUPPORT 
+Meddela @Ellinor Nilsson  om ni vill gå samman med ett 
+annat team. 
+Meddela @Ellinor Nilsson  om en teammedlem inte bidrar 
+till teamet, så kan vi hjälpa till! 
+Du kan gärna ändra ditt teamnamn om ni vill. Meddela i så 
+fall @Ellinor Nilsson .
+Få ett försprång 
+1. KOM IGÅNG 
+Gå med i Discord nu! 2. PLANERING 
+Svara på teamledarens omröstning om mötestid. 
+3. KONTINUITET 
+Håll teammötena igång genom att boka nästa möte 
+innan varje möte avslutas. 4. FÖRBEREDELSER 
+Bekanta dig med tekniken och delta i de 
+online-träningspassen. 

@@ -1,0 +1,66 @@
+{
+  "066": [
+    { "id": "066-DECOY-1", "type": "decoy", "start_x": 1600.0, "start_y": 335.0, "target_x": 198.3, "target_y": 335.0, "speed": 200.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "066-DECOY-2", "type": "decoy", "start_x": 1600.0, "start_y": 355.0, "target_x": 198.3, "target_y": 335.0, "speed": 200.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "066-HYPER-1", "type": "fast-mover", "start_x": 1600.0, "start_y": 95.0, "target_x": 418.3, "target_y": 95.0, "speed": 4200.0, "threat_value": 100.0, "spawn_tick": 60 }
+  ],
+  "067": [
+    { "id": "067-JET-1", "type": "fast-mover", "start_x": 1600.0, "start_y": 0.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-2", "type": "fast-mover", "start_x": 1600.0, "start_y": 80.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-3", "type": "fast-mover", "start_x": 1600.0, "start_y": 160.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-4", "type": "fast-mover", "start_x": 1600.0, "start_y": 240.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-5", "type": "fast-mover", "start_x": 1600.0, "start_y": 320.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-6", "type": "fast-mover", "start_x": 1600.0, "start_y": 400.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-7", "type": "fast-mover", "start_x": 1600.0, "start_y": 480.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-8", "type": "fast-mover", "start_x": 1600.0, "start_y": 560.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-9", "type": "fast-mover", "start_x": 1600.0, "start_y": 640.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-10", "type": "fast-mover", "start_x": 1600.0, "start_y": 720.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-11", "type": "fast-mover", "start_x": 1600.0, "start_y": 800.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-12", "type": "fast-mover", "start_x": 1600.0, "start_y": 880.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-13", "type": "fast-mover", "start_x": 1600.0, "start_y": 960.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-14", "type": "fast-mover", "start_x": 1600.0, "start_y": 1040.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 },
+    { "id": "067-JET-15", "type": "fast-mover", "start_x": 1600.0, "start_y": 1120.0, "target_x": 198.3, "target_y": 335.0, "speed": 2400.0, "threat_value": 75.0, "spawn_tick": 0 }
+  ],
+  "068": [
+    { "id": "068-DECOY-1", "type": "decoy", "start_x": 550.0, "start_y": 200.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-2", "type": "decoy", "start_x": 570.0, "start_y": 220.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-3", "type": "decoy", "start_x": 590.0, "start_y": 240.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-4", "type": "decoy", "start_x": 610.0, "start_y": 260.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-5", "type": "decoy", "start_x": 630.0, "start_y": 180.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-6", "type": "decoy", "start_x": 650.0, "start_y": 160.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-7", "type": "decoy", "start_x": 670.0, "start_y": 190.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-8", "type": "decoy", "start_x": 690.0, "start_y": 210.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-9", "type": "decoy", "start_x": 560.0, "start_y": 210.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "068-DECOY-10", "type": "decoy", "start_x": 580.0, "start_y": 230.0, "target_x": 0.0, "target_y": 1000.0, "speed": 100.0, "threat_value": 15.0, "spawn_tick": 0 }
+  ],
+  "069": [
+    { "id": "069-BOMBER-1", "type": "bomber", "start_x": 1600.0, "start_y": 95.0, "target_x": 418.3, "target_y": 95.0, "speed": 800.0, "threat_value": 90.0, "spawn_tick": 0 },
+    { "id": "069-HYPER-1", "type": "fast-mover", "start_x": 1600.0, "start_y": 95.0, "target_x": 418.3, "target_y": 95.0, "speed": 3500.0, "threat_value": 100.0, "spawn_tick": 0 },
+    { "id": "069-BOMBER-2", "type": "bomber", "start_x": 1600.0, "start_y": 125.0, "target_x": 418.3, "target_y": 95.0, "speed": 800.0, "threat_value": 90.0, "spawn_tick": 10 },
+    { "id": "069-HYPER-2", "type": "fast-mover", "start_x": 1600.0, "start_y": 125.0, "target_x": 418.3, "target_y": 95.0, "speed": 3500.0, "threat_value": 100.0, "spawn_tick": 10 },
+    { "id": "069-BOMBER-3", "type": "bomber", "start_x": 1600.0, "start_y": 65.0, "target_x": 418.3, "target_y": 95.0, "speed": 800.0, "threat_value": 90.0, "spawn_tick": 20 },
+    { "id": "069-HYPER-3", "type": "fast-mover", "start_x": 1600.0, "start_y": 65.0, "target_x": 418.3, "target_y": 95.0, "speed": 3500.0, "threat_value": 100.0, "spawn_tick": 20 }
+  ],
+  "070": [
+    { "id": "070-DECOY-01", "type": "decoy", "start_x": 1600.0, "start_y": 300.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-02", "type": "decoy", "start_x": 1600.0, "start_y": 310.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-03", "type": "decoy", "start_x": 1600.0, "start_y": 320.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-04", "type": "decoy", "start_x": 1600.0, "start_y": 330.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-05", "type": "decoy", "start_x": 1600.0, "start_y": 340.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-06", "type": "decoy", "start_x": 1600.0, "start_y": 350.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-07", "type": "decoy", "start_x": 1600.0, "start_y": 360.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-08", "type": "decoy", "start_x": 1600.0, "start_y": 370.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-09", "type": "decoy", "start_x": 1600.0, "start_y": 380.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-10", "type": "decoy", "start_x": 1600.0, "start_y": 390.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-11", "type": "decoy", "start_x": 1600.0, "start_y": 400.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-12", "type": "decoy", "start_x": 1600.0, "start_y": 410.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-13", "type": "decoy", "start_x": 1600.0, "start_y": 420.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-14", "type": "decoy", "start_x": 1600.0, "start_y": 430.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-15", "type": "decoy", "start_x": 1600.0, "start_y": 440.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-16", "type": "decoy", "start_x": 1600.0, "start_y": 450.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-17", "type": "decoy", "start_x": 1600.0, "start_y": 460.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-18", "type": "decoy", "start_x": 1600.0, "start_y": 470.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-19", "type": "decoy", "start_x": 1600.0, "start_y": 480.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 },
+    { "id": "070-DECOY-20", "type": "decoy", "start_x": 1600.0, "start_y": 490.0, "target_x": 198.3, "target_y": 335.0, "speed": 400.0, "threat_value": 15.0, "spawn_tick": 0 }
+  ]
+}
