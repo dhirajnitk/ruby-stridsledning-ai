@@ -18,10 +18,6 @@ __pycache__/
 *.swp
 *.swo
 
-# Output Data / Benchmark Logs
-data/results/*.png
-data/results/*.csv
-data/results/sitrep_benchmark.log
 
 # Temporary and local files
 .DS_Store

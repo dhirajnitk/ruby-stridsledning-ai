@@ -1,0 +1,8 @@
+Doctrine,Survival Rate (%),Avg Score,Survived,Total
+Balanced,100.0,97.25,100,100
+Aggressive,41.0,-100.5,41,100
+Fortress,100.0,97.59,100,100
+Economy,100.0,97.13,100,100
+Ambush,93.0,55.47,93,100
+Fortress+Economy,100.0,97.06,100,100
+Aggressive+Economy,93.0,54.41,93,100
