@@ -1,81 +1,76 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-import csv
+import pandas as pd
+import numpy as np
 import os
+import json
+from sklearn.preprocessing import StandardScaler
 
-# 1. The Policy Network Architecture
+# --- 1. MODEL ARCHITECTURE ---
 class PolicyNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim=10, output_dim=14):
         super(PolicyNetwork, self).__init__()
         self.network = nn.Sequential(
-            nn.Linear(9, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            # Outputs 3 probabilities for our 3 core tactical approaches
-            # Index 0: Standard Doctrine
-            # Index 1: Economy of Force (Save Ammo)
-            # Index 2: Capital Defense (Maximum Aggression)
-            nn.Linear(32, 3), 
-            nn.Softmax(dim=-1) # Converts outputs into percentages (e.g., [0.10, 0.85, 0.05])
+            nn.Linear(input_dim, 64), nn.ReLU(),
+            nn.Linear(64, 64), nn.ReLU(),
+            nn.Linear(64, output_dim), nn.Softplus()
         )
-        
-    def forward(self, x):
-        return self.network(x)
+    def forward(self, x): return self.network(x)
 
-class BorealPolicyDataset(Dataset):
-    def __init__(self, csv_file):
-        self.x_data = []
-        self.y_data = []
-        with open(csv_file, 'r') as f:
-            reader = csv.reader(f)
-            next(reader)
-            for row in reader:
-                features = [float(val) for val in row[1:10]]
-                score = float(row[10])
-                
-                self.x_data.append(features)
-                
-                # For training purposes, we artificially categorize the "best" policy
-                # based on the MCTS score and threat density.
-                num_threats = features[5] + features[6] + features[7]
-                if score < 0 and num_threats > 10:
-                    self.y_data.append(1) # Class 1: Needs Economy of Force
-                elif features[8] < 150.0:
-                    self.y_data.append(2) # Class 2: Threat too close, needs Capital Defense
-                else:
-                    self.y_data.append(0) # Class 0: Standard Doctrine works
-                    
-        self.x_data = torch.tensor(self.x_data, dtype=torch.float32)
-        self.y_data = torch.tensor(self.y_data, dtype=torch.long)
-        
-    def __len__(self): return len(self.x_data)
-    def __getitem__(self, idx): return self.x_data[idx], self.y_data[idx]
-
-if __name__ == "__main__":
-    EPOCHS = 300
-    dataset = BorealPolicyDataset('rl_value_network_training_data.csv')
-    dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+# --- 2. TRAINING LOGIC ---
+def train_policy():
+    print("="*60)
+    print("  BOREAL CHESSMASTER — POLICY NETWORK TRAINING")
+    print("="*60)
     
-    model = PolicyNetwork()
-    criterion = nn.CrossEntropyLoss() # Used for classification/probability mapping
+    data_path = "data/rl_training_data.csv"
+    if not os.path.exists(data_path):
+        print(f"Error: {data_path} not found. Run rl_data_collector.py first.")
+        return
+
+    df = pd.read_csv(data_path)
+    feature_cols = ["num_threats", "avg_dist", "min_dist", "total_val", "fighters", "sams", "drones", "cap_sams", "weather_bin", "blend_ratio"]
+    X_raw = df[feature_cols].values
+    
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X_raw)
+    
+    # Tactical Reflex Teacher Function
+    y = []
+    for row in X_raw:
+        mults = np.ones(14)
+        num_threats, avg_dist, min_dist, total_val, fighters, sams, drones, cap_sams, weather_bin, blend = row
+        if num_threats > 5:
+            mults[5] = 1.5 + (num_threats * 0.05) # economy_force
+            mults[6] = 1.2 # swarm_penalty
+        if min_dist < 150:
+            mults[1] = 2.0 # point_defense
+            mults[0] = 1.3 # t_int
+        if cap_sams < 3: mults[10] = 2.5 # capital_reserve
+        y.append(mults)
+    
+    X_train = torch.tensor(X, dtype=torch.float32)
+    y_train = torch.tensor(y, dtype=torch.float32)
+    
+    model = PolicyNetwork(input_dim=10, output_dim=14)
+    criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
-    print("Training Policy Network to guide MCTS search tree...")
-    for epoch in range(EPOCHS):
-        total_loss = 0.0
-        for batch_x, batch_y in dataloader:
-            optimizer.zero_grad()
-            predictions = model(batch_x)
-            loss = criterion(predictions, batch_y)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-            
-        if (epoch + 1) % 50 == 0:
-            print(f"Epoch [{epoch+1}/{EPOCHS}] | Average Cross-Entropy Loss: {total_loss/len(dataloader):.4f}")
-            
-    torch.save(model.state_dict(), 'policy_network.pth')
-    print("\n[SUCCESS] Model saved to 'policy_network.pth'")
+    for epoch in range(300):
+        model.train()
+        optimizer.zero_grad()
+        loss = criterion(model(X_train), y_train)
+        loss.backward()
+        optimizer.step()
+        if (epoch+1) % 50 == 0: print(f"Epoch [{epoch+1}/300] | Loss: {loss.item():.6f}")
+
+    os.makedirs("models", exist_ok=True)
+    params = {"scaler_mean": scaler.mean_.tolist(), "scaler_scale": scaler.scale_.tolist()}
+    with open("models/policy_network_params.json", "w") as f: json.dump(params, f)
+    torch.save(model.state_dict(), "models/policy_network.pth")
+    torch.save(model.state_dict(), "models/doctrine_network.pth")
+    print(f"\n[OK] Policy Network trained and saved to models/doctrine_network.pth")
+
+if __name__ == "__main__":
+    train_policy()

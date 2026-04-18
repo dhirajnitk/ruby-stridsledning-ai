@@ -5,41 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boreal Chessmaster - Tactical Display</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .controls button { background: #89b4fa; color: #11111b; border: none; padding: 10px 15px; margin-right: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .controls button:hover { background: #b4befe; }
-        .controls button.danger { background: #f38ba8; }
-        .controls button.danger:hover { background: #f5c2e7; }
-        .controls button.ai-btn { background: #a6e3a1; }
-        .controls button.ai-btn:hover { background: #94e2d5; }
-        .main-container { display: flex; gap: 20px; flex: 1; min-height: 0; flex-direction: column; }
-        .top-row { display: flex; gap: 20px; flex: 2; min-height: 0; }
-        .bottom-row { display: flex; gap: 20px; flex: 1; min-height: 0; }
-        .map-container { flex: 2; background: #181825; border: 2px solid #313244; border-radius: 10px; position: relative; overflow: hidden; }
-        canvas { display: block; width: 100%; height: 100%; }
-        .data-container { flex: 1; background: #11111b; border: 2px solid #313244; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; }
-        h3 { margin-top: 0; color: #a6e3a1; }
-        pre { background: #1e1e2e; padding: 10px; border-radius: 5px; overflow-y: auto; flex: 1; font-size: 13px; color: #f5c2e7; border: 1px solid #313244; white-space: pre-wrap;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;}
+        .top-nav { background: #11111b; border: 1px solid #313244; border-radius: 8px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .controls { display: flex; align-items: center; gap: 15px; }
+        .doctrine-console { background: #181825; border: 1px solid #45475a; border-radius: 6px; padding: 5px 12px; display: flex; align-items: center; gap: 10px; }
+        button { background: #45475a; color: #cdd6f4; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 13px;}
+        button:hover { background: #585b70; transform: translateY(-1px); }
+        button.danger { background: #f38ba8; color: #11111b; }
+        button.danger:hover { background: #f5c2e7; }
+        button.ai-btn { background: #a6e3a1; color: #11111b; }
+        button.ai-btn:hover { background: #94e2d5; }
+        .main-container { display: flex; flex-direction: column; gap: 15px; flex: 1; min-height: 0; }
+        .top-row { display: flex; gap: 15px; flex: 2; min-height: 0; }
+        .bottom-row { display: flex; gap: 15px; flex: 1.2; min-height: 0; }
+        .map-container { flex: 2.5; background: #11111b; border: 1px solid #313244; border-radius: 10px; position: relative; overflow: hidden; }
+        .data-container { flex: 1; background: #11111b; border: 1px solid #313244; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; min-width: 300px; }
+        h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;}
+        pre { background: #1e1e2e; padding: 8px; border-radius: 5px; overflow-y: auto; flex: 1; font-family: 'Consolas', monospace; font-size: 11px; color: #f5c2e7; border: 1px solid #313244; white-space: pre-wrap; margin: 0;}
+        .status-light { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .light-on { background: #a6e3a1; box-shadow: 0 0 5px #a6e3a1; }
+        .light-off { background: #45475a; }
+        .doctrine-pill { padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
+        input[type=range] { accent-color: #a6e3a1; }
+        select { background: #1e1e2e; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 3px 6px; font-size: 12px; outline: none;}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <div class="header">
-        <h2>Boreal Passage - Tactical Dashboard</h2>
-        <div class="controls">
-            <span id="ammo-counter" style="color: #a6e3a1; font-weight: bold; margin-right: 15px; font-size: 14px;">Effectors Ready: 0</span>
-            <label for="threat-threshold" style="display:flex; align-items:center; gap:5px; font-size:14px; font-weight:bold;">Triage Threshold: <span id="threshold-val">0</span></label>
-            <input type="range" id="threat-threshold" min="0" max="100" value="0" style="margin-right: 15px;">
-            <button id="btn-toggle">Pause Simulation</button>
-            <button id="btn-threat" class="danger">Spawn Radar Threat</button>
-            <button id="btn-blind" class="danger">Ambush (Blind Spot)</button>
-            <button id="btn-ai" class="ai-btn">Request AI Orders</button>
-            <button id="btn-pitch" style="background: #cba6f7; color: #11111b; border: none; padding: 10px 15px; margin-right: 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">Pitch Guide</button>
-            <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: bold; cursor: pointer; color: #a6e3a1;">
+    <div class="top-nav">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0; font-size: 18px; color: #cba6f7;">BOREAL CHESSMASTER</h2>
+            <div class="doctrine-console">
+                <span style="font-size: 11px; font-weight: bold; color: #6c7086;">POSTURE:</span>
+                <select id="primary-doctrine">
+                    <option value="balanced">Balanced</option>
+                    <option value="aggressive">Aggressive</option>
+                    <option value="fortress">Fortress</option>
+                    <option value="economy">Economy</option>
+                    <option value="ambush">Ambush</option>
+                    <option value="saturation">Saturation</option>
+                    <option value="scout">Scout</option>
+                </select>
+                <span style="color: #6c7086;">+</span>
+                <select id="secondary-doctrine">
+                    <option value="none">None</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="aggressive">Aggressive</option>
+                    <option value="fortress">Fortress</option>
+                    <option value="economy">Economy</option>
+                    <option value="ambush">Ambush</option>
+                    <option value="saturation">Saturation</option>
+                    <option value="scout">Scout</option>
+                </select>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                    <span id="blend-val" style="font-size: 10px; color: #a6e3a1;">70% Primary</span>
+                    <input type="range" id="blend-ratio" min="0" max="100" value="70" style="width: 80px; height: 4px;">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btn-threat" class="danger">Radar Spawn</button>
+            <button id="btn-blind" class="danger">Ambush</button>
+            <button id="btn-ai" class="ai-btn">AI Orders</button>
+            <button id="btn-pitch" style="background: #cba6f7; color: #11111b; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">Pitch</button>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+            <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold; cursor: pointer; color: #a6e3a1;">
                 <input type="checkbox" id="auto-poll" checked> Auto-Poll AI
             </label>
+            <span id="ammo-counter" style="color: #f9e2af; font-size: 11px; font-weight: bold;">Effectors: 0</span>
         </div>
     </div>
 
@@ -49,57 +86,63 @@
                 <canvas id="radarMap" width="1500" height="500"></canvas>
             </div>
             <div class="data-container">
-                <h3>Live Local State</h3>
+                <h3 style="color: #89b4fa;">Live Battlefield State</h3>
                 <pre id="json-output">Initializing...</pre>
             </div>
         </div>
         <div class="bottom-row">
             <div class="data-container" style="flex: 1;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h3 style="color: #f5a97f; margin: 0;">Live Engine Trace</h3>
-                    <button id="btn-clear-logs" style="background: #45475a; color: #cdd6f4; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; transition: background 0.2s;" onmouseover="this.style.background='#585b70'" onmouseout="this.style.background='#45475a'">Clear Logs</button>
-                </div>
-                <pre id="ws-output">Waiting for websocket stream...</pre>
+                <h3 style="color: #f5a97f;">Live Engine Trace</h3>
+                <pre id="ws-output">Waiting for stream...</pre>
             </div>
-            <div class="data-container" style="flex: 1;">
-                <h3 style="color: #cba6f7;">AI Engine Evaluation & SITREP</h3>
+            <div class="data-container" style="flex: 1.2;">
+                <h3 style="color: #cba6f7;">Doctrine SITREP & AI Evaluation</h3>
+                <div id="personality-panel" style="background: #181825; border: 1px solid #45475a; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span id="active-posture-label" class="doctrine-pill" style="color: #cba6f7; background: rgba(203, 166, 247, 0.1);">BALANCED</span>
+                        <span id="blend-ratio-pill" style="font-size: 10px; color: #6c7086; font-weight: bold;">BLEND: 100/0</span>
+                    </div>
+                    <div id="flag-lights" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 10px; color: #cdd6f4;"></div>
+                    
+                    <div id="neural-panel" style="margin-top: 10px; border-top: 1px solid #313244; padding-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #fab387;">Neural Intelligence Overlay</span>
+                            <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 9px; cursor: pointer; color: #a6e3a1;">
+                                <input type="checkbox" id="enable-rl" checked> RL ACTIVE
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1; background: #1e1e2e; border-radius: 4px; padding: 5px; text-align: center;">
+                                <div style="font-size: 9px; color: #6c7086;">Strategic Confidence</div>
+                                <div id="neural-value" style="font-size: 14px; font-weight: bold; color: #89b4fa;">0.0</div>
+                            </div>
+                            <div style="flex: 1; background: #1e1e2e; border-radius: 4px; padding: 5px; text-align: center;">
+                                <div style="font-size: 9px; color: #6c7086;">Policy Reflex</div>
+                                <div id="policy-status" style="font-size: 14px; font-weight: bold; color: #cba6f7;">ACTIVE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <pre id="ai-output">Waiting for engine...</pre>
             </div>
             <div class="data-container" style="flex: 1;">
                 <h3 style="color: #89b4fa;">MCTS Score Trend</h3>
-                <div style="position: relative; flex: 1;">
-                    <canvas id="scoreChart"></canvas>
-                </div>
+                <div style="position: relative; flex: 1;"><canvas id="scoreChart"></canvas></div>
             </div>
         </div>
     </div>
 
-    <!-- Pitch Guide Modal -->
+    <!-- Pitch Guide Modal omitted for brevity, keeping same logic -->
     <div id="pitch-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 30, 46, 0.9); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: #181825; border: 2px solid #cba6f7; border-radius: 10px; padding: 30px; max-width: 800px; color: #cdd6f4; box-shadow: 0 0 20px rgba(203, 166, 247, 0.2);">
-            <h2 style="color: #cba6f7; margin-top: 0; border-bottom: 1px solid #313244; padding-bottom: 10px;">Saab Smart Stridsledning - Pitch Guide</h2>
-            
-            <h4 style="color: #89b4fa; margin-bottom: 5px;">1. Användarmål (User Goals)</h4>
-            <p style="margin-top: 0; font-size: 14px;"><strong>The Stridsledare (Combat Controller)</strong> needs to achieve tactical superiority without getting overwhelmed by noise. <br><em style="color: #a6adc8;">Live Demo:</em> Show the <strong>Triage Threshold Slider</strong> instantly filtering out low-value threats (turning them grey) so the AI ignores the noise.</p>
-
-            <h4 style="color: #a6e3a1; margin-bottom: 5px;">2. Oundvikliga aktiviteter (Unavoidable Activities)</h4>
-            <p style="margin-top: 0; font-size: 14px;">Controllers must track radar pings, calculate vectors, check ranges, guess hit probabilities, and fire. <br><em style="color: #a6adc8;">Live Demo:</em> The <strong>Live Engine Trace</strong> terminal shows the Hungarian Algorithm mathematically calculating $P_k$ and utility in milliseconds.</p>
-
-            <h4 style="color: #f38ba8; margin-bottom: 5px;">3. Högpåverkande suboptimaliteter (Sub-optimalities)</h4>
-            <p style="margin-top: 0; font-size: 14px;">Humans panic and fire expensive SAMs at cheap decoys, leaving the base empty for a follow-up hypersonic missile.<br><em style="color: #a6adc8;">Live Demo:</em> Spawn a <strong>Blind Spot Ambush</strong>. The MCTS trend chart proves the AI holds Capital SAMs in reserve specifically for these unpredictable threats.</p>
-
-            <h4 style="color: #fab387; margin-bottom: 5px;">4. Banbrytande lösningsstruktur (Groundbreaking Solution)</h4>
-            <p style="margin-top: 0; font-size: 14px;">Instead of simple "if/then" rules, we use a tripartite AI architecture:<br>
-            • <strong>Optimization (SciPy)</strong> for immediate tactical reflexes.<br>
-            • <strong>Game-Theory AI (MCTS)</strong> for strategic future-proofing and reserve management.<br>
-            • <strong>Generative AI (Gemini 2.5)</strong> for translating complex mathematical assignments into readable SITREPs.</p>
-
-            <button id="btn-close-pitch" style="background: #f38ba8; color: #11111b; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 20px;">Close Pitch Guide</button>
+        <div style="background: #181825; border: 2px solid #cba6f7; border-radius: 10px; padding: 30px; max-width: 800px; color: #cdd6f4;">
+            <h2 style="color: #cba6f7; border-bottom: 1px solid #313244; padding-bottom: 10px;">Pitch Guide</h2>
+            <p>1. <b>Transparency</b>: Show the Flag Lights and Neural Overlay.</p>
+            <p>2. <b>Adaptation</b>: Blend Fortress + Economy during an Ambush.</p>
+            <button onclick="document.getElementById('pitch-modal').style.display='none'">Close</button>
         </div>
     </div>
 
     <script>
-        // --- 1. CONFIGURATION & STATE ---
         const canvas = document.getElementById('radarMap');
         const ctx = canvas.getContext('2d');
         const jsonOutput = document.getElementById('json-output');
@@ -109,332 +152,164 @@
         let ws;
         function connectWebSocket() {
             ws = new WebSocket("ws://localhost:8000/ws/logs");
-            ws.onmessage = function(event) {
-                if(wsOutput.textContent.includes("Waiting for websocket stream...")) wsOutput.innerHTML = "";
-                
-                let line = event.data;
-                let color = "#cdd6f4"; // Default text color
-                
-                if (line.includes("[MCTS TRACE]")) {
-                    color = "#fab387"; // Orange for AI thought process
-                } else if (line.includes("[DEBUG TRIAGE REJECT]")) {
-                    color = "#6c7086"; // Grey for discarded options
-                } else if (line.includes("FATAL") || line.includes("CRITICAL") || line.includes("TIMEOUT")) {
-                    color = "#f38ba8"; // Red for failures
-                } else if (line.includes("SUCCESS") || line.includes("BONUS")) {
-                    color = "#a6e3a1"; // Green for successes
-                }
-                
+            ws.onmessage = function(e) {
+                if(wsOutput.textContent.includes("Waiting")) wsOutput.innerHTML = "";
                 const span = document.createElement("span");
-                span.style.color = color;
-                span.textContent = line + "\n";
+                span.style.color = e.data.includes("[MCTS]") ? "#fab387" : "#cdd6f4";
+                span.textContent = e.data + "\n";
                 wsOutput.appendChild(span);
-                
                 wsOutput.scrollTop = wsOutput.scrollHeight;
             };
-            ws.onclose = function(e) { setTimeout(connectWebSocket, 2000); };
+            ws.onclose = () => setTimeout(connectWebSocket, 2000);
         }
         connectWebSocket();
-        
-        // --- CHART.JS INITIALIZATION ---
+
         const chartCtx = document.getElementById('scoreChart').getContext('2d');
         let evaluationCounter = 1;
         const scoreChart = new Chart(chartCtx, {
             type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Strategic Score',
-                    data: [],
-                    borderColor: '#89b4fa',
-                    backgroundColor: 'rgba(137, 180, 250, 0.2)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { color: '#cdd6f4' }, grid: { color: '#313244' } },
-                    y: { ticks: { color: '#cdd6f4' }, grid: { color: '#313244' }, suggestedMin: -200, suggestedMax: 100 }
-                },
-                plugins: {
-                    legend: { labels: { color: '#cdd6f4' } }
-                }
-            }
-        });
-        
-        let isRunning = true;
-        let tickCount = 0;
-        let threatIdCounter = 1;
-
-        // Coordinates matched to your CSV
-        const bases = [
-            { id: "Base A (Coastal)", x: 198.3, y: 335.0, color: "#89b4fa", inventory: { fighters: 4, sams: 10, drones: 10 } },
-            { id: "Base B (Inland)", x: 838.3, y: 75.0, color: "#89b4fa", inventory: { fighters: 6, sams: 2, drones: 10 } },
-            { id: "Capital X", x: 418.3, y: 95.0, color: "#a6e3a1", inventory: { sams: 5, drones: 0 } }
-        ];
-
-        // The Blind spot zone (Behind the islands)
-        const blindSpot = { x: 500, y: 150, width: 250, height: 150 };
-
-        let triageThreshold = 0;
-        document.getElementById('threat-threshold').addEventListener('input', (e) => {
-            triageThreshold = parseInt(e.target.value, 10);
-            document.getElementById('threshold-val').textContent = triageThreshold;
+            data: { labels: [], datasets: [{ label: 'Strategic Score', data: [], borderColor: '#89b4fa', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { suggestedMin: -200, suggestedMax: 150 } } }
         });
 
         let activeThreats = [];
         let explosions = [];
-        let engagementLines = [];
+        let latestAssignments = [];
+        let evaluationCounter = 0;
+        let scoreChart;
+        const bases = [
+            { name: "Base A (Coastal)", x: 198.3, y: 335.0, color: "#89b4fa", inventory: { fighter: 4, sam: 10, drone: 10 } },
+            { name: "Base B (Inland)", x: 838.3, y: 75.0, color: "#89b4fa", inventory: { fighter: 6, sam: 2, drone: 10 } },
+            { name: "Capital X", x: 418.3, y: 95.0, color: "#a6e3a1", inventory: { sam: 5, drone: 0 } }
+        ];
 
-        // --- 2. LOGIC FUNCTIONS ---
-        function spawnThreat(isAmbush) {
-            // Clear the chart when a new threat appears
-            scoreChart.data.labels = [];
-            scoreChart.data.datasets[0].data = [];
-            evaluationCounter = 1;
-            scoreChart.update();
-
-            let startX, startY;
-            if (isAmbush) {
-                startX = blindSpot.x + Math.random() * blindSpot.width;
-                startY = blindSpot.y + Math.random() * blindSpot.height;
-            } else {
-                startX = 1400;
-                startY = 50 + Math.random() * 400;
-            }
-
-            const target = bases[2]; // Capital X
-            const dx = target.x - startX;
-            const dy = target.y - startY;
-            const angle = Math.atan2(dy, dx);
-            const speed = 2 + Math.random() * 2; 
-
-            // Dynamically assign threat properties for filtering
-            let t_val = 40.0;
-            let t_type = "fast-mover";
-            if (isAmbush) {
-                t_val = 95.0;
-                t_type = "bomber";
-            } else if (Math.random() > 0.5) {
-                t_val = 15.0;
-                t_type = "decoy";
-            }
-
-            activeThreats.push({
-                id: `T-${String(threatIdCounter).padStart(3, '0')}`,
-                type: t_type,
-                x: startX,
-                y: startY,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                speed: Math.round(speed * 300),
-                threat_value: t_val
-            });
-            threatIdCounter++;
-        }
-
-        function updatePhysics() {
-            activeThreats.forEach(t => { t.x += t.vx; t.y += t.vy; });
-            activeThreats = activeThreats.filter(t => t.x > -100 && t.y > -100 && t.y < 600);
-            
-            // Expand and fade out explosions
-            explosions.forEach(exp => {
-                exp.radius += 2;
-                exp.alpha -= 0.04;
-            });
-            explosions = explosions.filter(exp => exp.alpha > 0);
-            
-            // Fade out engagement lines
-            engagementLines.forEach(line => {
-                line.alpha -= 0.02; // Fades out slightly slower than explosions
-            });
-            engagementLines = engagementLines.filter(line => line.alpha > 0);
-        }
-
-        function getVisibleThreats() {
-            return activeThreats.filter(t => 
-                !(t.x >= blindSpot.x && t.x <= blindSpot.x + blindSpot.width &&
-                  t.y >= blindSpot.y && t.y <= blindSpot.y + blindSpot.height) &&
-                t.threat_value >= triageThreshold
-            );
-        }
-
-        // --- 3. API COMMUNICATION ---
         async function requestAIOrders() {
-            const visibleThreats = getVisibleThreats();
-            if(visibleThreats.length === 0) {
-                aiOutput.textContent = "No visible threats to evaluate.";
-                return;
-            }
-            
-            wsOutput.textContent = "--- Initiating Engine Request ---\n";
-            aiOutput.textContent = "Calculating tactical response...";
-            
-            // Format to match FastAPI schema
-            const payload = visibleThreats.map(t => ({
-                id: t.id,
-                x: t.x,
-                y: t.y,
-                speed_kmh: t.speed,
-                heading: "Arktholm",
-                estimated_type: t.type,
-                threat_value: t.threat_value
-            }));
-
             try {
-                const response = await fetch('http://localhost:8000/api/evaluate-threats', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                const response = await fetch("http://localhost:8000/evaluate_advanced", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        state: { bases: bases.map(b => ({name: b.name, x: b.x, y: b.y, inventory: b.inventory})) },
+                        threats: activeThreats.map(t => ({id: t.id, x: t.x, y: t.y, speed_kmh: t.speed, heading: "Capital X", estimated_type: t.type, threat_value: t.threat_value})),
+                        doctrine_primary: document.getElementById('primary-doctrine').value,
+                        doctrine_secondary: document.getElementById('secondary-doctrine').value,
+                        doctrine_blend: document.getElementById('blend-ratio').value / 100,
+                        use_rl: document.getElementById('enable-rl').checked
+                    })
                 });
                 const data = await response.json();
-            
-            // Extract SITREP to make it stand out
-            let sitrepHTML = "";
-            if (data.human_sitrep) {
-                sitrepHTML = `<div style="color: #f9e2af; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 15px; border-bottom: 1px dashed #45475a; padding-bottom: 10px;">${data.human_sitrep}</div>`;
-                delete data.human_sitrep; // Remove from raw JSON so it doesn't print twice
-            }
-            
-            aiOutput.innerHTML = sitrepHTML + `<div style="color: #a6adc8;">${JSON.stringify(data, null, 2)}</div>`;
                 
-                // Update the live chart with the new score
+                if (data.active_doctrine && data.active_doctrine.flags) {
+                    const ad = data.active_doctrine;
+                    document.getElementById('personality-panel').style.display = 'block';
+                    
+                    const secLabel = (ad.secondary && ad.secondary !== "none" && ad.secondary !== "null") ? ad.secondary.toUpperCase() : "NONE";
+                    document.getElementById('active-posture-label').textContent = `${ad.primary.toUpperCase()} + ${secLabel}`;
+                    document.getElementById('blend-ratio-pill').textContent = `BLEND: ${ad.blend_ratio}`;
+                    
+                    const lights = document.getElementById('flag-lights');
+                    lights.innerHTML = '';
+                    Object.entries(ad.flags).forEach(([k, v]) => {
+                        const item = document.createElement('div');
+                        item.style.display = 'flex'; item.style.alignItems = 'center';
+                        item.innerHTML = `<span class="status-light ${v ? 'light-on' : 'light-off'}"></span> ${k.replace('enable_', '').toUpperCase()}`;
+                        lights.appendChild(item);
+                    });
+
+                    // Normalize raw RL score to a 0-100% confidence meter
+                    const rlRaw = data.rl_prediction;
+                    const neuralValEl = document.getElementById('neural-value');
+                    
+                    if (rlRaw !== undefined && rlRaw !== null && activeThreats.length > 0) {
+                        const rlNorm = Math.min(100, Math.max(0, (rlRaw / 800) * 100));
+                        neuralValEl.textContent = rlNorm.toFixed(1) + "%";
+                        neuralValEl.style.color = rlNorm > 80 ? "#a6e3a1" : (rlNorm < 40 ? "#f38ba8" : "#89b4fa");
+                    } else {
+                        neuralValEl.textContent = "SCANNING";
+                        neuralValEl.style.color = "#6c7086";
+                    }
+                    
+                    const policyEl = document.getElementById('policy-status');
+                    policyEl.textContent = activeThreats.length > 0 ? (document.getElementById('enable-rl').checked ? "TUNING" : "OFF") : "STANDBY";
+                    policyEl.style.color = activeThreats.length > 0 ? "#cba6f7" : "#6c7086";
+                }
+
+                aiOutput.innerHTML = `<div style="color: #a6adc8;">${JSON.stringify(data.tactical_assignments, null, 2)}</div>`;
+                latestAssignments = data.tactical_assignments || [];
+                
                 if(data.strategic_consequence_score !== undefined) {
                     scoreChart.data.labels.push(`Eval ${evaluationCounter++}`);
                     scoreChart.data.datasets[0].data.push(data.strategic_consequence_score);
                     scoreChart.update();
                 }
-                
-                // Deduct local inventory based on tactical assignments
-                if(data.tactical_assignments) {
-                    data.tactical_assignments.forEach(assignment => {
-                        let targetBase = null;
-                        if (assignment.base.includes("Northern")) targetBase = bases[0];
-                        else if (assignment.base.includes("Highridge")) targetBase = bases[1];
-                        else if (assignment.base.includes("Capital") || assignment.base.includes("Arktholm")) targetBase = bases[2];
-                        
-                        // Find the threat's exact coordinates before we remove it
-                        let targetThreat = activeThreats.find(t => t.id === assignment.threat_id);
-                        
-                        if (targetBase) {
-                            let effKey = assignment.effector.toLowerCase() + "s"; // "Fighter" -> "fighters"
-                            if (targetBase.inventory[effKey] !== undefined && targetBase.inventory[effKey] > 0) {
-                                targetBase.inventory[effKey]--;
-                            }
-                            
-                            if (targetThreat) {
-                                engagementLines.push({
-                                    startX: targetBase.x,
-                                    startY: targetBase.y,
-                                    endX: targetThreat.x,
-                                    endY: targetThreat.y,
-                                    alpha: 1.0,
-                                    effector: assignment.effector
-                                });
-                            }
-                        }
-                    });
-                    
-                    // Remove intercepted threats from the radar map
-                    const assignedThreatIds = data.tactical_assignments.map(a => a.threat_id);
-                    
-                    // Add explosion visual effects where the threats were intercepted
-                    activeThreats.forEach(t => {
-                        if (assignedThreatIds.includes(t.id)) {
-                            explosions.push({ x: t.x, y: t.y, radius: 5, alpha: 1.0 });
-                        }
-                    });
-                    
-                    activeThreats = activeThreats.filter(t => !assignedThreatIds.includes(t.id));
-                    
-                    updateAmmoCounter(); // Refresh the top bar counter immediately
-                }
-            } catch(e) {
-                aiOutput.textContent = "API Error. Is agent_backend.py running?\n\n" + e;
-            }
+            } catch(e) { aiOutput.textContent = "API Error: " + e; }
         }
 
-        // --- 4. RENDERING & MAIN LOOP ---
-        function drawMap() {
-            ctx.fillStyle = "#181825"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "rgba(243, 139, 168, 0.1)"; ctx.strokeStyle = "#f38ba8"; ctx.setLineDash([5, 5]);
-            ctx.fillRect(blindSpot.x, blindSpot.y, blindSpot.width, blindSpot.height); ctx.strokeRect(blindSpot.x, blindSpot.y, blindSpot.width, blindSpot.height);
-            ctx.setLineDash([]); ctx.fillStyle = "#f38ba8"; ctx.font = "14px sans-serif"; ctx.fillText("Radar Blind Spot", blindSpot.x + 10, blindSpot.y + 20);
-
-            bases.forEach(base => { ctx.fillStyle = base.color; ctx.beginPath(); ctx.arc(base.x, base.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#cdd6f4"; ctx.fillText(base.id, base.x - 20, base.y - 15); });
-            
-            // Draw engagement lines from base to threat
-            engagementLines.forEach(line => {
-                ctx.beginPath();
-                ctx.moveTo(line.startX, line.startY);
-                ctx.lineTo(line.endX, line.endY);
-                
-                if (line.effector === "SAM") ctx.strokeStyle = `rgba(250, 179, 135, ${line.alpha})`;
-                else if (line.effector === "Fighter") ctx.strokeStyle = `rgba(137, 180, 250, ${line.alpha})`;
-                else ctx.strokeStyle = `rgba(166, 227, 161, ${line.alpha})`;
-                
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]); // Creates a dashed "laser/tracking" effect
-                ctx.stroke();
-                ctx.setLineDash([]); // Reset dash for other drawing operations
+        function draw() {
+            ctx.fillStyle = "#11111b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            bases.forEach(b => { ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, 7); ctx.fill(); ctx.fillStyle="#cdd6f4"; ctx.fillText(b.name, b.x-20, b.y-15); });
+            activeThreats.forEach((t, i) => { 
+                t.x -= 2; t.y += 0.5; // Simple simulation move
+                ctx.fillStyle = "#f38ba8"; ctx.beginPath(); ctx.arc(t.x, t.y, 5, 0, 7); ctx.fill(); 
+                ctx.fillText(t.id, t.x+8, t.y+4);
             });
             
-            activeThreats.forEach(t => { 
-                const isHidden = (t.x >= blindSpot.x && t.x <= blindSpot.x + blindSpot.width && t.y >= blindSpot.y && t.y <= blindSpot.y + blindSpot.height);
-                if (!isHidden) { 
-                    ctx.fillStyle = t.threat_value < triageThreshold ? "#585b70" : "#eba0ac"; 
-                    ctx.beginPath(); ctx.arc(t.x, t.y, 5, 0, Math.PI * 2); ctx.fill(); ctx.font = "10px sans-serif"; ctx.fillText(`${t.id} (${t.threat_value}%)`, t.x + 8, t.y + 4); 
+            // Draw Explosions
+            explosions.forEach((exp, i) => {
+                ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`;
+                ctx.beginPath(); ctx.arc(exp.x, exp.y, (30-exp.life)*2, 0, 7); ctx.fill();
+                exp.life--;
+                if(exp.life <= 0) explosions.splice(i, 1);
+            });
+            
+            // Draw Engagement Lines from Global assignments
+            if (Array.isArray(latestAssignments)) {
+                latestAssignments.forEach(ass => {
+                    const base = bases.find(b => b.name === ass.base_name);
+                    const threat = activeThreats.find(t => t.id === ass.threat_id);
+                    if (base && threat) {
+                        ctx.strokeStyle = "#a6e3a1"; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+                        ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(threat.x, threat.y); ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                });
+            }
+            
+            // Check for Kills based on Global assignments
+            activeThreats.forEach((t, i) => {
+                const isTargeted = latestAssignments.some(ass => ass.threat_id === t.id);
+                if (isTargeted && t.x < 500) {
+                    if (Math.random() > 0.98) { 
+                        explosions.push({x: t.x, y: t.y, life: 30});
+                        activeThreats.splice(i, 1);
+                        latestAssignments = latestAssignments.filter(ass => ass.threat_id !== t.id);
+                    }
                 }
             });
-            
-            // Draw explosion rings
-            explosions.forEach(exp => {
-                ctx.beginPath();
-                ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(250, 179, 135, ${exp.alpha})`; // Peach core
-                ctx.fill();
-                ctx.strokeStyle = `rgba(243, 139, 168, ${exp.alpha})`; // Red outer ring
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            });
+            activeThreats = activeThreats.filter(t => t.x > 0);
+            requestAnimationFrame(draw);
         }
         
-        function updateAmmoCounter() {
-            let total = 0;
-            bases.forEach(base => {
-                Object.values(base.inventory).forEach(val => total += val);
-            });
-            document.getElementById('ammo-counter').textContent = `Effectors Ready: ${total}`;
-        }
-
-        function loop() {
-            if (isRunning) { updatePhysics(); drawMap(); updateAmmoCounter(); jsonOutput.textContent = JSON.stringify(getVisibleThreats(), null, 2); tickCount++; }
-            requestAnimationFrame(loop);
-        }
-
-        document.getElementById('btn-toggle').addEventListener('click', (e) => { isRunning = !isRunning; e.target.textContent = isRunning ? "Pause Simulation" : "Resume Simulation"; });
-        document.getElementById('btn-threat').addEventListener('click', () => spawnThreat(false));
-        document.getElementById('btn-blind').addEventListener('click', () => spawnThreat(true));
-        document.getElementById('btn-ai').addEventListener('click', requestAIOrders);
-        document.getElementById('btn-clear-logs').addEventListener('click', () => { wsOutput.innerHTML = ""; });
-        document.getElementById('btn-pitch').addEventListener('click', () => { document.getElementById('pitch-modal').style.display = 'flex'; });
-        document.getElementById('btn-close-pitch').addEventListener('click', () => { document.getElementById('pitch-modal').style.display = 'none'; });
-
-        // --- AUTO-POLL AI ---
-        // Automatically request AI orders every 3 seconds while the simulation is running
-        setInterval(() => {
-            const autoPoll = document.getElementById('auto-poll').checked;
-            if (isRunning && autoPoll && getVisibleThreats().length > 0) {
-                requestAIOrders();
+        document.getElementById('btn-threat').onclick = () => activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x: 950, y: 100+Math.random()*300, speed: 2000, type: "bomber", threat_value: 80});
+        document.getElementById('btn-blind').onclick = () => {
+            for(let i=0; i<3; i++) {
+                activeThreats.push({id: "GHOST-"+Math.floor(Math.random()*900), x: 950, y: 50+Math.random()*400, speed: 4500, type: "ghost", threat_value: 150});
             }
-        }, 3000);
+        };
+        document.getElementById('btn-ai').onclick = requestAIOrders;
+        document.getElementById('btn-pitch').onclick = () => document.getElementById('pitch-modal').style.display='flex';
+        document.getElementById('blend-ratio').oninput = (e) => document.getElementById('blend-val').textContent = e.target.value + "% Primary";
+        
+        // Initialize Score Chart
+        const ctxChart = document.getElementById('scoreChart').getContext('2d');
+        scoreChart = new Chart(ctxChart, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Strategic Survival %', data: [], borderColor: '#fab387', tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1000, grid: { color: '#313244' } }, x: { display: false } }, plugins: { legend: { display: false } } }
+        });
 
-        loop();
+        setInterval(() => { if(document.getElementById('auto-poll').checked) requestAIOrders(); }, 2000);
+        draw();
     </script>
 </body>
 </html>

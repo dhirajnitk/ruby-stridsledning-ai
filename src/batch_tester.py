@@ -78,7 +78,13 @@ def run_batch_tests():
                 ))
             
             # ADVANCED ENGINE: Run the Hungarian Matcher and MCTS Rollouts
-            decision = evaluate_threats_advanced(base_state, active_threats, mcts_iterations=MCTS_ITERATIONS, max_time_sec=30.0)
+            decision = evaluate_threats_advanced(
+                base_state, 
+                active_threats, 
+                mcts_iterations=MCTS_ITERATIONS, 
+                max_time_sec=30.0,
+                doctrine_primary="balanced"
+            )
             
             score = decision["strategic_consequence_score"]
             is_safe = score > -100 # Capital survives if penalty doesn't nuke the score

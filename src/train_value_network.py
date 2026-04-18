@@ -1,92 +1,94 @@
-import csv
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+import pandas as pd
+import numpy as np
 import os
+import json
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
-# 1. Custom Dataset to load the CSV
-class BorealValueDataset(Dataset):
-    def __init__(self, csv_file):
-        self.x_data = []
-        self.y_data = []
-        
-        if not os.path.exists(csv_file):
-            raise FileNotFoundError(f"Could not find {csv_file}. Did you run generate_rl_data.py first?")
-            
-        with open(csv_file, 'r') as f:
-            reader = csv.reader(f)
-            next(reader)  # Skip the header row
-            for row in reader:
-                # row[0] is scenario_id (ignore)
-                # row[1:10] are the 9 input features
-                features = [float(val) for val in row[1:10]]
-                # row[10] is the target_mcts_score
-                target = [float(row[10])]
-                
-                self.x_data.append(features)
-                self.y_data.append(target)
-                
-        # Convert lists to PyTorch Tensors
-        self.x_data = torch.tensor(self.x_data, dtype=torch.float32)
-        self.y_data = torch.tensor(self.y_data, dtype=torch.float32)
-        
-    def __len__(self):
-        return len(self.x_data)
-        
-    def __getitem__(self, idx):
-        return self.x_data[idx], self.y_data[idx]
-
-# 2. The Neural Network Architecture
+# --- 1. MODEL ARCHITECTURE ---
 class ValueNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim=15):
         super(ValueNetwork, self).__init__()
-        # We have 9 input features and 1 continuous output (the score)
         self.network = nn.Sequential(
-            nn.Linear(9, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 16),
-            nn.ReLU(),
-            nn.Linear(16, 1)  # Final scalar output
+            nn.Linear(input_dim, 64), nn.ReLU(),
+            nn.Linear(64, 32), nn.ReLU(),
+            nn.Linear(32, 16), nn.ReLU(),
+            nn.Linear(16, 1)
         )
-        
     def forward(self, x):
         return self.network(x)
 
-if __name__ == "__main__":
-    # Hyperparameters
-    EPOCHS = 500
-    BATCH_SIZE = 16
-    LEARNING_RATE = 0.001
+# --- 2. TRAINING LOGIC ---
+def train_value():
+    print("="*60)
+    print("  BOREAL CHESSMASTER — VALUE NETWORK TRAINING")
+    print("="*60)
     
-    print("Loading dataset...")
-    dataset = BorealValueDataset('rl_value_network_training_data.csv')
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+    data_path = "data/rl_training_data.csv"
+    if not os.path.exists(data_path):
+        print(f"Error: {data_path} not found. Run rl_data_collector.py first.")
+        return
+
+    df = pd.read_csv(data_path)
+    print(f"Loaded {len(df)} samples for training.")
+
+    # 1. Feature Engineering (15 Features)
+    numeric_cols = ["num_threats", "avg_dist", "min_dist", "total_val", "fighters", "sams", "drones", "cap_sams", "weather_bin", "blend_ratio"]
+    doctrine_names = sorted(df["primary_doctrine"].unique())
     
-    print(f"Dataset loaded with {len(dataset)} examples.")
+    # Preprocessing
+    X_num = df[numeric_cols].values
+    scaler = StandardScaler()
+    X_num_scaled = scaler.fit_transform(X_num)
     
-    # Initialize Model, Loss Function, and Optimizer
-    model = ValueNetwork()
-    criterion = nn.MSELoss()  # Mean Squared Error for regression
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-    
-    print("Starting training loop...")
-    for epoch in range(EPOCHS):
-        total_loss = 0.0
-        for batch_x, batch_y in dataloader:
-            optimizer.zero_grad()           # 1. Clear old gradients
-            predictions = model(batch_x)    # 2. Forward pass
-            loss = criterion(predictions, batch_y) # 3. Calculate error
-            loss.backward()                 # 4. Backpropagation
-            optimizer.step()                # 5. Update weights
-            total_loss += loss.item()
-            
+    # One-hot doctrine
+    X_doc = pd.get_dummies(df["primary_doctrine"])[doctrine_names].values
+    X = np.hstack([X_num_scaled, X_doc])
+    y = df["target_mcts_score"].values.reshape(-1, 1)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+
+    # Tensors
+    X_train_t = torch.tensor(X_train, dtype=torch.float32)
+    y_train_t = torch.tensor(y_train, dtype=torch.float32)
+    X_test_t = torch.tensor(X_test, dtype=torch.float32)
+    y_test_t = torch.tensor(y_test, dtype=torch.float32)
+
+    # Train
+    model = ValueNetwork(input_dim=X.shape[1])
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+    epochs = 500
+    for epoch in range(epochs):
+        model.train()
+        optimizer.zero_grad()
+        outputs = model(X_train_t)
+        loss = criterion(outputs, y_train_t)
+        loss.backward()
+        optimizer.step()
+        
         if (epoch + 1) % 50 == 0:
-            avg_loss = total_loss / len(dataloader)
-            print(f"Epoch [{epoch+1}/{EPOCHS}] | Average MSE Loss: {avg_loss:.4f}")
-            
-    # Save the trained weights
-    torch.save(model.state_dict(), 'value_network.pth')
-    print("\n[SUCCESS] Training complete! Model saved to 'value_network.pth'")
+            model.eval()
+            with torch.no_grad():
+                test_loss = criterion(model(X_test_t), y_test_t)
+            print(f"Epoch [{epoch+1}/{epochs}] | Loss: {loss.item():.4f} | Val Loss: {test_loss.item():.4f}")
+
+    # Save
+    os.makedirs("models", exist_ok=True)
+    params = {
+        "scaler_mean": scaler.mean_.tolist(),
+        "scaler_scale": scaler.scale_.tolist(),
+        "numeric_cols": numeric_cols,
+        "doctrine_names": doctrine_names,
+        "doctrine_categories": doctrine_names
+    }
+    with open("models/value_network_params.json", "w") as f: json.dump(params, f)
+    torch.save(model.state_dict(), "models/value_network.pth")
+    print(f"\n[OK] Value Network trained and saved to models/value_network.pth")
+
+if __name__ == "__main__":
+    train_value()

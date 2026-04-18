@@ -34,7 +34,7 @@ class GameState:
 
 # Define Effectors based on Blueprint
 EFFECTORS = {
-    "Fighter": Effector("Fighter", 2000.0, 50.0, {"fast-mover": 0.8, "bomber": 0.9, "decoy": 0.5}),
-    "SAM": Effector("SAM", 3000.0, 80.0, {"fast-mover": 0.7, "bomber": 0.95, "decoy": 0.9}),
-    "Drone": Effector("Drone", 400.0, 10.0, {"fast-mover": 0.1, "bomber": 0.4, "decoy": 0.8})
+    "fighter": Effector("Fighter", 2000.0, 50.0, {"fast-mover": 0.8, "bomber": 0.9, "decoy": 0.5}),
+    "sam": Effector("SAM", 3000.0, 80.0, {"fast-mover": 0.7, "bomber": 0.95, "decoy": 0.9}),
+    "drone": Effector("Drone", 400.0, 10.0, {"fast-mover": 0.1, "bomber": 0.4, "decoy": 0.8})
 }
