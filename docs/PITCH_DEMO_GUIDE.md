@@ -1,58 +1,54 @@
 # Boreal Chessmaster: Winning Pitch Demo Guide 🏆
 
-This guide outlines the optimal flow for demonstrating the Boreal Chessmaster AI during the Saab Hackathon. Use this to highlight the synergy between optimization, MCTS, and Reinforcement Learning.
+This guide outlines the optimal flow for demonstrating the Boreal Chessmaster AI. Use this to highlight the synergy between mathematical optimization, MCTS, and Reinforcement Learning.
 
 ---
 
 ## 🎭 The Narrative
-*"In modern high-intensity conflict, the OODA loop is too fast for humans alone. The Boreal Chessmaster is a Tripartite AI that gives the Commander a 1000x processing edge while maintaining full postural control."*
+*"In modern high-intensity conflict, the OODA loop is too fast for humans alone. The Boreal Chessmaster is an Ultra-Reflex AI that gives the Commander a 5Hz processing edge—analyzing the battlefield 5 times every second while maintaining full doctrinal control."*
 
 ---
 
 ## 🕹️ Step-by-Step Demo Flow
 
-### Phase 1: The "Always-On" Intelligence
-1.  **Preparation**: Ensure **"Auto-Poll AI"** is CHECKED.
-2.  **Visual**: Point to the **Neural Intelligence Overlay** showing **"SCANNING"**.
-3.  **The Hook**: *"Judges, notice the 'SCANNING' status. Even with no threats, our Neural Value Network is hallucinating 500+ scenarios per second to prepare for blind-spot ambushes."*
+### Phase 1: The "Always-On" Vigilance
+1.  **Preparation**: Ensure **"AUTO"** is CHECKED and **"NEURAL"** is CHECKED.
+2.  **Visual**: Point to the **SITREP & DOCTRINE** panel showing **"SCANNING"**.
+3.  **The Hook**: *"Judges, notice the 'SCANNING' status. Even with no threats, our system is in a state of 'Energy-Efficient Vigilance.' The Neural Brain is loaded and ready, but silent—conserving CPU power until the moment of engagement."*
 
 ### Phase 2: Standard Tactical Response
-1.  **Action**: Click **"Radar Spawn"** once.
-2.  **Visual**: Watch the **Live Engine Trace** (Middle Panel) show the Hungarian assignments.
-3.  **The Hook**: *"A standard threat appears. Our $O(N^3)$ Optimization layer instantly locks a solution, while the MCTS Score Trend (Bottom Right) tracks our long-term survival probability."*
+1.  **Action**: Click **"Spawn"** once.
+2.  **Visual**: Watch the **Engine Trace** (Bottom Right) show the tactical assignments and **Neural Confidence**.
+3.  **The Hook**: *"A standard threat appears. At 5Hz frequency, our $O(N^3)$ Optimization layer instantly locks a solution, while the Neural-MCTS tracks our strategic confidence in real-time."*
 
 ### Phase 3: The "Ambush" Crisis (The Climax)
-1.  **Action**: Click **"Ambush"** 3-4 times rapidly.
-2.  **Visual**: Watch the **"Policy Reflex"** change to **TUNING**.
-3.  **The Hook**: *"This is a coordinated saturation attack. The battlefield is now too complex for static rules. Notice the 'Policy Reflex' is now 'TUNING'—the RL agent is micro-adjusting 14 military weights in real-time to save the Capital."*
+1.  **Action**: Click **"Ambush"** once.
+2.  **Visual**: Watch the **Engine Trace** flood with `[STRAT]` updates for 10+ vectors.
+3.  **The Hook**: *"This is a saturation attack. 10 'Ghost' vectors have entered the Boreal Passage. Notice the Engine Trace—it's re-evaluating the entire 1000km grid every 200ms. The AI is solving a 10-target puzzle in the blink of an eye."*
 
-### Phase 4: Human-in-the-Loop (Strategic Blending)
-1.  **Action**: Change **Primary Doctrine** to `Fortress` and **Secondary** to `Economy`.
-2.  **Visual**: Point to the **"BALANCED + NONE"** label changing to **"FORTRESS + ECONOMY"**.
-3.  **The Hook**: *"We don't trust 'Black Box' AI. The Commander remains the architect. By blending Fortress and Economy, I'm ordering the AI to protect our assets while being mindful of ammo depletion."*
+### Phase 4: The "Neural vs Heuristic" Proof (The Kill-Shot)
+1.  **Action**: Uncheck **"NEURAL"**.
+2.  **Visual**: Point to the confidence panel showing **"HEURISTIC"** and the trace saying `Basic effector allocation`.
+3.  **The Hook**: *"To prove our edge, I've disabled the Neural layer. We are now running on 'Textbook Logic.' It's safe, but it lacks the strategic intuition needed for complex swarms. By toggling NEURAL back ON, we regain our 5Hz predictive advantage."*
 
-### Phase 5: The "AlphaZero" Proof (The Technical Kill-Shot)
-1.  **Action**: Uncheck **"RL ACTIVE"**.
-2.  **Visual**: Point to the **MCTS Trace** showing the loss of Neural Predictions.
-3.  **The Hook**: *"To prove our edge, I've disabled the Neural layer. We've lost our 1000x 'Strategic Intuition'. By toggling RL back ON, we regain the reflexive speed needed to win the Boreal Passage."*
-
-### Phase 6: Visual Payoff (Kinetic Interception) [NEW]
-1.  **Visual**: Point to the **Dashed Green Lines** on the map.
-2.  **Action**: Wait for a threat to cross the 500km threshold.
-3.  **The Hook**: *"Watch the radar. When the AI confirms a high-probability kill, the UI renders a kinetic impact shockwave. This isn't just a chart; it's a real-time battle management system."*
+### Phase 5: Strategic Blending (Human Control)
+1.  **Action**: Change **Primary Doctrine** to `Fortress` and adjust the **Blend Slider**.
+2.  **Visual**: Point to the **Flag Lights** (enable_capital_reserve, etc.) updating instantly.
+3.  **The Hook**: *"The Commander remains the architect. By blending doctrines, I am not just giving a command; I am reshaping the AI's neural weights in real-time. This is Human-Machine Teaming at its peak."*
 
 ---
 
-## 🛠️ Button Definitions (For Reference)
-- **Radar Spawn**: Single threat engagement.
-- **Ambush**: Multi-ghost saturation simulation.
-- **AI Orders**: Manual recalculation override.
-- **Auto-Poll**: Continuous AI "Hallucination" stream.
-- **RL ACTIVE**: Toggles the Value/Policy Hybrid layers.
+## 🛠️ UI Component Map
+- **AUTO**: Toggles the 5Hz (200ms) evaluation loop.
+- **NEURAL**: Toggles the RL Value Network (Neural vs Heuristic).
+- **Ambush**: Triggers a 10-target saturation event.
+- **Execute AI**: Manual strategic override (forces fresh MCTS logic).
+- **Engine Trace**: The "Black Box" opened—100% transparent AI reasoning.
 
 ---
 
 ## 💡 Key Technical Talking Points
-- **Hybrid 70/30**: 70% Physics (MCTS) + 30% Intuition (RL).
-- **Sub-ms Latency**: Neural shortcutting increases decision volume by 1000x.
-- **Explainability**: Flag lights and SITREP logs provide full transparency into AI logic.
+- **5Hz Ultra-Reflex**: Evaluation cycle every 200ms.
+- **Adaptive Performance**: 0% idle load, 100% engagement power.
+- **Tripartite Intelligence**: $O(N^3)$ Optimization + MCTS Simulations + Neural Intuition.
+- **Zero-Scroll UX**: Designed for high-stress control room environments.

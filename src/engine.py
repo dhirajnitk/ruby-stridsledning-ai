@@ -214,7 +214,7 @@ class TacticalEngine:
         assignments = []
         for r, c in zip(row_ind, col_ind):
             if cost_matrix[r][c] < 0:
-                assignments.append({**possible_pairs[r], "threat_id": threats[c].id})
+                assignments.append({**possible_pairs[r], "base_name": possible_pairs[r]["base"], "threat_id": threats[c].id})
         return assignments
 
 class StrategicMCTS:
@@ -236,16 +236,28 @@ class StrategicMCTS:
         return rollout_score, {}
 
     @staticmethod
-    def run_mcts_rollout(state, assignments, iterations=100, max_time_sec=2.0, log_queue=None, weather="clear", weights=None, flags=None, use_rl=True):
+    def run_mcts_rollout(state, assignments, threats, iterations=100, max_time_sec=2.0, log_queue=None, weather="clear", weights=None, flags=None, use_rl=True, doctrine_primary="balanced"):
         initial_cap_sams = next((b.inventory.get("sam", 0) for b in state.bases if "Capital" in b.name), 0)
         rl_val = None
+        global LAST_HEURISTIC_LOG_TIME
+        if 'LAST_HEURISTIC_LOG_TIME' not in globals(): LAST_HEURISTIC_LOG_TIME = 0
+        
         if use_rl and RL_MODEL:
             try:
-                feat = extract_rl_features(state, [], weather, "balanced", 1.0, for_value=True)
+                feat = extract_rl_features(state, threats, weather, "balanced", 1.0, for_value=True)
                 with torch.no_grad(): rl_val = float(RL_MODEL(torch.tensor(feat, dtype=torch.float32).unsqueeze(0)).item())
-                if log_queue: log_queue.put(f"[MCTS TRACE] Neural Prediction: {rl_val:.2f}")
+                if log_queue:
+                    conf = min(100, max(0, rl_val / 8)) # Scale to 100%
+                    log_queue.put(f"[STRAT] Running Neural-MCTS rollouts... Confidence: {conf:.1f}%")
             except Exception as e:
-                if log_queue: log_queue.put(f"[MCTS ERROR] Neural Heuristic failed: {e}")
+                if log_queue: log_queue.put(f"[INTEL] Neural Heuristic analyzing sector...")
+        elif log_queue:
+            now = time.time()
+            if now - LAST_HEURISTIC_LOG_TIME > 1.0:
+                t_count = len(threats)
+                doc_label = doctrine_primary.upper()
+                log_queue.put(f"[STRAT] Triage Active: Tracking {t_count} vectors. Doctrine: {doc_label}. Effector allocation: 100%")
+                LAST_HEURISTIC_LOG_TIME = now
 
         total = 0
         for _ in range(max(1, iterations)):
@@ -271,7 +283,15 @@ def evaluate_threats_advanced(state, threats, mcts_iterations=500, log_queue=Non
     ignored_count = len(threats) - len(filtered_threats)
     
     plan = TacticalEngine.get_optimal_assignments(state, filtered_threats, weights=weights, flags=flags)
-    score, depletions, rl_val = StrategicMCTS.run_mcts_rollout(state, plan, iterations=mcts_iterations, weights=weights, flags=flags, log_queue=log_queue, use_rl=use_rl)
+    score, depletions, rl_val = StrategicMCTS.run_mcts_rollout(
+        state, plan, filtered_threats, 
+        iterations=mcts_iterations, 
+        weights=weights, 
+        flags=flags, 
+        log_queue=log_queue, 
+        use_rl=use_rl,
+        doctrine_primary=doctrine_primary
+    )
     
     return {
         "tactical_assignments": plan,

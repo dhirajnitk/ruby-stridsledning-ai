@@ -4,311 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boreal Chessmaster - Tactical Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;}
-        .top-nav { background: #11111b; border: 1px solid #313244; border-radius: 8px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .controls { display: flex; align-items: center; gap: 15px; }
-        .doctrine-console { background: #181825; border: 1px solid #45475a; border-radius: 6px; padding: 5px 12px; display: flex; align-items: center; gap: 10px; }
-        button { background: #45475a; color: #cdd6f4; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 13px;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;}
+        .top-nav { background: #11111b; border: 1px solid #313244; border-radius: 8px; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;}
+        .controls { display: flex; align-items: center; gap: 8px; }
+        .doctrine-console { background: #181825; border: 1px solid #45475a; border-radius: 6px; padding: 3px 8px; display: flex; align-items: center; gap: 8px; }
+        button { background: #45475a; color: #cdd6f4; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 11px;}
         button:hover { background: #585b70; transform: translateY(-1px); }
         button.danger { background: #f38ba8; color: #11111b; }
-        button.danger:hover { background: #f5c2e7; }
         button.ai-btn { background: #a6e3a1; color: #11111b; }
-        button.ai-btn:hover { background: #94e2d5; }
-        .main-container { display: flex; flex-direction: column; gap: 15px; flex: 1; min-height: 0; }
-        .top-row { display: flex; gap: 15px; flex: 2; min-height: 0; }
-        .bottom-row { display: flex; gap: 15px; flex: 1.2; min-height: 0; }
-        .map-container { flex: 2.5; background: #11111b; border: 1px solid #313244; border-radius: 10px; position: relative; overflow: hidden; }
-        .data-container { flex: 1; background: #11111b; border: 1px solid #313244; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; min-width: 300px; }
-        h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;}
-        pre { background: #1e1e2e; padding: 8px; border-radius: 5px; overflow-y: auto; flex: 1; font-family: 'Consolas', monospace; font-size: 11px; color: #f5c2e7; border: 1px solid #313244; white-space: pre-wrap; margin: 0;}
-        .status-light { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .main-layout { display: flex; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
+        .map-section { flex: 1; background: #181825; border: 1px solid #313244; border-radius: 10px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
+        .data-stack { width: 300px; display: flex; flex-direction: column; gap: 10px; min-height: 0; flex-shrink: 0; }
+        .panel { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-height: 0; }
+        .panel-header { font-size: 11px; font-weight: bold; margin-bottom: 8px; color: #89b4fa; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 1px;}
+        #canvas-container { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #11111b; border-radius: 6px; position: relative;}
+        #radarCanvas { background: url('boreal-map.svg'); background-size: cover; border-radius: 6px; cursor: crosshair; }
+        .trace-log { flex: 1; background: #11111b; border-radius: 6px; padding: 8px; font-family: 'Cascadia Code', monospace; font-size: 10px; overflow-y: auto; white-space: pre-wrap; color: #a6adc8; border: 1px solid #313244;}
+        .status-light { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
         .light-on { background: #a6e3a1; box-shadow: 0 0 5px #a6e3a1; }
-        .light-off { background: #45475a; }
-        .doctrine-pill { padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
-        input[type=range] { accent-color: #a6e3a1; }
-        select { background: #1e1e2e; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 3px 6px; font-size: 12px; outline: none;}
+        .light-off { background: #f38ba8; }
+        .toggle-box { font-size: 9px; color: #a6adc8; display: flex; align-items: center; gap: 3px; cursor: pointer; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
     <div class="top-nav">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <h2 style="margin: 0; font-size: 18px; color: #cba6f7;">BOREAL CHESSMASTER</h2>
+        <div style="font-size: 16px; font-weight: bold; color: #fab387;">BOREAL CHESSMASTER <span style="font-size: 9px; color: #89b4fa; margin-left:5px;">v4.0</span></div>
+        <div class="controls">
             <div class="doctrine-console">
-                <span style="font-size: 11px; font-weight: bold; color: #6c7086;">POSTURE:</span>
-                <select id="primary-doctrine">
-                    <option value="balanced">Balanced</option>
-                    <option value="aggressive">Aggressive</option>
-                    <option value="fortress">Fortress</option>
-                    <option value="economy">Economy</option>
-                    <option value="ambush">Ambush</option>
-                    <option value="saturation">Saturation</option>
-                    <option value="scout">Scout</option>
-                </select>
-                <span style="color: #6c7086;">+</span>
-                <select id="secondary-doctrine">
-                    <option value="none">None</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="aggressive">Aggressive</option>
-                    <option value="fortress">Fortress</option>
-                    <option value="economy">Economy</option>
-                    <option value="ambush">Ambush</option>
-                    <option value="saturation">Saturation</option>
-                    <option value="scout">Scout</option>
-                </select>
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                    <span id="blend-val" style="font-size: 10px; color: #a6e3a1;">70% Primary</span>
-                    <input type="range" id="blend-ratio" min="0" max="100" value="70" style="width: 80px; height: 4px;">
-                </div>
+                <select id="primary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option><option value="economy">ECONOMY</option><option value="ambush">AMBUSH</option><option value="saturation">SATURATION</option></select>
+                <span style="color: #45475a;">|</span>
+                <select id="secondary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="none">NONE</option><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option></select>
             </div>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <button id="btn-threat" class="danger">Radar Spawn</button>
+            <div style="display: flex; align-items: center; gap: 5px; font-size: 10px;">
+                <input type="range" id="blend-ratio" min="0" max="100" value="70">
+                <span id="blend-val">70% P</span>
+            </div>
+            <label class="toggle-box" title="Toggle RL Neural Logic"><input type="checkbox" id="use-rl" checked> NEURAL</label>
+            <label class="toggle-box" title="Toggle Autonomous Mode"><input type="checkbox" id="auto-poll" checked> AUTO</label>
+            <button id="btn-threat">Spawn</button>
             <button id="btn-blind" class="danger">Ambush</button>
-            <button id="btn-ai" class="ai-btn">AI Orders</button>
-            <button id="btn-pitch" style="background: #cba6f7; color: #11111b; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">Pitch</button>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-            <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold; cursor: pointer; color: #a6e3a1;">
-                <input type="checkbox" id="auto-poll" checked> Auto-Poll AI
-            </label>
-            <span id="ammo-counter" style="color: #f9e2af; font-size: 11px; font-weight: bold;">Effectors: 0</span>
+            <button id="btn-ai" class="ai-btn">Execute AI</button>
         </div>
     </div>
-
-    <div class="main-container">
-        <div class="top-row">
-            <div class="map-container">
-                <canvas id="radarMap" width="1500" height="500"></canvas>
-            </div>
-            <div class="data-container">
-                <h3 style="color: #89b4fa;">Live Battlefield State</h3>
-                <pre id="json-output">Initializing...</pre>
-            </div>
+    <div class="main-layout">
+        <div class="map-section">
+            <div class="panel-header" style="padding: 5px 10px;">TACTICAL THEATER <span>BOREAL PASSAGE</span></div>
+            <div id="canvas-container"><canvas id="radarCanvas" width="1000" height="780"></canvas></div>
         </div>
-        <div class="bottom-row">
-            <div class="data-container" style="flex: 1;">
-                <h3 style="color: #f5a97f;">Live Engine Trace</h3>
-                <pre id="ws-output">Waiting for stream...</pre>
-            </div>
-            <div class="data-container" style="flex: 1.2;">
-                <h3 style="color: #cba6f7;">Doctrine SITREP & AI Evaluation</h3>
-                <div id="personality-panel" style="background: #181825; border: 1px solid #45475a; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span id="active-posture-label" class="doctrine-pill" style="color: #cba6f7; background: rgba(203, 166, 247, 0.1);">BALANCED</span>
-                        <span id="blend-ratio-pill" style="font-size: 10px; color: #6c7086; font-weight: bold;">BLEND: 100/0</span>
-                    </div>
-                    <div id="flag-lights" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 10px; color: #cdd6f4;"></div>
-                    
-                    <div id="neural-panel" style="margin-top: 10px; border-top: 1px solid #313244; padding-top: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <span style="font-size: 11px; font-weight: bold; color: #fab387;">Neural Intelligence Overlay</span>
-                            <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 9px; cursor: pointer; color: #a6e3a1;">
-                                <input type="checkbox" id="enable-rl" checked> RL ACTIVE
-                            </label>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <div style="flex: 1; background: #1e1e2e; border-radius: 4px; padding: 5px; text-align: center;">
-                                <div style="font-size: 9px; color: #6c7086;">Strategic Confidence</div>
-                                <div id="neural-value" style="font-size: 14px; font-weight: bold; color: #89b4fa;">0.0</div>
-                            </div>
-                            <div style="flex: 1; background: #1e1e2e; border-radius: 4px; padding: 5px; text-align: center;">
-                                <div style="font-size: 9px; color: #6c7086;">Policy Reflex</div>
-                                <div id="policy-status" style="font-size: 14px; font-weight: bold; color: #cba6f7;">ACTIVE</div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="data-stack">
+            <div class="panel" style="flex: 1;">
+                <div class="panel-header">SITREP & DOCTRINE</div>
+                <div id="active-posture-label" style="font-size: 13px; font-weight: bold; color: #a6e3a1;">INITIALIZING...</div>
+                <div id="blend-ratio-pill" style="font-size: 9px; color: #89b4fa; margin-bottom: 5px;">SYNCING...</div>
+                <div style="background: #1e1e2e; border-radius: 4px; padding: 6px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;"><span style="font-size: 10px; font-weight: bold; color: #fab387;">NEURAL CONFIDENCE</span></div>
+                    <div style="display: flex; align-items: baseline; gap: 5px;"><div id="neural-value" style="font-size: 18px; font-weight: bold; color: #89b4fa;">SCANNING</div><div id="policy-status" style="font-size: 10px; color: #cba6f7;">STANDBY</div></div>
                 </div>
-                <pre id="ai-output">Waiting for engine...</pre>
+                <div id="flag-lights" style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 8px; color: #9399b2;"></div>
             </div>
-            <div class="data-container" style="flex: 1;">
-                <h3 style="color: #89b4fa;">MCTS Score Trend</h3>
-                <div style="position: relative; flex: 1;"><canvas id="scoreChart"></canvas></div>
-            </div>
+            <div class="panel" style="height: 150px;"><div class="panel-header">SURVIVAL TREND</div><div style="flex: 1; position: relative;"><canvas id="scoreChart"></canvas></div></div>
+            <div class="panel" style="flex: 1.5;"><div class="panel-header">ENGINE TRACE</div><div id="ws-output" class="trace-log">Connecting...</div></div>
         </div>
     </div>
-
-    <!-- Pitch Guide Modal omitted for brevity, keeping same logic -->
-    <div id="pitch-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 30, 46, 0.9); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: #181825; border: 2px solid #cba6f7; border-radius: 10px; padding: 30px; max-width: 800px; color: #cdd6f4;">
-            <h2 style="color: #cba6f7; border-bottom: 1px solid #313244; padding-bottom: 10px;">Pitch Guide</h2>
-            <p>1. <b>Transparency</b>: Show the Flag Lights and Neural Overlay.</p>
-            <p>2. <b>Adaptation</b>: Blend Fortress + Economy during an Ambush.</p>
-            <button onclick="document.getElementById('pitch-modal').style.display='none'">Close</button>
-        </div>
-    </div>
-
     <script>
-        const canvas = document.getElementById('radarMap');
-        const ctx = canvas.getContext('2d');
-        const jsonOutput = document.getElementById('json-output');
-        const aiOutput = document.getElementById('ai-output');
-        const wsOutput = document.getElementById('ws-output');
-        
+        const canvas = document.getElementById('radarCanvas'); const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container'); const wsOutput = document.getElementById('ws-output');
+        let activeThreats = []; let explosions = []; let latestAssignments = []; let scoreChart; const SCALE = 0.6; 
+        const bases = [
+            { name: "Northern Vanguard Base", x_km: 198.3, y_km: 335.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
+            { name: "Highridge Command", x_km: 838.3, y_km: 75.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
+            { name: "Arktholm (Capital X)", x_km: 418.3, y_km: 95.0, color: "#ffcc00", type: "capital", inventory: { sam: 20 } },
+            { name: "Boreal Watch Post", x_km: 1158.3, y_km: 385.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
+            { name: "Nordvik", x_km: 140, y_km: 323.3, color: "#ffffff", type: "city" },
+            { name: "Valbrek", x_km: 1423.3, y_km: 213.3, color: "#ffffff", type: "city" }
+        ];
+        function fitCanvas() { const s = Math.min(container.clientWidth / 1000, container.clientHeight / 780, 1.0); canvas.style.transform = `scale(${s})`; canvas.style.transformOrigin = 'center center'; }
+        window.addEventListener('resize', fitCanvas); fitCanvas();
         let ws;
         function connectWebSocket() {
-            ws = new WebSocket("ws://localhost:8000/ws/logs");
-            ws.onmessage = function(e) {
-                if(wsOutput.textContent.includes("Waiting")) wsOutput.innerHTML = "";
+            ws = new WebSocket("ws://127.0.0.1:8000/ws/logs");
+            ws.onopen = () => wsOutput.innerHTML = `<span style="color: #a6e3a1;">[SYSTEM] Strategic Link Established. Monitoring Boreal Sector...</span>\n`;
+            ws.onmessage = (e) => {
                 const span = document.createElement("span");
-                span.style.color = e.data.includes("[MCTS]") ? "#fab387" : "#cdd6f4";
-                span.textContent = e.data + "\n";
-                wsOutput.appendChild(span);
-                wsOutput.scrollTop = wsOutput.scrollHeight;
+                span.style.color = e.data.includes("KILL") ? "#f38ba8" : (e.data.includes("[STRAT]") ? "#fab387" : "#cdd6f4");
+                span.textContent = e.data + "\n"; wsOutput.appendChild(span); wsOutput.scrollTop = wsOutput.scrollHeight;
             };
             ws.onclose = () => setTimeout(connectWebSocket, 2000);
         }
         connectWebSocket();
-
-        const chartCtx = document.getElementById('scoreChart').getContext('2d');
-        let evaluationCounter = 1;
-        const scoreChart = new Chart(chartCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Strategic Score', data: [], borderColor: '#89b4fa', fill: true, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { suggestedMin: -200, suggestedMax: 150 } } }
-        });
-
-        let activeThreats = [];
-        let explosions = [];
-        let latestAssignments = [];
-        let evaluationCounter = 0;
-        let scoreChart;
-        const bases = [
-            { name: "Base A (Coastal)", x: 198.3, y: 335.0, color: "#89b4fa", inventory: { fighter: 4, sam: 10, drone: 10 } },
-            { name: "Base B (Inland)", x: 838.3, y: 75.0, color: "#89b4fa", inventory: { fighter: 6, sam: 2, drone: 10 } },
-            { name: "Capital X", x: 418.3, y: 95.0, color: "#a6e3a1", inventory: { sam: 5, drone: 0 } }
-        ];
-
-        async function requestAIOrders() {
+        async function requestAIOrders(isAuto = false) {
+            const btn = document.getElementById('btn-ai');
+            if (!isAuto) { btn.style.opacity = "0.5"; const logSpan = document.createElement("span"); logSpan.style.color = "#a6e3a1"; logSpan.textContent = `[COMMAND] Manual strategic override dispatched...\n`; wsOutput.appendChild(logSpan); wsOutput.scrollTop = wsOutput.scrollHeight; }
             try {
-                const response = await fetch("http://localhost:8000/evaluate_advanced", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
+                const response = await fetch('http://127.0.0.1:8000/evaluate_advanced', {
+                    method: 'POST', headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        state: { bases: bases.map(b => ({name: b.name, x: b.x, y: b.y, inventory: b.inventory})) },
-                        threats: activeThreats.map(t => ({id: t.id, x: t.x, y: t.y, speed_kmh: t.speed, heading: "Capital X", estimated_type: t.type, threat_value: t.threat_value})),
+                        state: { bases: bases.filter(b => b.type.includes("base") || b.type.includes("capital")).map(b => ({name: b.name, x: b.x_km, y: b.y_km, inventory: b.inventory})) },
+                        threats: activeThreats.map(t => ({ id: t.id, x: t.x_km, y: t.y_km, speed_kmh: t.speed_kmh, heading: "Capital X", estimated_type: t.estimated_type, threat_value: t.threat_value })),
                         doctrine_primary: document.getElementById('primary-doctrine').value,
                         doctrine_secondary: document.getElementById('secondary-doctrine').value,
                         doctrine_blend: document.getElementById('blend-ratio').value / 100,
-                        use_rl: document.getElementById('enable-rl').checked
+                        use_rl: document.getElementById('use-rl').checked
                     })
                 });
-                const data = await response.json();
-                
-                if (data.active_doctrine && data.active_doctrine.flags) {
-                    const ad = data.active_doctrine;
-                    document.getElementById('personality-panel').style.display = 'block';
-                    
-                    const secLabel = (ad.secondary && ad.secondary !== "none" && ad.secondary !== "null") ? ad.secondary.toUpperCase() : "NONE";
-                    document.getElementById('active-posture-label').textContent = `${ad.primary.toUpperCase()} + ${secLabel}`;
+                const data = await response.json(); latestAssignments = data.tactical_assignments || [];
+                if (data.active_doctrine) {
+                    const ad = data.active_doctrine; document.getElementById('active-posture-label').textContent = `${ad.primary.toUpperCase()}`;
                     document.getElementById('blend-ratio-pill').textContent = `BLEND: ${ad.blend_ratio}`;
-                    
-                    const lights = document.getElementById('flag-lights');
-                    lights.innerHTML = '';
+                    const lights = document.getElementById('flag-lights'); lights.innerHTML = '';
                     Object.entries(ad.flags).forEach(([k, v]) => {
-                        const item = document.createElement('div');
-                        item.style.display = 'flex'; item.style.alignItems = 'center';
-                        item.innerHTML = `<span class="status-light ${v ? 'light-on' : 'light-off'}"></span> ${k.replace('enable_', '').toUpperCase()}`;
-                        lights.appendChild(item);
+                        const item = document.createElement('div'); item.innerHTML = `<span class="status-light ${v ? 'light-on' : 'light-off'}"></span> ${k.replace('enable_', '').toUpperCase()}`; lights.appendChild(item);
                     });
-
-                    // Normalize raw RL score to a 0-100% confidence meter
-                    const rlRaw = data.rl_prediction;
-                    const neuralValEl = document.getElementById('neural-value');
-                    
-                    if (rlRaw !== undefined && rlRaw !== null && activeThreats.length > 0) {
-                        const rlNorm = Math.min(100, Math.max(0, (rlRaw / 800) * 100));
-                        neuralValEl.textContent = rlNorm.toFixed(1) + "%";
-                        neuralValEl.style.color = rlNorm > 80 ? "#a6e3a1" : (rlNorm < 40 ? "#f38ba8" : "#89b4fa");
-                    } else {
-                        neuralValEl.textContent = "SCANNING";
-                        neuralValEl.style.color = "#6c7086";
-                    }
-                    
-                    const policyEl = document.getElementById('policy-status');
-                    policyEl.textContent = activeThreats.length > 0 ? (document.getElementById('enable-rl').checked ? "TUNING" : "OFF") : "STANDBY";
-                    policyEl.style.color = activeThreats.length > 0 ? "#cba6f7" : "#6c7086";
+                    if (data.rl_prediction !== undefined && activeThreats.length > 0 && document.getElementById('use-rl').checked) {
+                        const rlNorm = Math.min(100, Math.max(0, (data.rl_prediction / 800) * 100));
+                        document.getElementById('neural-value').textContent = rlNorm.toFixed(1) + "%";
+                        document.getElementById('neural-value').style.color = rlNorm > 80 ? "#a6e3a1" : "#89b4fa";
+                    } else { document.getElementById('neural-value').textContent = "HEURISTIC"; }
                 }
-
-                aiOutput.innerHTML = `<div style="color: #a6adc8;">${JSON.stringify(data.tactical_assignments, null, 2)}</div>`;
-                latestAssignments = data.tactical_assignments || [];
-                
                 if(data.strategic_consequence_score !== undefined) {
-                    scoreChart.data.labels.push(`Eval ${evaluationCounter++}`);
-                    scoreChart.data.datasets[0].data.push(data.strategic_consequence_score);
-                    scoreChart.update();
+                    scoreChart.data.labels.push(""); scoreChart.data.datasets[0].data.push(data.strategic_consequence_score);
+                    if(scoreChart.data.labels.length > 20) { scoreChart.data.labels.shift(); scoreChart.data.datasets[0].data.shift(); }
+                    scoreChart.update('none');
                 }
-            } catch(e) { aiOutput.textContent = "API Error: " + e; }
+            } catch(e) {} finally { if (!isAuto) btn.style.opacity = "1.0"; }
         }
-
         function draw() {
-            ctx.fillStyle = "#11111b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            bases.forEach(b => { ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, 7); ctx.fill(); ctx.fillStyle="#cdd6f4"; ctx.fillText(b.name, b.x-20, b.y-15); });
-            activeThreats.forEach((t, i) => { 
-                t.x -= 2; t.y += 0.5; // Simple simulation move
-                ctx.fillStyle = "#f38ba8"; ctx.beginPath(); ctx.arc(t.x, t.y, 5, 0, 7); ctx.fill(); 
-                ctx.fillText(t.id, t.x+8, t.y+4);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            bases.forEach(b => { 
+                const pxX = b.x_km * SCALE; const pxY = b.y_km * SCALE; ctx.fillStyle = b.color; ctx.beginPath();
+                if(b.type.includes("city") || b.type.includes("capital")) { ctx.rect(pxX-4, pxY-4, 8, 8); } else { ctx.arc(pxX, pxY, 5, 0, 7); }
+                ctx.fill(); ctx.fillStyle="#cdd6f4"; ctx.font = "8px Segoe UI"; ctx.fillText(b.name, pxX-15, pxY-8); 
             });
-            
-            // Draw Explosions
-            explosions.forEach((exp, i) => {
-                ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`;
-                ctx.beginPath(); ctx.arc(exp.x, exp.y, (30-exp.life)*2, 0, 7); ctx.fill();
-                exp.life--;
-                if(exp.life <= 0) explosions.splice(i, 1);
+            activeThreats.forEach(t => { 
+                t.x_km -= 4.0; t.y_km += 0.5; const pxX = t.x_km * SCALE; const pxY = t.y_km * SCALE;
+                ctx.fillStyle = "#f38ba8"; ctx.beginPath(); ctx.arc(pxX, pxY, 3, 0, 7); ctx.fill(); 
+                ctx.font = "8px monospace"; ctx.fillText(t.id, pxX+5, pxY+3);
             });
-            
-            // Draw Engagement Lines from Global assignments
             if (Array.isArray(latestAssignments)) {
                 latestAssignments.forEach(ass => {
-                    const base = bases.find(b => b.name === ass.base_name);
-                    const threat = activeThreats.find(t => t.id === ass.threat_id);
-                    if (base && threat) {
-                        ctx.strokeStyle = "#a6e3a1"; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
-                        ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(threat.x, threat.y); ctx.stroke();
-                        ctx.setLineDash([]);
-                    }
+                    const b = bases.find(base => base.name === ass.base_name); const t = activeThreats.find(th => th.id === ass.threat_id);
+                    if (b && t) { ctx.strokeStyle = "#a6e3a1"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(b.x_km * SCALE, b.y_km * SCALE); ctx.lineTo(t.x_km * SCALE, t.y_km * SCALE); ctx.stroke(); ctx.setLineDash([]); }
                 });
             }
-            
-            // Check for Kills based on Global assignments
-            activeThreats.forEach((t, i) => {
-                const isTargeted = latestAssignments.some(ass => ass.threat_id === t.id);
-                if (isTargeted && t.x < 500) {
-                    if (Math.random() > 0.98) { 
-                        explosions.push({x: t.x, y: t.y, life: 30});
-                        activeThreats.splice(i, 1);
-                        latestAssignments = latestAssignments.filter(ass => ass.threat_id !== t.id);
-                    }
+            explosions.forEach((exp, i) => { ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`; ctx.beginPath(); ctx.arc(exp.x_km * SCALE, exp.y_km * SCALE, (30-exp.life)*2, 0, 7); ctx.fill(); exp.life--; if(exp.life <= 0) explosions.splice(i, 1); });
+            const targetedForKill = [];
+            activeThreats.forEach(t => {
+                if (latestAssignments.some(ass => ass.threat_id === t.id) && t.x_km < 1100 && Math.random() > 0.94) {
+                    explosions.push({x_km: t.x_km, y_km: t.y_km, life: 30}); targetedForKill.push(t.id);
                 }
             });
-            activeThreats = activeThreats.filter(t => t.x > 0);
+            activeThreats = activeThreats.filter(t => !targetedForKill.includes(t.id) && t.x_km > 0);
             requestAnimationFrame(draw);
         }
-        
-        document.getElementById('btn-threat').onclick = () => activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x: 950, y: 100+Math.random()*300, speed: 2000, type: "bomber", threat_value: 80});
-        document.getElementById('btn-blind').onclick = () => {
-            for(let i=0; i<3; i++) {
-                activeThreats.push({id: "GHOST-"+Math.floor(Math.random()*900), x: 950, y: 50+Math.random()*400, speed: 4500, type: "ghost", threat_value: 150});
-            }
-        };
-        document.getElementById('btn-ai').onclick = requestAIOrders;
-        document.getElementById('btn-pitch').onclick = () => document.getElementById('pitch-modal').style.display='flex';
-        document.getElementById('blend-ratio').oninput = (e) => document.getElementById('blend-val').textContent = e.target.value + "% Primary";
-        
-        // Initialize Score Chart
+        document.getElementById('btn-threat').onclick = () => activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x_km: 1600, y_km: 100+Math.random()*600, speed_kmh: 2000, estimated_type: "bomber", threat_value: 80});
+        document.getElementById('btn-blind').onclick = () => { for(let i=0; i<10; i++) activeThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: 1600+(i*40), y_km: 50+Math.random()*700, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150}); };
+        document.getElementById('btn-ai').onclick = () => requestAIOrders(false);
+        document.getElementById('blend-ratio').oninput = (e) => document.getElementById('blend-val').textContent = e.target.value + "% P";
         const ctxChart = document.getElementById('scoreChart').getContext('2d');
-        scoreChart = new Chart(ctxChart, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Strategic Survival %', data: [], borderColor: '#fab387', tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1000, grid: { color: '#313244' } }, x: { display: false } }, plugins: { legend: { display: false } } }
-        });
-
-        setInterval(() => { if(document.getElementById('auto-poll').checked) requestAIOrders(); }, 2000);
+        scoreChart = new Chart(ctxChart, { type: 'line', data: { labels: [], datasets: [{ label: 'S', data: [], borderColor: '#fab387', tension: 0.3, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1000, grid: { display: false } }, x: { display: false } }, plugins: { legend: { display: false } } } });
+        setInterval(() => { if(document.getElementById('auto-poll').checked) requestAIOrders(true); }, 200);
         draw();
     </script>
 </body>
