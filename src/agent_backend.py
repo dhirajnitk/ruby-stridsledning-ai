@@ -24,7 +24,9 @@ from engine import evaluate_threats_advanced
 
 # 2. CONSTANTS & CONFIG
 CSV_FILE_PATH = "data/input/Boreal_passage_coordinates.csv"
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "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")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+if not OPENROUTER_API_KEY:
+    print("[SYSTEM] OPENROUTER_API_KEY not set — LLM reporting disabled, using local heuristic.")
 
 # 3. APP INITIALIZATION
 app = FastAPI(title="Boreal Chessmaster Tactical API")
@@ -75,13 +77,13 @@ class IncomingThreat(BaseModel):
     threat_value: Optional[float] = 50.0
 
 class TacticalRequest(BaseModel):
-    state: dict
     threats: List[IncomingThreat]
     weather: str = "clear"
     doctrine_primary: str = "balanced"
-    doctrine_secondary: Optional[str] = None
-    doctrine_blend: float = 0.7
+    doctrine_secondary: str = "none"
+    doctrine_blend: float = 0.5
     use_rl: bool = True
+    use_ppo: bool = False
 
 # 6. HELPERS
 def load_battlefield_state(filepath) -> GameState:
@@ -90,7 +92,7 @@ def load_battlefield_state(filepath) -> GameState:
         with open(filepath, mode='r') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if row['side'] == 'north' and row['subtype'] in ['air_base', 'capital']:
+                if row['subtype'] in ['air_base', 'capital', 'major_city']:
                     name = row['feature_name']
                     # Inject inventory based on base type/importance
                     inv = {"sam": 10, "fighter": 4, "drone": 15}
@@ -99,8 +101,8 @@ def load_battlefield_state(filepath) -> GameState:
                     bases.append(Base(name, float(row['x_km']), float(row['y_km']), inv))
     except Exception as e: print(f"Error loading state: {e}")
     
-    # Fallback if CSV fails
-    if (not bases) or True: # Force refresh for total strategic sync
+    # Fall back to a canonical base layout if the CSV yields nothing.
+    if not bases:
         bases = [
             Base("Northern Vanguard Base", 198.3, 335.0, {"sam": 10, "fighter": 4, "drone": 15}),
             Base("Highridge Command", 838.3, 75.0, {"sam": 10, "fighter": 4, "drone": 15}),
@@ -112,12 +114,49 @@ def load_battlefield_state(filepath) -> GameState:
     return GameState(bases=bases, blind_spots=[(656.7, 493.3)])
 
 async def format_report_with_llm(raw_decision_data):
-    """Local heuristic analyst replacing cloud LLM to ensure 100% offline reliability."""
+    """Local heuristic analyst replacing"""
+    breach_risk = max(0, 100 - (raw_decision_data.get("rl_prediction", 0) / 8))
+    
+    prompt = f"""
+    You are the Boreal Strategic AI (CORTEX-1), a military intelligence advisor to the Commander (Stridsledare).
+    STATUS: CHRONOSTASIS ACTIVE (Tactical Time Freeze).
+    
+    TACTICAL INTELLIGENCE:
+    - Target: BOREAL PASSAGE
+    - Active Vectors: {t_count}
+    - Strategic Health: {score:.1f}
+    - Neural Breach Risk: {breach_risk:.1f}%
+    - Posture: {doctrine.upper()}
+    - Proposed Intercepts: {json.dumps(raw_decision_data.get("tactical_assignments", []), indent=2)}
+    
+    YOUR MISSION:
+    1. Write a 2-sentence SITREP using military brevity. Identify the highest-threat vector (e.g. 'FAST-MOVER approaching VALBREK').
+    2. Provide a 1-sentence ADVISORY. Use NATO codes like 'WEAPONS FREE' or 'HOLD FIRE'.
+    Keep it cold, professional, and precise. Use CAPITAL LETTERS for base names and threat types.
+    """
     t_count = len(raw_decision_data.get("tactical_assignments", []))
     score = raw_decision_data.get("strategic_consequence_score", 0)
     doctrine = raw_decision_data.get("active_doctrine", {}).get("primary", "balanced")
     is_neural = raw_decision_data.get("rl_prediction") is not None
-    
+
+    if OPENROUTER_API_KEY:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
+                    json={
+                        "model": "google/gemini-2.0-flash-001",
+                        "messages": [{"role": "user", "content": prompt}]
+                    },
+                    timeout=8.0
+                )
+                if response.status_code == 200:
+                    return response.json()['choices'][0]['message']['content']
+        except Exception as e:
+            print(f"[WARNING] OpenRouter failure: {e}")
+
+    # Fallback to Local Heuristic Advisor
     report = f"--- BOREAL STRATEGIC SITREP ---\n"
     report += f"POSTURE: {doctrine.upper()} mode engaged.\n"
     report += f"THREATS: {t_count} vectors acquired and triaged.\n"
@@ -127,38 +166,45 @@ async def format_report_with_llm(raw_decision_data):
     
     mode_text = "Neural assessment" if is_neural else "Heuristic stability"
     report += f"CONFIDENCE: {mode_text} at {min(100, score/10):.1f}%.\n"
-    report += "ADVISORY: All Northern assets (Nordvik, Valbrek, Arktholm) remain secure."
+    report += "ADVISORY: Chronostasis triggered. Manual firing authorization recommended for high-speed leakers."
         
     return report
 
 # 7. ROUTES
-@app.websocket("/ws/logs")
-async def websocket_logs(websocket: WebSocket):
-    await ws_manager.connect(websocket)
-    try:
-        while True: await websocket.receive_text()
-    except WebSocketDisconnect: ws_manager.disconnect(websocket)
-
 @app.on_event("startup")
 async def startup_event():
-    async def log_reader():
+    async def log_broadcaster():
         while True:
             try:
-                msg = await asyncio.to_thread(GLOBAL_LOG_QUEUE.get, True, 0.1)
-                await ws_manager.broadcast(msg)
-            except queue.Empty: pass
-            except Exception as e: print(f"Log error: {e}")
-    asyncio.create_task(log_reader())
+                # Use a non-blocking poll for the queue
+                while not GLOBAL_LOG_QUEUE.empty():
+                    msg = GLOBAL_LOG_QUEUE.get_nowait()
+                    await ws_manager.broadcast(msg)
+                await asyncio.sleep(0.1)
+            except Exception:
+                await asyncio.sleep(0.5)
+    asyncio.create_task(log_broadcaster())
     
     async def idle_pulse():
         global LAST_USE_RL, RECENTLY_ACTIVE
         while True:
-            await asyncio.sleep(5)
+            await asyncio.sleep(8)
             if GLOBAL_LOG_QUEUE.empty() and not RECENTLY_ACTIVE:
                 mode = "NEURAL" if LAST_USE_RL else "HEURISTIC"
                 msg = f"[STRAT] Monitoring Boreal sector... {mode} BRAIN: STANDBY"
                 GLOBAL_LOG_QUEUE.put(msg)
+            RECENTLY_ACTIVE = False # Reset flag
     asyncio.create_task(idle_pulse())
+
+@app.websocket("/ws/logs")
+async def websocket_logs(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await asyncio.sleep(15)
+            await websocket.send_text("[HEARTBEAT]")
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
 
 @app.post("/evaluate_advanced")
 async def evaluate_threats_endpoint(request: TacticalRequest):
@@ -197,21 +243,24 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
         evaluate_threats_advanced, 
         game_state, 
         active_threats, 
-        200, 
+        50, 
         GLOBAL_LOG_QUEUE, 
         request.weather, 
         2.0, 
         request.doctrine_primary, 
         doc_sec, 
         request.doctrine_blend,
-        request.use_rl
+        request.use_rl,
+        request.use_ppo
     )
 
     try:
+        rl_display = raw_decision.get('rl_prediction') or 0.0
         formatted_report = await format_report_with_llm(raw_decision)
     except Exception as e:
         print(f"[WARNING] LLM Fail: {e}")
-        formatted_report = f"TACTICAL ALERT: {len(active_threats)} threats. Posture: {request.doctrine_primary.upper()}. Neural Conf: {raw_decision.get('rl_prediction', 0):.1f}%."
+        rl_display = raw_decision.get('rl_prediction') or 0.0
+        formatted_report = f"TACTICAL ALERT: {len(active_threats)} threats. Posture: {request.doctrine_primary.upper()}. Neural Conf: {rl_display:.1f}%."
 
     raw_decision["human_sitrep"] = formatted_report
     EVALUATION_CACHE[payload_hash] = raw_decision

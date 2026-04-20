@@ -1,14 +1,14 @@
 """Quick integration test for multi-doctrine engine."""
-import sys
-sys.path.insert(0, 'ruby-stridsledning-ai/src')
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from engine import evaluate_threats_advanced
 from models import Threat, Base, GameState
 
 # Mini scenario: 3 threats heading to Capital
 state = GameState(bases=[
-    Base('Capital Arktholm', 418.3, 95.0, {'SAM': 4}),
-    Base('Northern Vanguard Base', 198.3, 335.0, {'Fighter': 4, 'Drone': 10, 'SAM': 0}),
-    Base('Highridge Command', 838.3, 75.0, {'Fighter': 4, 'Drone': 10, 'SAM': 0}),
+    Base('Capital Arktholm', 418.3, 95.0, {'sam': 4}),
+    Base('Northern Vanguard Base', 198.3, 335.0, {'fighter': 4, 'drone': 10, 'sam': 0}),
+    Base('Highridge Command', 838.3, 75.0, {'fighter': 4, 'drone': 10, 'sam': 0}),
 ], blind_spots=[(656.7, 493.3)])
 
 threats = [

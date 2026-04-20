@@ -1,1 +1,58 @@
-{"numeric_cols": ["num_threats", "avg_dist", "min_dist", "total_val", "fighters", "sams", "drones", "cap_sams", "weather_bin", "blend_ratio"], "doctrine_names": ["primary_doctrine_aggressive", "primary_doctrine_balanced", "primary_doctrine_economy", "primary_doctrine_fortress"], "scaler_mean": [10.35, 947.883467153991, 848.2292555280253, 491.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8666666666666667], "scaler_scale": [8.044097214728325, 414.72281102217113, 470.86629935298197, 333.0780689267908, 1.0, 1.0, 1.0, 1.0, 1.0, 0.19720265943665388], "doctrine_categories": ["aggressive", "balanced", "economy", "fortress"]}
+{
+  "numeric_cols": [
+    "num_threats",
+    "avg_dist",
+    "min_dist",
+    "total_val",
+    "fighters",
+    "sams",
+    "drones",
+    "cap_sams",
+    "weather_bin",
+    "blend",
+    "west",
+    "east",
+    "stress",
+    "dist_norm",
+    "val_norm"
+  ],
+  "doctrine_categories": [
+    "balanced",
+    "fortress",
+    "aggressive"
+  ],
+  "scaler_mean": [
+    20.41790008544922,
+    1050.2889404296875,
+    531.1885375976562,
+    3619.87353515625,
+    9.996199607849121,
+    39.796600341796875,
+    30.296300888061523,
+    15.069700241088867,
+    0.4862000048160553,
+    0.505759060382843,
+    10.167200088500977,
+    5.121399879455566,
+    6.73524284362793,
+    1.0502889156341553,
+    3.619873523712158
+  ],
+  "scaler_scale": [
+    11.62606430053711,
+    548.1450805664062,
+    439.50323486328125,
+    2677.482421875,
+    6.053977966308594,
+    23.412612915039062,
+    17.583646774291992,
+    8.957749366760254,
+    0.49983450770378113,
+    0.2893192172050476,
+    9.069226264953613,
+    6.230870246887207,
+    8.59542179107666,
+    0.548145055770874,
+    2.6774823665618896
+  ]
+}

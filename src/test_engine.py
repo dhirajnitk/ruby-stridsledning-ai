@@ -42,7 +42,7 @@ def test_boreal_scenario():
     data = json.loads(scenario_json)
     
     # Map the JSON dictionary into our Data Classes
-    bases = [Base(name=b["id"], x=b["x"], y=b["y"], inventory={"Fighter": b["inventory"].get("fighters", 0), "SAM": b["inventory"].get("sams", 0), "Drone": 10}) for b in data["bases"]]
+    bases = [Base(name=b["id"], x=b["x"], y=b["y"], inventory={"fighter": b["inventory"].get("fighters", 0), "sam": b["inventory"].get("sams", 0), "drone": 10}) for b in data["bases"]]
     game_state = GameState(bases=bases, blind_spots=[(656.7, 493.3)])
     
     threats = []
