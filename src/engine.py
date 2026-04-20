@@ -82,13 +82,20 @@ try:
         DOCTRINE_MODEL.eval()
         print(f"[SYSTEM] Successfully hot-loaded RL Doctrine Manager (input_dim={input_dim}) from {DOC_MODEL_PATH}")
 
-    # 3. Load PPO Direct Action Agent
+    # 3. Load PPO Direct Action Agent (Prioritize 98k Veteran)
     from ppo_agent import ActorCriticDirect, get_ppo_assignments
     PPO_MODEL = ActorCriticDirect()
-    if os.path.exists("models/ppo_direct_network.pth"):
-        PPO_MODEL.load_state_dict(torch.load("models/ppo_direct_network.pth", map_location='cpu'))
+    PPO_VETERAN_PATH = "models/ppo_checkpoint_step_98000.pth"
+    PPO_BASELINE_PATH = "models/ppo_direct_network.pth"
+    
+    if os.path.exists(PPO_VETERAN_PATH):
+        PPO_MODEL.load_state_dict(torch.load(PPO_VETERAN_PATH, map_location='cpu'))
         PPO_MODEL.eval()
-        print("[SYSTEM] Successfully hot-loaded PPO Direct Action Agent from models/ppo_direct_network.pth")
+        print(f"[SYSTEM] Successfully hot-loaded VETERAN PPO Agent (98k iterations) from {PPO_VETERAN_PATH}")
+    elif os.path.exists(PPO_BASELINE_PATH):
+        PPO_MODEL.load_state_dict(torch.load(PPO_BASELINE_PATH, map_location='cpu'))
+        PPO_MODEL.eval()
+        print(f"[SYSTEM] Successfully hot-loaded PPO Baseline Agent from {PPO_BASELINE_PATH}")
     
 except ImportError:
     print("[SYSTEM] PyTorch not installed. Falling back to classical MCTS engine.")

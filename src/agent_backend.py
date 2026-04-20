@@ -76,7 +76,17 @@ class IncomingThreat(BaseModel):
     estimated_type: Optional[str] = "bomber"
     threat_value: Optional[float] = 50.0
 
+class IncomingBase(BaseModel):
+    name: str
+    x: float
+    y: float
+    inventory: dict
+
+class TacticalState(BaseModel):
+    bases: List[IncomingBase]
+
 class TacticalRequest(BaseModel):
+    state: Optional[TacticalState] = None
     threats: List[IncomingThreat]
     weather: str = "clear"
     doctrine_primary: str = "balanced"
@@ -221,7 +231,12 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
     doc_sec = request.doctrine_secondary
     if doc_sec == "none": doc_sec = None
     
-    game_state = load_battlefield_state(CSV_FILE_PATH)
+    if request.state and request.state.bases:
+        bases = [Base(b.name, b.x, b.y, b.inventory) for b in request.state.bases]
+        game_state = GameState(bases=bases, blind_spots=[(656.7, 493.3)])
+    else:
+        game_state = load_battlefield_state(CSV_FILE_PATH)
+        
     active_threats = [Threat(t.id, t.x, t.y, t.speed_kmh, t.heading, t.estimated_type, t.threat_value) for t in request.threats]
     
     if not active_threats: 
