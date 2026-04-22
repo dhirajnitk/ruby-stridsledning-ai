@@ -62,13 +62,20 @@ button.green:hover{background:rgba(0,255,136,0.1)}
       <option value="miss">MISS (IMPACT)</option>
     </select>
     <select id="sel-mode"><option value="auto">🤖 AUTO</option><option value="hitl">👤 HITL</option><option value="manual">🎯 MANUAL</option></select>
+    <select id="sel-wave-rate" title="Wave defense success rate">
+      <option value="1.0">WAVE: 100% DEF</option>
+      <option value="0.8">WAVE: 80% DEF</option>
+      <option value="0.6">WAVE: 60% DEF</option>
+      <option value="0.4">WAVE: DEGRADED</option>
+    </select>
     <button class="green" id="btn-fire">▶ FIRE DEMO</button>
     <button class="red" id="btn-wave">⚡ SATURATION WAVE</button>
     <button id="btn-reset">↺ RESET</button>
     <button onclick="window.history.back()">◄ BACK</button>
   </div>
   <div id="stats-hud">
-    <div class="sh">FIRED</div><div class="sv" id="s-fired" style="color:#00f2ff">0</div>
+    <div class="sh">THREATS</div><div class="sv" id="s-threats" style="color:#ffcc00">0</div>
+    <div class="sh">SAMs</div><div class="sv" id="s-fired" style="color:#00f2ff">0</div>
     <div class="sh">KILLS</div><div class="sv" id="s-kills" style="color:#00ff88">0</div>
     <div class="sh">IMPACTS</div><div class="sv" id="s-impacts" style="color:#ff3e3e">0</div>
   </div>
@@ -78,6 +85,11 @@ button.green:hover{background:rgba(0,255,136,0.1)}
 <div id="freeze-overlay">
   <div id="freeze-banner">⏸ TACTICAL FREEZE</div>
   <div id="freeze-sub">AWAITING COMMANDER DECISION</div>
+  <div id="freeze-threat-info" style="font-size:.55rem;color:#ff3e3e;letter-spacing:2px;margin:6px 0;min-height:1.2em"></div>
+  <div id="manual-base-select" style="display:none;margin:8px 0">
+    <div style="font-size:.45rem;color:#888;letter-spacing:1px;margin-bottom:4px">OVERRIDE LAUNCHER BASE</div>
+    <select id="manual-base-override" style="background:rgba(255,204,0,.1);border:1px solid rgba(255,204,0,.5);color:#ffcc00;font-family:'Courier New',monospace;font-size:.6rem;padding:5px 10px;min-width:200px"></select>
+  </div>
   <div id="freeze-btns">
     <button id="btn-approve-k">✔ APPROVE INTERCEPT</button>
     <button id="btn-reject-k">✖ REJECT — HOLD FIRE</button>
@@ -91,40 +103,37 @@ button.green:hover{background:rgba(0,255,136,0.1)}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 // ── THEATER DATA ──────────────────────────────────────────────
+// Universal coordinate-to-scene scale: SVG scale bar = 120 units / 200 km → 1 unit = 1.666 km = 1666 m
+const SC = 1666;
 const THEATERS = {
   sweden:[
-    {id:'STO',name:'Stockholm (Capital)',x:0,y:0,hva:true},
-    {id:'F21',name:'Luleå Air Base',x:185,y:691},
-    {id:'F16',name:'Uppsala Air Base',x:-27,y:63},
-    {id:'GOT',name:'Gotland Visby Hub',x:16,y:-186},
-    {id:'F17',name:'Ronneby Air Base',x:-172,y:-340},
-    {id:'GBG',name:'Gothenburg Port',x:-364,y:-180,hva:true},
+    {id:'F21', name:'Luleå Air Base (F 21)', x:185, y:691},
+    {id:'F16', name:'Uppsala Air Base (F 16)', x:-27, y:63},
+    {id:'VID', name:'Vidsel Air Base', x:95, y:728},
+    {id:'STO', name:'Stockholm (Capital)', x:0, y:0, hva:true},
+    {id:'MUS', name:'Muskö Naval Base', x:4, y:-46},
+    {id:'F7',  name:'Såtenäs Air Base (F 7)', x:-313, y:-99},
+    {id:'F17', name:'Ronneby Air Base (F 17)', x:-172, y:-340},
+    {id:'MAL', name:'Malmen Air Base', x:-150, y:-104},
+    {id:'KRL', name:'Karlskrona Naval Base', x:-153, y:-352},
+    {id:'GOT', name:'Gotland (Visby Base)', x:16, y:-186},
+    {id:'GBG', name:'Gothenburg Port', x:-364, y:-180, hva:true},
   ],
   boreal:[
-    // NORTH SIDE
-    {id:'ARK',name:'Arktholm Capital',  x:418, y:95,   hva:true},
-    {id:'NVB',name:'Northern Vanguard', x:198, y:335},
-    {id:'HRC',name:'Highridge Command', x:838, y:75},
-    {id:'BWP',name:'Boreal Watch Post', x:1158,y:385},
-    {id:'VAL',name:'Valbrek',           x:1423,y:213,  hva:true},
-    {id:'NRD',name:'Nordvik',           x:140, y:323,  hva:true},
-    // SOUTH SIDE
-    {id:'MER',name:'Meridia Capital',   x:1225,y:1208, hva:true},
-    {id:'FWS',name:'Firewatch Station', x:1398,y:1071},
-    {id:'SRB',name:'Southern Redoubt',  x:321, y:1238},
-    {id:'SPB',name:'Spear Point Base',  x:918, y:835},
-    {id:'CAL',name:'Callhaven',         x:96,  y:1150, hva:true},
-    {id:'SOL',name:'Solano',            x:576, y:1236, hva:true},
-    // TERRAIN NODES
-    {id:'NML',name:'North Mainland',    x:820, y:295,  zone:true},
-    {id:'SML',name:'South Mainland',    x:823, y:1075, zone:true},
-    {id:'NIW',name:'N-Island West',     x:656, y:493,  zone:true},
-    {id:'NIE',name:'N-Island East',     x:1156,y:388,  zone:true},
-    {id:'NRI',name:'North Remote Is.',  x:303, y:626,  zone:true},
-    {id:'SFI',name:'South Forward Is.', x:1408,y:753,  zone:true},
-    {id:'SSI',name:'South Small Is.',   x:423, y:920,  zone:true},
-    {id:'SCP',name:'South Peninsula',   x:898, y:828,  zone:true},
-    {id:'BST',name:'Boreal Strait',     x:833, y:650,  zone:true},
+    // NORTH (SVG north-group: translate(0,-40) applied to raw SVG coords)
+    {id:'NVB', name:'NORTHERN VANGUARD',   x:119,  y:197},
+    {id:'HRC', name:'HIGHRIDGE COMMAND',   x:503,  y:41},
+    {id:'BWP', name:'BOREAL WATCH POST',   x:695,  y:227},
+    {id:'ARK', name:'ARKTHOLM CAPITAL',    x:251,  y:57,   hva:true},
+    {id:'VAL', name:'VALBREK',             x:854,  y:128,  hva:true},
+    {id:'NRD', name:'NORDVIK',             x:84,   y:194,  hva:true},
+    // SOUTH (SVG south-group: translate(0,+40) applied to raw SVG coords)
+    {id:'FWS', name:'FIREWATCH STATION',   x:839,  y:639},
+    {id:'SRB', name:'SOUTHERN REDOUBT',    x:193,  y:739},
+    {id:'SPB', name:'SPEAR POINT BASE',    x:551,  y:497},
+    {id:'MER', name:'MERIDIA CAPITAL',     x:735,  y:725,  hva:true},
+    {id:'CAL', name:'CALLHAVEN',           x:58,   y:690,  hva:true},
+    {id:'SOL', name:'SOLANO',              x:346,  y:742,  hva:true},
   ]
 };
 const WEAPONS={
@@ -175,16 +184,23 @@ gridH.position.y=0;
 scene.add(gridH);
 
 // ── BASE MARKERS ──────────────────────────────────────────────
+// Theater center coordinates (SVG units) for camera positioning
+const THEATER_CENTERS = {
+  sweden: { x: 0,   z: 0,   camX: 0,      camY: 600000, camZ: 1200000, tgtX: 0,      tgtZ: 0      },
+  boreal: { x: 456, z: 391, camX: 759000, camY: 700000, camZ: 1852000, tgtX: 759000, tgtZ: 652000 }
+};
+
 let baseMarkers=[];
 function buildBases(theater){
-  baseMarkers.forEach(m=>scene.remove(m));baseMarkers=[];
+  baseMarkers.forEach(m=>{ scene.remove(m); m.geometry.dispose(); m.material.dispose(); }); baseMarkers=[];
+  sceneLabels.forEach(l=>l.div.remove()); sceneLabels.length=0;
+  labelOverlay.innerHTML = ''; // Full purge
   THEATERS[theater].forEach(b=>{
-    const sc=1000;
     const geo=new THREE.CylinderGeometry(0,12000,28000,6);
     const col=b.hva?0x00ff88:0x00f2ff;
     const mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col,wireframe:true}));
-    mesh.position.set(b.x*sc,0,-b.y*sc);
-    scene.add(mesh);baseMarkers.push(mesh);
+    mesh.position.set(b.x*SC,0,b.y*SC);
+    scene.add(mesh); baseMarkers.push(mesh);
 
     // Glow ring
     const ring=new THREE.Mesh(
@@ -192,12 +208,18 @@ function buildBases(theater){
       new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.4})
     );
     ring.rotation.x=Math.PI/2;
-    ring.position.set(b.x*sc,100,-b.y*sc);
-    scene.add(ring);baseMarkers.push(ring);
+    ring.position.set(b.x*SC,100,b.y*SC);
+    scene.add(ring); baseMarkers.push(ring);
 
     // Label
-    addLabel(b.name,b.x*sc,-b.y*sc,col);
+    addLabel(b.name,b.x*SC,b.y*SC,col);
   });
+
+  // Reposition camera & orbit to theater center
+  const tc = THEATER_CENTERS[theater] || THEATER_CENTERS.sweden;
+  camera.position.set(tc.camX, tc.camY, tc.camZ);
+  orbit.target.set(tc.tgtX, 0, tc.tgtZ);
+  orbit.update();
 }
 
 // ── DOM LABELS ────────────────────────────────────────────────
@@ -232,8 +254,10 @@ function log(msg,cls='i'){
 }
 
 // ── STATS ─────────────────────────────────────────────────────
-let sFired=0,sKills=0,sImpacts=0;
+let sFired=0,sKills=0,sImpacts=0,sThreats=0;
+let waveActive=0; // tracks how many wave missiles are still in flight
 function updateStats(){
+  document.getElementById('s-threats').textContent=sThreats;
   document.getElementById('s-fired').textContent=sFired;
   document.getElementById('s-kills').textContent=sKills;
   document.getElementById('s-impacts').textContent=sImpacts;
@@ -255,16 +279,23 @@ function explode(pos,col,count=80){
 }
 
 function tickParticles(){
-  particles.forEach((p,i)=>{
+  for(let i=particles.length-1; i>=0; i--){
+    const p=particles[i];
     p.life-=0.025;
-    if(p.life<=0){scene.remove(p.pts);particles.splice(i,1);return;}
+    if(p.life<=0){
+      scene.remove(p.pts);
+      p.pts.geometry.dispose();
+      p.pts.material.dispose();
+      particles.splice(i,1);
+      continue;
+    }
     const pos=p.pts.geometry.attributes.position.array;
-    for(let j=0;j<pos.length;j+=3){
-      pos[j]+=p.vels[j/3*3];pos[j+1]+=p.vels[j/3*3+1];pos[j+2]+=p.vels[j/3*3+2];
+    for(let j=0; j<pos.length; j+=3){
+      pos[j]+=p.vels[j/3*3]; pos[j+1]+=p.vels[j/3*3+1]; pos[j+2]+=p.vels[j/3*3+2];
     }
     p.pts.geometry.attributes.position.needsUpdate=true;
     p.pts.material.opacity=p.life;
-  });
+  }
 }
 
 // ── TRAIL SYSTEM ──────────────────────────────────────────────
@@ -296,6 +327,30 @@ function freezeSim(k) {
   SIM_PAUSED = true;
   pendingKinetic = k;
   freezeOverlay.classList.add('active');
+  // BUG-K06 FIX: Show threat type + target in freeze overlay
+  const infoEl = document.getElementById('freeze-threat-info');
+  if (infoEl) infoEl.textContent = k._threatInfo || '';
+  const baseSelDiv = document.getElementById('manual-base-select');
+  const baseSelEl  = document.getElementById('manual-base-override');
+  if (CMD_MODE === 'manual' && baseSelDiv && baseSelEl) {
+    // BUG-K04 FIX: MANUAL mode — show base selector, distinct banner
+    document.getElementById('freeze-banner').textContent = '🎯 MANUAL ENGAGEMENT';
+    document.getElementById('freeze-sub').textContent    = 'SELECT LAUNCHER — OVERRIDE ACTIVE';
+    baseSelDiv.style.display = 'block';
+    baseSelEl.innerHTML = '';
+    const theater = document.getElementById('sel-theater').value;
+    THEATERS[theater].filter(b=>!b.hva).forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.name;
+      if (k._defBaseIds && b.id === k._defBaseIds[0]) opt.selected = true;
+      baseSelEl.appendChild(opt);
+    });
+  } else {
+    document.getElementById('freeze-banner').textContent = '⏸ TACTICAL FREEZE';
+    document.getElementById('freeze-sub').textContent    = 'AWAITING COMMANDER DECISION';
+    if (baseSelDiv) baseSelDiv.style.display = 'none';
+  }
   log('TACTICAL FREEZE — AWAITING COMMANDER', 'w');
 }
 function resumeSim() {
@@ -306,7 +361,16 @@ function resumeSim() {
 }
 
 document.getElementById('btn-approve-k').addEventListener('click', () => {
-  if (pendingKinetic) { pendingKinetic._approved = true; }
+  if (pendingKinetic) {
+    pendingKinetic._approved = true;
+    // BUG-K04 FIX: MANUAL mode — override defBases[0] with operator-selected base
+    if (CMD_MODE === 'manual') {
+      const selId = document.getElementById('manual-base-override').value;
+      const theater = document.getElementById('sel-theater').value;
+      const overrideBase = THEATERS[theater].find(b => b.id === selId);
+      if (overrideBase) pendingKinetic._manualBase = overrideBase;
+    }
+  }
   resumeSim();
 });
 document.getElementById('btn-reject-k').addEventListener('click', () => {
@@ -352,20 +416,19 @@ function updateKineticLabel(div, state, wx, wz) {
 const kinetics=[];
 let kId=0;
 
-function launchKinetic(theater,weaponKey,outcome){
+function launchKinetic(theater,weaponKey,outcome,isWave=false){
   const bases=THEATERS[theater];
   const tgt=bases[Math.floor(Math.random()*bases.length)];
   const wdef=WEAPONS[weaponKey];
-  const SC=1000;
 
   // Spawn from random edge
   const angle=Math.random()*Math.PI*2;
   const dist=800000+Math.random()*400000;
   const spawnX=tgt.x*SC+Math.cos(angle)*dist;
-  const spawnZ=-tgt.y*SC+Math.sin(angle)*dist;
+  const spawnZ=tgt.y*SC+Math.sin(angle)*dist;
   const spawnY=wdef.alt*(0.5+Math.random()*0.5);
 
-  const tgtX=tgt.x*SC, tgtZ=-tgt.y*SC;
+  const tgtX=tgt.x*SC, tgtZ=tgt.y*SC;
 
   // Missile mesh
   const mGeo=new THREE.ConeGeometry(5000,20000,8);
@@ -375,28 +438,125 @@ function launchKinetic(theater,weaponKey,outcome){
 
   const totalFrames=220;
   let frame=0;
-  let interceptor=null, intTrail=null;
-  let interceptLaunched=false;
 
-  // If intercept, pick a nearby defender base
-  let defBase=null;
+  // ── SALVO SETUP: 2 closest non-HVA bases ranked by distance to target ────
+  const nonHva=bases.filter(b=>!b.hva);
+  const sortedBases=[...nonHva].sort((a,b)=>
+    Math.hypot((a.x-tgt.x)*SC,(a.y-tgt.y)*SC)-Math.hypot((b.x-tgt.x)*SC,(b.y-tgt.y)*SC));
+  const defBases=[];
   if(outcome==='intercept'){
-    defBase=bases.find(b=>b.type!=='HVA'&&!b.hva) || bases[0];
+    sortedBases.slice(0,2).forEach(b=>defBases.push(b));
+  }
+  // BUG-K01 FIX: increment threat counter on every launch (not just on SAM fire)
+  sThreats++; updateStats();
+
+  // ── PREDICTED INTERCEPT POINT GUIDANCE ───────────────────────────────────
+  // For scripted (parametric) trajectories, solving for the earliest future
+  // missile position reachable at constant interceptor speed is exact and far
+  // superior to PN, which requires accurate real-time velocity estimation.
+  function aimPoint(iPos, iSpeed, curFrame){
+    for(let k=1; k<=220; k++){
+      const tf=Math.min((curFrame+k)/totalFrames,1.0);
+      const pfX=spawnX+(tgtX-spawnX)*tf;
+      const pfZ=spawnZ+(tgtZ-spawnZ)*tf;
+      const peakY=wdef.alt*(1-tf*tf*0.3);
+      const pfY=peakY*(1-tf)+10000*tf;
+      if(iPos.distanceTo(new THREE.Vector3(pfX,pfY,pfZ))<=iSpeed*k)
+        return new THREE.Vector3(pfX,pfY,pfZ);
+    }
+    return new THREE.Vector3(tgtX,0,tgtZ); // fallback: aim at impact point
   }
 
-  const myId = kId++;
-  const statusDiv = addKineticLabel(myId);
-  log(`TRACKING ${wdef.label} → ${tgt.name}`, 'w');
+  // ── INTERCEPTOR POOL (salvo-ready) ────────────────────────────────────────
+  const INT_SPEED=18000; // m/frame — tuned for cruise geometry
+  const sams=[];
+
+  function spawnSAM(base,label){
+    const dbx=base.x*SC, dbz=base.y*SC;
+    const iGeo=new THREE.ConeGeometry(4000,16000,6);
+    const iMesh=new THREE.Mesh(iGeo,new THREE.MeshBasicMaterial({color:0x00f2ff}));
+    scene.add(iMesh);
+    const iTrail=makeTrail(0x00f2ff);
+    iMesh.position.set(dbx,5000,dbz);
+    sams.push({mesh:iMesh, trail:iTrail, vel:new THREE.Vector3(1,0,0), active:true});
+    log(`${label} LAUNCHED from ${base.name}`,'s');
+    sFired++; updateStats();
+  }
+
+  function disposeSAM(sam){
+    if(!sam.active) return;
+    sam.active=false;
+    scene.remove(sam.mesh); sam.mesh.geometry.dispose(); sam.mesh.material.dispose();
+    setTimeout(()=>{
+      scene.remove(sam.trail.line);
+      sam.trail.line.geometry.dispose(); sam.trail.line.material.dispose();
+    },3000);
+  }
+
+  const myId=kId++;
+  const statusDiv=addKineticLabel(myId);
+  log(`TRACKING ${wdef.label} → ${tgt.name}`,'w');
+  // Store threat info for freeze overlay (BUG-K06 FIX)
+  const kThreatInfo = `${weaponKey} → ${tgt.name}`;
+  // Store base IDs for manual override selector (BUG-K04 FIX)
+  const kDefBaseIds = defBases.map(b=>b.id);
+
+  // ── Neural Engine Query (async, non-blocking) ────────────────────────────
+  // Call CORTEX-1 (/evaluate_advanced) for a strategic SITREP and effector
+  // recommendation. Does not block the simulation — fires and logs on response.
+  (async()=>{
+    try{
+      const typeMap={CRUISE:'cruise-missile',HYPERSONIC:'hypersonic-pgm',LOITER:'drone',BALLISTIC:'ballistic'};
+      const speedMap={CRUISE:800,HYPERSONIC:6000,LOITER:200,BALLISTIC:3000};
+      const KM=1; // pass raw SVG units — engine uses theater-unit ranges
+      // Include theater bases as state so engine range checks work
+      const stateBasesPayload=bases.filter(b=>!b.hva).map(b=>({
+        name:b.name, x:b.x*KM, y:b.y*KM,
+        inventory:{'patriot-pac3':16,'nasams':8}
+      }));
+      const r=await fetch('http://localhost:8000/evaluate_advanced',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          state:{bases:stateBasesPayload},
+          threats:[{id:`K-${myId}`,x:tgt.x*KM,y:tgt.y*KM,
+                    speed_kmh:speedMap[weaponKey]||800,
+                    estimated_type:typeMap[weaponKey]||'cruise-missile',
+                    threat_value:70}],
+          weather:'clear',doctrine_primary:'balanced',use_rl:true
+        }),
+        signal:AbortSignal.timeout(4000)
+      });
+      if(r.ok){
+        const data=await r.json();
+        const score=(data.strategic_consequence_score||0).toFixed(0);
+        // BUG-K05 FIX: skip raw separator lines, strip trailing dashes from sitrep
+        const sirepLines=(data.human_sitrep||'').split('\n').map(l=>l.trim()).filter(Boolean);
+        const firstContent=sirepLines.find(l=>!l.match(/^[-—]+$/));
+        const sitrep=(firstContent||'').replace(/^[-—\s]+|[-—\s]+$/g,'').substring(0,80);
+        const eff=(data.tactical_assignments?.[0]?.effector||'N/A').toUpperCase();
+        const base=(data.tactical_assignments?.[0]?.base||'N/A');
+        log(`CORTEX-1: ${sitrep||'ASSESSMENT RECEIVED'}`,'i');
+        log(`ENGINE → ${eff} from ${base} | STRATEGIC SCORE: ${score}`,'i');
+      }
+    }catch(e){}
+  })();
 
   const k={
     done:false,
-    _approved: false,
-    _rejected: false,
-    _state: 'tracking', // tracking | locked | lostlock | killed | impact
+    _approved:false,
+    _rejected:false,
+    _manualBase:null,
+    _sam1Fired:false,
+    _sam2Fired:false,
+    _state:'tracking',
+    _threatInfo:kThreatInfo,
+    _defBaseIds:kDefBaseIds,
     tick:()=>{
       frame++;
       const t=frame/totalFrames;
 
+      // ── MISSILE POSITION ─────────────────────────────────────────────────
       const mx=spawnX+(tgtX-spawnX)*t;
       const mz=spawnZ+(tgtZ-spawnZ)*t;
       const peakY=wdef.alt*(1-t*t*0.3);
@@ -407,77 +567,83 @@ function launchKinetic(theater,weaponKey,outcome){
         mMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
       }
       pushTrail(trail,mx,my,mz);
-      updateKineticLabel(statusDiv, k._state, mx, mz);
+      updateKineticLabel(statusDiv,k._state,mx,mz);
 
-      // HITL/Manual freeze point: when entering kill zone
-      if(outcome==='intercept' && !interceptLaunched && t>0.4){
-        if((CMD_MODE==='hitl'||CMD_MODE==='manual') && !k._approved && !k._rejected){
+      // ── SAM-1: early engagement at t>=0.05 (>= so missed windows are caught) ─
+      if(outcome==='intercept' && defBases[0] && !k._sam1Fired && frame>=Math.floor(totalFrames*0.05)){
+        // BUG-K03 FIX: use isWave flag instead of waveActive counter
+        // waveActive<=1 incorrectly triggers HITL for the last wave missile
+        if((CMD_MODE==='hitl'||CMD_MODE==='manual')&&!k._approved&&!k._rejected && !isWave){
           if(!SIM_PAUSED) freezeSim(k);
-          return; // hold here until approved
-        }
-        if(!k._rejected){
-          interceptLaunched=true;
-          const dbx=defBase.x*SC, dbz=-defBase.y*SC;
-          const iGeo=new THREE.ConeGeometry(4000,16000,6);
-          interceptor=new THREE.Mesh(iGeo,new THREE.MeshBasicMaterial({color:0x00f2ff}));
-          scene.add(interceptor);
-          intTrail=makeTrail(0x00f2ff);
-          interceptor.position.set(dbx,5000,dbz);
-          interceptor._vel=new THREE.Vector3(mx-dbx,my-5000,mz-dbz).normalize().multiplyScalar(800*10);
-          log(`SAM LAUNCHED from ${defBase.name}`, 's');
-          sFired++;updateStats();
+        } else if(!k._rejected){
+          k._sam1Fired=true;
+          // BUG-K04 FIX: use manually selected base if operator overrode it
+          const launchBase = k._manualBase || defBases[0];
+          spawnSAM(launchBase,'SAM-1');
+          if(k._manualBase) log(`MANUAL OVERRIDE → LAUNCH FROM ${k._manualBase.name}`,'w');
         }
       }
 
-      // PN Guidance + Radar Lock State Machine
-      if(interceptor){
-        const r_m=interceptor.position;
-        const v_m=interceptor._vel||new THREE.Vector3(0,1000,0);
-        const r_t=new THREE.Vector3(mx,my,mz);
-        const v_t=new THREE.Vector3(tgtX-spawnX,0-spawnY,tgtZ-spawnZ).normalize().multiplyScalar(wdef.speed*1000/60);
-        const r_tm=r_t.clone().sub(r_m);
-        const dist=r_tm.length();
-        const unit_los=r_tm.clone().normalize();
-        const v_tm=v_t.clone().sub(v_m);
-
-        // Radar lock check (R^4 physics from data factory)
-        const P_r = radarReturn(dist, 0.5);
-        const hasLock = P_r > P_MIN;
-        if(hasLock && k._state==='tracking') { k._state='locked'; log('RADAR LOCK ACQUIRED','s'); }
-        if(!hasLock && k._state==='locked')  { k._state='lostlock'; log('RADAR LOCK LOST — FLYING BLIND','a'); }
-
-        if(hasLock){
-          const N=4.0;
-          const omega=new THREE.Vector3().crossVectors(r_tm,v_tm).divideScalar(dist*dist);
-          const cv=-v_tm.dot(unit_los);
-          const a_c=new THREE.Vector3().crossVectors(omega,unit_los).multiplyScalar(N*cv);
-          v_m.add(a_c.multiplyScalar(1/60));
-        }
-        v_m.normalize().multiplyScalar(800*10);
-        interceptor._vel=v_m;
-        interceptor.position.add(v_m);
-        interceptor.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v_m.clone().normalize());
-        pushTrail(intTrail,r_m.x,r_m.y,r_m.z);
-
-        if(dist<15000){
-          k._state='killed';
-          updateKineticLabel(statusDiv,'killed',mx,mz);
-          const mid=new THREE.Vector3(mx,my,mz);
-          explode(mid,0x00f2ff,120); explode(mid,0xffffff,60);
-          // Secondary ring at kill point
-          const kr=new THREE.Mesh(new THREE.RingGeometry(5000,25000,32),new THREE.MeshBasicMaterial({color:0x00f2ff,transparent:true,opacity:0.9,side:THREE.DoubleSide}));
-          kr.rotation.x=-Math.PI/2; kr.position.copy(mid); scene.add(kr);
-          let ks=1; const ki=setInterval(()=>{ ks+=0.2; kr.scale.set(ks,ks,1); kr.material.opacity-=0.06;
-            if(kr.material.opacity<=0){clearInterval(ki);scene.remove(kr);} },30);
-          scene.remove(mMesh); scene.remove(interceptor);
-          setTimeout(()=>{ scene.remove(trail.line); if(intTrail)scene.remove(intTrail.line); statusDiv.remove(); },3000);
-          log(`NEUTRALIZED ${wdef.label} — INTERCEPT CONFIRMED`,'s');
-          sKills++; updateStats(); k.done=true;
-        }
+      // ── SAM-2 SALVO: backup interceptor at t>=0.3 ───────────────────────
+      if(outcome==='intercept' && defBases[1] && !k._sam2Fired && frame>=Math.floor(totalFrames*0.3) && !k._rejected && !k.done){
+        k._sam2Fired=true;
+        spawnSAM(defBases[1],'SAM-2 (SALVO)');
       }
 
-      if(t>=1){
-        k._state='impact';
+      // ── HITL/MANUAL approval → immediate launch if SAM-1 hasn't auto-fired yet ─
+      // Note: frame-based SAM-1 check runs before this in the same tick and
+      // spawnSAM increments sams[], so sams.length===0 guard prevents duplicates.
+      if(outcome==='intercept' && k._approved && sams.length===0){
+        const launchBase = k._manualBase || defBases[0];
+        if(launchBase) spawnSAM(launchBase,'SAM-1 (APPROVED)');
+        if(defBases[1] && !k._manualBase) spawnSAM(defBases[1],'SAM-2 (SALVO/APPROVED)');
+      }
+
+      // ── UPDATE ALL ACTIVE SAMs ───────────────────────────────────────────
+      let killConfirmed=false;
+      const mPos=new THREE.Vector3(mx,my,mz);
+      sams.forEach(sam=>{
+        if(!sam.active||k.done) return;
+        const iPos=sam.mesh.position;
+        const distToMissile=iPos.distanceTo(mPos);
+
+        // Predicted intercept point guidance — replaces PN
+        const aim=aimPoint(iPos,INT_SPEED,frame);
+        const dir=aim.clone().sub(iPos).normalize();
+        sam.vel=dir.multiplyScalar(INT_SPEED);
+        sam.mesh.position.add(sam.vel);
+        sam.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+        pushTrail(sam.trail,iPos.x,iPos.y,iPos.z);
+
+        // Radar lock state with re-acquisition (lostlock → locked if signal recovered)
+        const hasLock=radarReturn(distToMissile,0.5)>P_MIN;
+        if(hasLock  && k._state!=='killed')                       { k._state='locked';   }
+        if(!hasLock && k._state==='locked' && distToMissile>50000){ k._state='lostlock'; log('RADAR LOST — PREDICTED TRACK ACTIVE','a'); }
+
+        if(distToMissile<25000) killConfirmed=true;
+      });
+
+      // ── KILL RESOLUTION ──────────────────────────────────────────────────
+      if(killConfirmed && !k.done){
+        k.done=true; k._state='killed';
+        updateKineticLabel(statusDiv,'killed',mx,mz);
+        const mid=new THREE.Vector3(mx,my,mz);
+        explode(mid,0x00f2ff,120); explode(mid,0xffffff,60);
+        const kr=new THREE.Mesh(new THREE.RingGeometry(5000,25000,32),new THREE.MeshBasicMaterial({color:0x00f2ff,transparent:true,opacity:0.9,side:THREE.DoubleSide}));
+        kr.rotation.x=-Math.PI/2; kr.position.copy(mid); scene.add(kr);
+        let ks=1; const ki=setInterval(()=>{ ks+=0.2; kr.scale.set(ks,ks,1); kr.material.opacity-=0.06;
+          if(kr.material.opacity<=0){clearInterval(ki);scene.remove(kr);} },30);
+        scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+        sams.forEach(sam=>disposeSAM(sam));
+        setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },3000);
+        log(`NEUTRALIZED ${wdef.label} — INTERCEPT CONFIRMED`,'s');
+        sKills++; waveActive=Math.max(0,waveActive-1); updateStats();
+        return;
+      }
+
+      // ── IMPACT ───────────────────────────────────────────────────────────
+      if(t>=1 && !k.done){
+        k.done=true; k._state='impact';
         updateKineticLabel(statusDiv,'impact',tgtX,tgtZ);
         const impPos=new THREE.Vector3(tgtX,0,tgtZ);
         explode(impPos,0xff3e3e,160); explode(impPos,0xff8800,80);
@@ -485,10 +651,11 @@ function launchKinetic(theater,weaponKey,outcome){
         ring.rotation.x=-Math.PI/2; ring.position.set(tgtX,500,tgtZ); scene.add(ring);
         let rScale=1; const rIntvl=setInterval(()=>{ rScale+=0.15; ring.scale.set(rScale,rScale,1); ring.material.opacity-=0.05;
           if(ring.material.opacity<=0){clearInterval(rIntvl);scene.remove(ring);} },30);
-        scene.remove(mMesh);
-        setTimeout(()=>{ scene.remove(trail.line); statusDiv.remove(); },3000);
+        scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+        sams.forEach(sam=>disposeSAM(sam));
+        setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },3000);
         log(`IMPACT AT ${tgt.name} — DEFENSE BREACH`,'a');
-        sImpacts++; updateStats(); k.done=true;
+        sImpacts++; waveActive=Math.max(0,waveActive-1); updateStats();
       }
     }
   };
@@ -506,7 +673,11 @@ function animate(){
   orbit.update();
   tickParticles(); // particles always animate even when frozen
   if(!SIM_PAUSED){
-    kinetics.forEach((k,i)=>{if(!k.done)k.tick();else kinetics.splice(i,1);});
+    for(let i=kinetics.length-1; i>=0; i--){
+      const k=kinetics[i];
+      if(!k.done) k.tick();
+      else kinetics.splice(i,1);
+    }
     baseMarkers.forEach((m,i)=>{if(i%2===0)m.rotation.y+=0.005;});
   }
   updateLabels();
@@ -530,9 +701,14 @@ document.getElementById('btn-fire').addEventListener('click',()=>{
 
 document.getElementById('btn-wave').addEventListener('click',()=>{
   const weps=['CRUISE','HYPERSONIC','LOITER','BALLISTIC','CRUISE'];
-  const outcomes=['intercept','intercept','miss','intercept','miss'];
-  weps.forEach((w,i)=>setTimeout(()=>launchKinetic(currentTheater,w,outcomes[i]),i*800));
-  log('SATURATION WAVE INBOUND — MULTI-VECTOR ENGAGEMENT', 'a');
+  // BUG-K07 FIX: wave outcome rate selector
+  const rate=parseFloat(document.getElementById('sel-wave-rate').value);
+  const outcomes=weps.map(()=>Math.random()<rate?'intercept':'miss');
+  const nIntercept=outcomes.filter(o=>o==='intercept').length;
+  waveActive=nIntercept; // only intercept-outcome missiles count (only they can contribute kills)
+  weps.forEach((w,i)=>setTimeout(()=>launchKinetic(currentTheater,w,outcomes[i],true),i*800));
+  log(`SATURATION WAVE INBOUND — ${weps.length} THREATS | DEF RATE ${Math.round(rate*100)}%`, 'a');
+  if(rate<1) log(`LEAKERS EXPECTED: ${weps.length-nIntercept}`, 'w');
 });
 
 document.getElementById('btn-reset').addEventListener('click',()=>location.reload());

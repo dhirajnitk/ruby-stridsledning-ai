@@ -5,18 +5,20 @@ const MODE = urlParams.get('mode') || 'boreal';
 // --- THEATRE COORDINATES (adaptive per mode) ---
 // Sweden: origin=Stockholm, units=km offset from Stockholm
 // Boreal: origin=Arktholm, units=arbitrary grid units
-let SVG_OX, SVG_OY, SVG_SCALE;
 if (MODE === 'sweden') {
   // Sweden: pulled down further for button clearance (OY 480 -> 530)
   SVG_OX = 545; SVG_OY = 530; SVG_SCALE = 0.48;
 } else {
-  // Boreal: lifted slightly (OY 820 -> 770) to improve N-node visibility
-  SVG_OX = 100; SVG_OY = 770; SVG_SCALE = 0.45;
+  // Boreal: 1:1 mapping to SVG viewBox (1000x780). Scaling: 1 unit = 1.66km
+  SVG_OX = 0; SVG_OY = 0; SVG_SCALE = 1.0; 
 }
+const KM_TO_UNIT = 120 / 200; // 0.6 units per km
+const UNIT_TO_KM = 200 / 120; // 1.666 km per unit
+
 function toSvgX(v) { return SVG_OX + v * SVG_SCALE; }
-function toSvgY(v) { return SVG_OY - v * SVG_SCALE; }
-function to3X(v)   { return v * 1000; }
-function to3Z(v)   { return -v * 1000; }
+function toSvgY(v) { return SVG_OY + v * SVG_SCALE; } // SVG Y is down
+function to3X(v)   { return v * 1666; } // 1 unit = 1666m
+function to3Z(v)   { return v * 1666; }
 
 const SWEDEN_KM = [
   [88,720],[125,692],[192,642],[192,590],[170,522],[152,442],[135,368],
@@ -40,31 +42,22 @@ const THEATER_DATA = (MODE === 'sweden') ? [
   { type:"BASE", id:"GOT", name:"GOTLAND VISBY HUB", x:  16, y:-186, sam:40, effectors:['LV-103', 'E98', 'RBS70']  },
   { type:"HVA",  id:"GBG", name:"GOTHENBURG PORT",   x:-364, y:-180, sam:30, effectors:['E98', 'LVKV90']       }
 ] : [
-  // BOREAL (US-STYLE PROPORTIONS)
-  { type:"BASE", id:"NVB", name:"NORTHERN VANGUARD",   x:198,  y:335,  sam:40, effectors:['PAC3', 'NASAMS', 'HELWS'] },
-  { type:"BASE", id:"HRC", name:"HIGHRIDGE COMMAND",   x:838,  y:75,   sam:30, effectors:['THAAD', 'PAC3']           },
-  { type:"BASE", id:"BWP", name:"BOREAL WATCH POST",   x:1158, y:385,  sam:50, effectors:['NASAMS', 'CRAM']         },
-  { type:"HVA",  id:"ARK", name:"ARKTHOLM CAPITAL",    x:418,  y:95,   sam:100,effectors:['THAAD', 'PAC3', 'NASAMS', 'CRAM']},
-  { type:"HVA",  id:"VAL", name:"VALBREK",             x:1423, y:213,  sam:60, effectors:['PAC3', 'HELWS']          },
-  { type:"HVA",  id:"NRD", name:"NORDVIK",             x:140,  y:323,  sam:40, effectors:['NASAMS', 'CRAM']         },
-  // ... (Other nodes would follow same pattern)
-  // SOUTH SIDE (adversary / contested)
-  { type:"BASE", id:"FWS", name:"FIREWATCH STATION",   x:1398, y:1071, sam:24, domain:"KINETIC"     },
-  { type:"BASE", id:"SRB", name:"SOUTHERN REDOUBT",    x:321,  y:1238, sam:16, domain:"KINETIC"     },
-  { type:"BASE", id:"SPB", name:"SPEAR POINT BASE",    x:918,  y:835,  sam:20, domain:"KINETIC"     },
-  { type:"HVA",  id:"MER", name:"MERIDIA CAPITAL",     x:1225, y:1208                                },
-  { type:"HVA",  id:"CAL", name:"CALLHAVEN",           x:96,   y:1150                                },
-  { type:"HVA",  id:"SOL", name:"SOLANO",              x:576,  y:1236                                },
-  // TERRAIN NODES (COASTAL & ISLANDS)
-  { type:"ZONE", id:"NML", name:"NORTH MAINLAND",      x:820,  y:295,  subtype:"mainland"           },
-  { type:"ZONE", id:"SML", name:"SOUTH MAINLAND",      x:823,  y:1075, subtype:"mainland"           },
-  { type:"ZONE", id:"NIW", name:"N-ISLAND WEST",       x:656,  y:493,  subtype:"island"             },
-  { type:"ZONE", id:"NIE", name:"N-ISLAND EAST",       x:1156, y:388,  subtype:"island"             },
-  { type:"ZONE", id:"NRI", name:"NORTH REMOTE ISLAND", x:303,  y:626,  subtype:"island"             },
-  { type:"ZONE", id:"SFI", name:"SOUTH FORWARD ISLAND",x:1408, y:753,  subtype:"island"             },
-  { type:"ZONE", id:"SSI", name:"SOUTH SMALL ISLAND",  x:423,  y:920,  subtype:"island"             },
-  { type:"ZONE", id:"SCP", name:"SOUTH PENINSULA",     x:898,  y:828,  subtype:"peninsula"          },
-  { type:"ZONE", id:"BST", name:"BOREAL STRAIT",       x:833,  y:650,  subtype:"water"              },
+  // BOREAL (Extracted from the-boreal-passage-map.svg)
+  { type:"BASE", id:"NVB", name:"NORTHERN VANGUARD",   x:119,  y:197,  sam:40, effectors:['PAC3', 'NASAMS', 'HELWS'] },
+  { type:"BASE", id:"HRC", name:"HIGHRIDGE COMMAND",   x:503,  y:41,   sam:30, effectors:['THAAD', 'PAC3']           },
+  { type:"BASE", id:"BWP", name:"BOREAL WATCH POST",   x:695,  y:227,  sam:50, effectors:['NASAMS', 'CRAM']         },
+  { type:"HVA",  id:"ARK", name:"ARKTHOLM CAPITAL",    x:251,  y:57,   sam:100,effectors:['THAAD', 'PAC3', 'NASAMS', 'CRAM']},
+  { type:"HVA",  id:"VAL", name:"VALBREK",             x:854,  y:128,  sam:60, effectors:['PAC3', 'HELWS']          },
+  { type:"HVA",  id:"NRD", name:"NORDVIK",             x:84,   y:194,  sam:40, effectors:['NASAMS', 'CRAM']         },
+  // SOUTH SIDE
+  { type:"BASE", id:"FWS", name:"FIREWATCH STATION",   x:839,  y:639,  sam:24, domain:"KINETIC"     },
+  { type:"BASE", id:"SRB", name:"SOUTHERN REDOUBT",    x:193,  y:739,  sam:16, domain:"KINETIC"     },
+  { type:"BASE", id:"SPB", name:"SPEAR POINT BASE",    x:551,  y:497,  sam:20, domain:"KINETIC"     },
+  { type:"HVA",  id:"MER", name:"MERIDIA CAPITAL",     x:735,  y:725, sam:40, effectors:['THAAD','PAC3','NASAMS'] },
+  { type:"HVA",  id:"CAL", name:"CALLHAVEN",           x:58,   y:690, sam:28, effectors:['PAC3','NASAMS']          },
+  { type:"HVA",  id:"SOL", name:"SOLANO",              x:346,  y:742, sam:28, effectors:['PAC3','NASAMS']          },
+  // TERRAIN NODES (Simplified for 2D)
+  { type:"ZONE", id:"BST", name:"BOREAL STRAIT",       x:500,  y:400,  subtype:"water"              },
 ];
 
 // --- EFFECTOR DEFINITIONS (Audited per NATO/Sweden Doctrine) ---
@@ -79,11 +72,22 @@ const EFFECTORS = {
   boreal: {
     'THAAD':  { name: 'THAAD (Upper-Tier)',     range: 200000, type: 'KINETIC',  color: '#00f2ff', cost: 800, pk: { HYPERSONIC: 0.8, BALLISTIC: 0.98, CRUISE: 0.4, FIGHTER: 0.3, LOITER: 0.1 } },
     'PAC3':   { name: 'Patriot PAC-3 MSE',     range: 120000, type: 'KINETIC',  color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.7, BALLISTIC: 0.95, CRUISE: 0.95, FIGHTER: 0.9, LOITER: 0.8 } },
+    'NASAMS': { name: 'NASAMS (AMRAAM)',         range: 40000,  type: 'KINETIC',  color: '#00ff88', cost: 100, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.5,  CRUISE: 0.88, FIGHTER: 0.9, LOITER: 0.6 } },
+    'HELWS':  { name: 'HELWS Laser Weapon',      range: 5000,   type: 'LASER',    color: '#ffff00', cost: 5,   pk: { LOITER: 0.9,  DRONE: 0.95, CRUISE: 0.2 } },
+    'CRAM':   { name: 'C-RAM Phalanx',           range: 1500,   type: 'KINETIC',  color: '#ff8800', cost: 10,  pk: { CRUISE: 0.7,  LOITER: 0.8, DRONE: 0.9 } },
     'COYOTE2': { name: 'RTX Coyote Block 2+',  range: 15000,  type: 'KINETIC',  color: '#00ffaa', cost: 5,   pk: { DRONE: 0.95, LOITER: 0.95, CRUISE: 0.3 } },
     'MEROPS': { name: 'Merops Interceptor',    range: 3000,   type: 'KINETIC',  color: '#ffcc00', cost: 2,   pk: { DRONE: 0.95, LOITER: 0.90 } },
     'COYOTE3': { name: 'Coyote B3 (Non-Kin)',  range: 10000,  type: 'LASER',    color: '#ff00ff', cost: 1,   pk: { DRONE: 0.90, LOITER: 0.80 } }
   }
 };
+
+// Maps backend engine effector keys → frontend EFFECTORS keys per theater
+const ENGINE_EFF_MAP = {
+  boreal: { 'patriot-pac3':'PAC3','nasams':'NASAMS','thaad':'THAAD','iris-t-sls':'PAC3','coyote-block2':'COYOTE2','merops-interceptor':'MEROPS','saab-nimbrix':'COYOTE3','lids-ew':'COYOTE3','meteor':'PAC3' },
+  sweden: { 'patriot-pac3':'LV-103','nasams':'LV-103','iris-t-sls':'E98','meteor':'METEOR','saab-nimbrix':'NIMBRIX','lids-ew':'LIDS-EW','thaad':'LV-103' }
+};
+// Active doctrine key, updated by setDoctrine() and used in callEngine()
+window._ACTIVE_DOCTRINE = 'balanced';
 
 const BASES = {};
 THEATER_DATA.forEach(n => { 
@@ -98,10 +102,10 @@ THEATER_DATA.forEach(n => {
 
 // --- KINETIC DEFINITIONS ---
 const WEAPONS = {
-  CRUISE:     { speed:600,  color3:'#ff3e3e', hex3:0xff3e3e, r2d:5,  label:'CRUISE MISSILE'      },
-  HYPERSONIC: { speed:2200, color3:'#ffcc00', hex3:0xffcc00, r2d:4,  label:'HYPERSONIC GLIDE'    },
-  LOITER:     { speed:300,  color3:'#ff00ff', hex3:0xff00ff, r2d:4,  label:'LOITERING MUNITION'  },
-  BALLISTIC:  { speed:1400, color3:'#ff5500', hex3:0xff5500, r2d:6,  label:'BALLISTIC MISSILE'   },
+  CRUISE:     { speed:600,  color3:'#ff3e3e', hex3:0xff3e3e, r2d:5,  label:'CRUISE MISSILE',   type:'CRUISE'     },
+  HYPERSONIC: { speed:2200, color3:'#ffcc00', hex3:0xffcc00, r2d:4,  label:'HYPERSONIC GLIDE', type:'HYPERSONIC' },
+  LOITER:     { speed:300,  color3:'#ff00ff', hex3:0xff00ff, r2d:4,  label:'LOITERING MUNITION',type:'LOITER'    },
+  BALLISTIC:  { speed:1400, color3:'#ff5500', hex3:0xff5500, r2d:6,  label:'BALLISTIC MISSILE', type:'BALLISTIC'  },
 };
 
 const WAVE_SEQ = [
@@ -114,8 +118,16 @@ const WAVE_SEQ = [
 
 let ammo = {};
 let balticMap, mapGeometry, baseIconsG, threatLayerG, cotFeed, healthFill;
-let cityHealth = 100, isSimulating = false, currentScenarioIdx = 0, waveTransitioning = false;
+let cityHealth = 100, isSimulating = false, currentScenarioIdx = 0, currentWaveIdx = 0, waveTransitioning = false;
+let BENCHMARKS = {};
 let threats = [];
+let rejectedThreats = new Set(); // Tracks HITL-rejected threat IDs so they aren't re-queued
+
+// Expose live state to dashboard panels (manual override, HITL queue) via getters
+Object.defineProperty(window, 'threats',   { get: () => threats,   configurable: true });
+Object.defineProperty(window, 'BASES',     { get: () => BASES,     configurable: true });
+Object.defineProperty(window, 'ammo',      { get: () => ammo,      configurable: true });
+Object.defineProperty(window, 'EFFECTORS', { get: () => EFFECTORS, configurable: true });
 
 // --- LIVE ACCURACY TRACKING ---
 let stats = { fired: 0, intercepted: 0, missed: 0, impacts: 0, totalThreats: 0 };
@@ -160,8 +172,16 @@ window.isMirror = !window.location.pathname.includes('dashboard.html');
 SAAB_CH.onmessage = e => {
   if (e.data?.type === 'LAUNCH') startEngagement();
   if (e.data?.type === 'DEMO') triggerDemo(e.data.id);
-  if (e.data?.type === 'FREEZE') window._engFrozen = true;
-  if (e.data?.type === 'RESUME') window._engFrozen = false;
+  if (e.data?.type === 'FREEZE') {
+    window._engFrozen = true;
+    const lf = document.getElementById('lv-freeze');
+    if (lf) lf.classList.add('on');
+  }
+  if (e.data?.type === 'RESUME') {
+    window._engFrozen = false;
+    const lf = document.getElementById('lv-freeze');
+    if (lf) lf.classList.remove('on');
+  }
   
   if (window.isMirror) {
     if (e.data?.type === 'THREAT_SPAWN') {
@@ -186,7 +206,9 @@ function initAmmo() {
 
 function restockAmmo() {
   Object.keys(BASES).forEach(id => {
-    ammo[id] = Math.min(BASES[id].sam, (ammo[id]||0) + Math.ceil(BASES[id].sam * 0.5));
+    const cap = BASES[id].sam || 0; // Guard: HVA nodes (MER/CAL/SOL) have no sam
+    if (cap <= 0) return;
+    ammo[id] = Math.min(cap, (ammo[id]||0) + Math.ceil(cap * 0.5));
   });
   addCoT('REPLENISHING SAM INVENTORY :: +50% STOCK', 'success');
   updateInventoryDisplay();
@@ -222,6 +244,7 @@ function updateInventoryDisplay() {
 
 window.cancelApproval = (threatId) => {
     pendingApprovals.delete(threatId);
+    rejectedThreats.add(threatId); // Marks as rejected — threat flies through uncontested
     // Resume simulation if no more approvals are pending
     updateSimulation();
 };
@@ -254,6 +277,16 @@ function renderMap() {
     path.setAttribute('stroke-width', '1.5');
     path.setAttribute('stroke-dasharray', '8 4');
     mapGeometry.appendChild(path);
+
+    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    const ark = THEATER_DATA.find(n => n.id === 'ARK');
+    if (ark) {
+      ring.setAttribute('cx', toSvgX(ark.x)); ring.setAttribute('cy', toSvgY(ark.y));
+      ring.setAttribute('r', 150); // 250km / 1.66 = 150 units
+      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', 'rgba(0,242,255,0.1)');
+      ring.setAttribute('stroke-dasharray', '5 5');
+      mapGeometry.appendChild(ring);
+    }
   }
 
   THEATER_DATA.forEach(node => {
@@ -424,10 +457,10 @@ class Interceptor {
         this.pos.add(dir.multiplyScalar(ACTIVE_MODEL.speed * flySpeed));
     }
 
-    if (this.pos.distanceTo(targetPos) < 15000) {
+    const dist = this.pos.distanceTo(targetPos);
+    if (dist < 15000) {
       // Use effector's specific Pk matrix against threat type
-      // Fallback to active model's benchmark Pk if matrix lookup fails
-      const pk = ACTIVE_MODEL.pk || 0.75;
+      const pk = this.eff.pk[this._threatType] || ACTIVE_MODEL.pk || 0.75;
       if (Math.random() < pk) {
         this.hit = true; this.dispose(); return true;
       } else {
@@ -476,8 +509,8 @@ class Threat {
   }
   update() {
     this.pos.add(this.vel);
-    this.circle2D?.setAttribute('cx', toSvgX(this.pos.x/1000));
-    this.circle2D?.setAttribute('cy', toSvgY(-this.pos.z/1000));
+    this.circle2D?.setAttribute('cx', toSvgX(this.pos.x/1666));
+    this.circle2D?.setAttribute('cy', toSvgY(this.pos.z/1666));
     if (this.mesh) this.mesh.position.copy(this.pos);
   }
   dispose() {
@@ -499,11 +532,49 @@ class Threat {
 }
 
 // --- SIMULATION ---
+// ── NEURAL ENGINE INTEGRATION ─────────────────────────────────────────────
+// Sends live threat list to FastAPI /evaluate_advanced and returns the
+// engine's tactical assignments + strategic score + SITREP.
+async function callEngine(threatList) {
+  const typeMap = { CRUISE:'cruise-missile', HYPERSONIC:'hypersonic-pgm', LOITER:'drone', BALLISTIC:'ballistic' };
+  const valMap  = { HYPERSONIC:90, BALLISTIC:80, CRUISE:60, LOITER:40 };
+  // Send SVG unit coordinates directly — engine uses theater-unit ranges matching this scale
+  const stateBasesPayload = Object.values(BASES).map(b => ({
+    name: b.name,
+    x: b.x,
+    y: b.y,
+    inventory: { 'patriot-pac3': b.sam || 0, 'nasams': Math.floor((b.sam||0)*0.5) }
+  }));
+  try {
+    const r = await fetch('http://localhost:8000/evaluate_advanced', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        state: { bases: stateBasesPayload },
+        threats: threatList.map(t => ({
+          id: t.id,
+          x: t.targetNode.x,
+          y: t.targetNode.y,
+          speed_kmh: t.wdef.speed,
+          estimated_type: typeMap[t.wdef.type] || 'cruise-missile',
+          threat_value: valMap[t.wdef.type] || 50
+        })),
+        weather: 'clear',
+        doctrine_primary: window._ACTIVE_DOCTRINE || 'balanced',
+        use_rl: true
+      }),
+      signal: AbortSignal.timeout(5000)
+    });
+    return r.ok ? await r.json() : null;
+  } catch(e) { return null; }
+}
+
 function startEngagement() {
   threats.forEach(t => t.dispose()); threats = [];
   isSimulating = true; currentWaveIdx = 0; waveTransitioning = false;
   cityHealth = 100; if (healthFill) healthFill.style.width = '100%';
   stats = { fired: 0, intercepted: 0, missed: 0, impacts: 0, totalThreats: 0 };
+  pendingApprovals.clear(); rejectedThreats.clear();
   updateAccuracyDisplay();
   initAmmo(); updateInventoryDisplay();
   if (balticMap) SAAB_CH.postMessage({ type: 'LAUNCH' });
@@ -547,6 +618,28 @@ function launchWave() {
     threats.push(t);
     stats.totalThreats++;
   });
+  // ── Query Neural Engine for live assignments and SITREP ────────────────
+  if (threats.length > 0) {
+    callEngine(threats).then(result => {
+      if (!result) { addCoT('CORTEX-1 OFFLINE — LOCAL TRIAGE ACTIVE', 'alert'); return; }
+      const score = (result.strategic_consequence_score || 0).toFixed(0);
+      const sirepLines = (result.human_sitrep || '').split('\n').map(l => l.trim()).filter(Boolean);
+      const firstContent = sirepLines.find(l => !l.match(/^[-—]+$/));
+      const sitrep = (firstContent || '').replace(/^[-—\s]+|[-—\s]+$/g, '').substring(0, 80);
+      addCoT(`CORTEX-1: ${sitrep || 'ASSESSMENT COMPLETE'}`, 'info');
+      addCoT(`NEURAL SCORE: ${score} | LEAKED PROJECTION: ${(result.leaked || 0).toFixed(1)}`, 'info');
+      // Annotate each threat with the engine's preferred base+effector
+      (result.tactical_assignments || []).forEach(a => {
+        const t = threats.find(x => x.id === a.threat_id);
+        if (t) {
+          t.engineAssignment = a;
+          const frontendEff = ENGINE_EFF_MAP[MODE]?.[a.effector] || null;
+          addCoT(`ENGINE → ${a.threat_id}: ${(a.effector || '?').toUpperCase()} ≡ ${frontendEff || 'LOCAL'} from ${a.base}`, 'success');
+        }
+      });
+    });
+  }
+
   updateAccuracyDisplay();
 }
 
@@ -600,8 +693,7 @@ let pendingApprovals = new Set();
 
 window.setEngineMode = (mode) => { ENGINE_MODE = mode; };
 window.setDoctrine = (doctrine) => {
-    // In a real scenario, this would update the cost matrix weights.
-    // For the viz, we adjust the engagement range or firing speed.
+    window._ACTIVE_DOCTRINE = doctrine; // persisted for callEngine() POST body
     if (doctrine === 'aggressive') addCoT("DOCTRINE: AGGRESSIVE (Extended Intercept Range)", "info");
     if (doctrine === 'fortress') addCoT("DOCTRINE: FORTRESS (Capital Priority Lock)", "info");
 };
@@ -611,7 +703,9 @@ window.commitManualEngagement = (threatId, baseId, effector) => {
     if (!t || t.hit) return;
     if (ammo[baseId] > 0) {
         ammo[baseId]--; updateInventoryDisplay();
-        t.interceptor = new Interceptor(BASES[baseId], effector);
+        const int = new Interceptor(BASES[baseId], effector);
+        int._threatType = t.wdef.type;
+        t.interceptors.push(int);  // FIX: was t.interceptor= (singular), never updated in sim loop
         stats.fired++;
         const effName = EFFECTORS[MODE][effector]?.name || effector;
         addCoT(`MANUAL OVERRIDE: ${effName} LAUNCHED FROM ${BASES[baseId].name}`, 'success');
@@ -624,13 +718,15 @@ window.commitManualEngagement = (threatId, baseId, effector) => {
 
 window.processApprovedAssignment = (threatId) => {
     const t = threats.find(x => x.id === threatId);
-    if (!t || t.hit) return;
+    if (!t || t.hit) { pendingApprovals.delete(threatId); return; }
     const defId = Object.keys(BASES).find(id => ammo[id] > 0);
     if (defId) {
         ammo[defId]--; updateInventoryDisplay();
-        // Intelligent selection for HITL: High-speed for hypersonics
+        // Intelligent selection for HITL: High-speed threats get upper-tier interceptors
         const effKey = (t.wdef.speed > 1.5) ? (MODE === 'sweden' ? 'LV-103' : 'PAC3') : (MODE === 'sweden' ? 'E98' : 'NASAMS');
-        t.interceptor = new Interceptor(BASES[defId], effKey);
+        const int = new Interceptor(BASES[defId], effKey);
+        int._threatType = t.wdef.type;
+        t.interceptors.push(int);  // FIX: was t.interceptor= (singular), never updated in sim loop
         stats.fired++;
         addCoT(`HITL APPROVED: ${EFFECTORS[MODE][effKey].name} INTERCEPTING ${t.id}`, 'success');
         
@@ -645,7 +741,8 @@ function updateSimulation() {
   if (!isSimulating) return;
 
   const isDecisionPending = (ENGINE_MODE === 'hitl' && pendingApprovals.size > 0);
-  const isManualPlanning  = (ENGINE_MODE === 'manual');
+  // Manual mode: sim runs freely — operator fires via dashboard manual panel (no freeze)
+  const isManualPlanning  = false;
   const wasFrozen = window._engFrozen || false;
   const nowFrozen = isDecisionPending || isManualPlanning;
 
@@ -664,28 +761,73 @@ function updateSimulation() {
     anyAlive = true; t.update();
     const dist = t.pos.distanceTo(new THREE.Vector3(to3X(t.targetNode.x), 5000, to3Z(t.targetNode.y)));
     
-    if (t.interceptors.length === 0 && dist < 250000) {
+    // Auto-Engagement Logic with Range Scaling
+    if (t.interceptors.length === 0) {
         if (ENGINE_MODE === 'auto') {
-            const salvoCount = (window._currentDoctrine === 'balanced') ? 1 : 2;
-            for (let s = 0; s < salvoCount; s++) {
-                let bestEff = null, bestBaseId = null, maxUtility = -Infinity;
+            // Build all valid (base, effector) candidates that are in range
+            const candidates = [];
+            Object.keys(BASES).forEach(baseId => {
+                if (ammo[baseId] <= 0) return;
+                const basePos = new THREE.Vector3(to3X(BASES[baseId].x), 5000, to3Z(BASES[baseId].y));
+                const dToBase = t.pos.distanceTo(basePos);
+                Object.keys(EFFECTORS[MODE]).forEach(effKey => {
+                    const eff = EFFECTORS[MODE][effKey];
+                    if (dToBase > eff.range) return; // outside this effector's reach
+                    const pk = eff.pk[t.wdef.type] || 0.5; // wdef.type now always defined
+                    // Engine bonus: +50 utility if engine recommended this effector type
+                    const engKey = t.engineAssignment ? (ENGINE_EFF_MAP[MODE]?.[t.engineAssignment.effector] || null) : null;
+                    const engineBonus = (engKey && effKey === engKey) ? 50 : 0;
+                    // Utility: kill probability primary, engine recommendation bonus, distance tiebreak
+                    const utility = (pk * 100) - (dToBase / 100000) + engineBonus;
+                    candidates.push({ baseId, effKey, dToBase, pk, utility });
+                });
+            });
+
+            // Best = highest utility (pk-driven), closest breaks ties
+            candidates.sort((a, b) => (b.utility - a.utility) || (a.dToBase - b.dToBase));
+            const best = candidates[0];
+            if (best) {
+                ammo[best.baseId]--; updateInventoryDisplay();
+                const int = new Interceptor(BASES[best.baseId], best.effKey);
+                int._threatType = t.wdef.type;
+                t.interceptors.push(int);
+                stats.fired++;
+                addCoT(`AUTO-ENGAGED ${t.id} → ${EFFECTORS[MODE][best.effKey].name} from ${BASES[best.baseId].name} (${(best.dToBase/1000).toFixed(0)}km)`, 'success');
+            }
+        } else if (ENGINE_MODE === 'hitl') {
+            // HITL: queue threat for commander approval ONLY when it enters engagement range
+            if (!pendingApprovals.has(t.id) && !rejectedThreats.has(t.id)) {
+                // Compute candidates (only add card when at least one base is in range)
+                const hitlCands = [];
                 Object.keys(BASES).forEach(baseId => {
                     if (ammo[baseId] <= 0) return;
+                    const bp = new THREE.Vector3(to3X(BASES[baseId].x), 5000, to3Z(BASES[baseId].y));
+                    const d = t.pos.distanceTo(bp);
                     Object.keys(EFFECTORS[MODE]).forEach(effKey => {
                         const eff = EFFECTORS[MODE][effKey];
+                        if (d > eff.range) return;
                         const pk = eff.pk[t.wdef.type] || 0.5;
-                        const utility = (pk * 100) - (eff.cost * 0.2);
-                        if (utility > maxUtility) { maxUtility = utility; bestEff = effKey; bestBaseId = baseId; }
+                        hitlCands.push({ baseId, effKey, d, utility: (pk*100)-(d/100000) });
                     });
                 });
-                if (bestBaseId && bestEff) {
-                    ammo[bestBaseId]--; updateInventoryDisplay();
-                    t.interceptors.push(new Interceptor(BASES[bestBaseId], bestEff));
-                    stats.fired++;
-                    addCoT(`AUTO-ENGAGED ${t.id} WITH ${EFFECTORS[MODE][bestEff].name}`, 'success');
+                hitlCands.sort((a,b) => b.utility - a.utility);
+                const bestH = hitlCands[0];
+                // Only show approval card once threat is actually within engagement range
+                if (bestH) {
+                    pendingApprovals.add(t.id);
+                    if (window.requestApproval) {
+                        window.requestApproval({
+                            threat_id: t.id,
+                            weapon: t.wdef.label || t.wdef.type,
+                            target: t.targetNode.name,
+                            effector: EFFECTORS[MODE][bestH.effKey].name,
+                            base_name: BASES[bestH.baseId].name
+                        });
+                    }
                 }
             }
         }
+        // MANUAL: no action — operator fires via dashboard manual panel
     }
 
     // Update all interceptors in the salvo
@@ -700,7 +842,8 @@ function updateSimulation() {
 
     if (threatNeutralized) {
       if (!t._disposed) {
-        createBlast(t.pos, 0x00f2ff); blastSvg(t.pos.x/1000, -t.pos.z/1000, '#00f2ff');
+        createBlast(t.pos, 0x00f2ff);
+        blastSvg(t.pos.x / 1666, t.pos.z / 1666, '#00f2ff'); // SVG unit = world m / SC(1666)
         stats.intercepted++;
         addCoT(`NEUTRALIZED ${t.id}`, 'success');
         t.dispose();
@@ -710,7 +853,7 @@ function updateSimulation() {
       // FIX: impact threshold MUST be smaller than interceptor kill radius (15000)
       // Using 3000 units — threat is at the target node
       createBlast(t.pos, 0xff3e3e);
-      const wx = t.pos.x/1000, wy = -t.pos.z/1000;
+      const wx = t.pos.x / 1666, wy = t.pos.z / 1666; // correct SVG coords
       blastSvg(wx, wy, '#ff3e3e');
       missMarkerSvg(wx, wy);
       cityHealth -= 5; if (healthFill) healthFill.style.width = `${cityHealth}%`;
@@ -732,6 +875,7 @@ function updateSimulation() {
       return;
     }
     currentWaveIdx++;
+    currentScenarioIdx++; // Advance to the next ground-truth scenario each wave
     if (currentWaveIdx < WAVE_SEQ.length) {
       restockAmmo();
       setTimeout(() => { waveTransitioning = false; launchWave(); }, 3000);
@@ -748,16 +892,38 @@ let scene, camera, renderer, orbitControls;
 function init3D() {
   const container = document.getElementById('canvas-container');
   if (!container) { setInterval(updateSimulation, 16); return; }
-  
+
+  // Use offsetWidth/Height which forces layout reflow; fall back to window dims
+  const W = container.offsetWidth  || (window.innerWidth  - 240);
+  const H = container.offsetHeight || (window.innerHeight - 260);
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x010a12);
-  camera = new THREE.PerspectiveCamera(60, container.clientWidth/container.clientHeight, 1000, 10000000);
-  camera.position.set(0, 1000000, 1000000);
+  camera = new THREE.PerspectiveCamera(60, W / H, 1000, 10000000);
+  // Center camera on boreal theater (~456, 391 units) or Sweden origin
+  if (MODE === 'boreal') {
+    camera.position.set(759000, 1000000, 1852000);
+  } else {
+    camera.position.set(0, 1000000, 1000000);
+  }
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(W, H);
   container.appendChild(renderer.domElement);
 
+  window.addEventListener('resize', () => {
+    const w = container.offsetWidth  || window.innerWidth;
+    const h = container.offsetHeight || window.innerHeight;
+    if (w > 0 && h > 0) {
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+  });
+
   orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+  if (MODE === 'boreal') orbitControls.target.set(759000, 0, 652000);
+  orbitControls.update();
+
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
   scene.add(new THREE.GridHelper(5000000, 50, 0x00f2ff, 0x112233));
 
@@ -770,7 +936,11 @@ function init3D() {
   });
 
   renderer.domElement.addEventListener('click', e => {
-    const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+    const rect = renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width)  * 2 - 1,
+      -((e.clientY - rect.top)  / rect.height) * 2 + 1
+    );
     const ray = new THREE.Raycaster(); ray.setFromCamera(mouse, camera);
     const hits = ray.intersectObjects(scene.children);
     if (hits[0]?.object.userData.id) triggerDemo(hits[0].object.userData.id);
@@ -793,17 +963,98 @@ function triggerDemo(id) {
   const n = THEATER_DATA.find(x => x.id === id);
   if (!n) return;
   threats.forEach(t => t.dispose()); threats = [];
-  initAmmo(); isSimulating = true;
-  const t = new Threat(`DEMO-${id}`, 'BALLISTIC', n, 0);
+  initAmmo(); isSimulating = true; waveTransitioning = false;
+  // Prevent wave transition from auto-launching ground-truth scenarios after demo ends
+  currentWaveIdx = WAVE_SEQ.length;
+  pendingApprovals.clear(); rejectedThreats.clear();
+  stats = { fired:0, intercepted:0, missed:0, impacts:0, totalThreats:1 };
+  // Use weapon selector if present (live_view.html), else random
+  const WKEYS = ['CRUISE','HYPERSONIC','LOITER','BALLISTIC'];
+  const wEl = document.getElementById('lv-sel-weapon');
+  const wkey = (wEl && wEl.value) ? wEl.value : WKEYS[Math.floor(Math.random() * WKEYS.length)];
+  const t = new Threat(`DEMO-${id}`, wkey, n, 0);
   threats.push(t);
-  addCoT(`DEMO INITIATED :: INBOUND STRIKE ON ${n.name}`, 'alert');
-  if (camera) { camera.position.set(to3X(n.x), 400000, to3Z(n.y)+400000); orbitControls.target.set(to3X(n.x), 0, to3Z(n.y)); }
+  addCoT(`DEMO: ${WEAPONS[wkey].label} INBOUND → ${n.name}`, 'alert');
+  if (camera) {
+    camera.position.set(to3X(n.x), 400000, to3Z(n.y)+400000);
+    orbitControls.target.set(to3X(n.x), 0, to3Z(n.y));
+    orbitControls.update();
+  }
+  // Query CORTEX-1 neural engine for this single threat
+  callEngine([t]).then(result => {
+    if (!result) { addCoT('CORTEX-1 OFFLINE — AUTO-ENGAGE ACTIVE', 'alert'); return; }
+    const score = (result.strategic_consequence_score || 0).toFixed(0);
+    const sirepLines = (result.human_sitrep || '').split('\n').map(l => l.trim()).filter(Boolean);
+    const firstContent = sirepLines.find(l => !l.match(/^[-—]+$/));
+    const sitrep = (firstContent || '').replace(/^[-—\s]+|[-—\s]+$/g, '').substring(0, 80);
+    addCoT(`CORTEX-1: ${sitrep || 'THREAT ASSESSED'}`, 'info');
+    addCoT(`NEURAL SCORE: ${score} | LEAKED: ${(result.leaked || 0).toFixed(1)}`, 'info');
+    (result.tactical_assignments || []).forEach(a => {
+      const thr = threats.find(x => x.id === a.threat_id);
+      if (thr) {
+        thr.engineAssignment = a;
+        const frontendEff = ENGINE_EFF_MAP[MODE]?.[a.effector] || null;
+        addCoT(`ENGINE → ${a.effector?.toUpperCase()} ≡ ${frontendEff || 'LOCAL'} from ${a.base}`, 'success');
+      }
+    });
+  });
 }
+
+function launchStandaloneWave() {
+  threats.forEach(t => t.dispose()); threats = [];
+  isSimulating = true; waveTransitioning = false;
+  cityHealth = 100; if (healthFill) healthFill.style.width = '100%';
+  stats = { fired:0, intercepted:0, missed:0, impacts:0, totalThreats:0 };
+  pendingApprovals.clear(); rejectedThreats.clear();
+  initAmmo(); updateInventoryDisplay();
+  const WKEYS = ['CRUISE','HYPERSONIC','LOITER','BALLISTIC','CRUISE'];
+  const tgtPool = THEATER_DATA.filter(n => n.type === 'HVA' || n.type === 'BASE');
+  addCoT('STANDALONE SATURATION WAVE — 5 THREATS INBOUND', 'alert');
+  addCoT(`ACTIVE MODEL: ${ACTIVE_MODEL.name} | Pk: ${(ACTIVE_MODEL.pk*100).toFixed(1)}%`, 'info');
+  // Set wave index past WAVE_SEQ boundary so updateSimulation() stops cleanly
+  // instead of transitioning to ground-truth launchWave() after this wave ends
+  currentWaveIdx = WAVE_SEQ.length;
+  const newThreats = WKEYS.map((wkey, i) => {
+    const tgt = tgtPool[Math.floor(Math.random() * tgtPool.length)];
+    const t = new Threat(`WAVE-${i}`, wkey, tgt, i);
+    threats.push(t);
+    stats.totalThreats++;
+    addCoT(`THREAT ${i+1}: ${WEAPONS[wkey].label} → ${tgt.name}`, 'alert');
+    return t;
+  });
+  if (camera && orbitControls) {
+    const cx = MODE === 'sweden' ? 0 : to3X(456);
+    const cz = MODE === 'sweden' ? 0 : to3Z(391);
+    camera.position.set(cx, 900000, cz + 700000);
+    orbitControls.target.set(cx, 0, cz);
+    orbitControls.update();
+  }
+  callEngine(newThreats).then(result => {
+    if (!result) { addCoT('CORTEX-1 OFFLINE — AUTO-TRIAGE ACTIVE', 'alert'); return; }
+    const score = (result.strategic_consequence_score || 0).toFixed(0);
+    const sirepLines = (result.human_sitrep || '').split('\n').map(l => l.trim()).filter(Boolean);
+    const firstContent = sirepLines.find(l => !l.match(/^[-—]+$/));
+    const sitrep = (firstContent || '').replace(/^[-—\s]+|[-—\s]+$/g, '').substring(0, 80);
+    addCoT(`CORTEX-1: ${sitrep || 'WAVE ASSESSED'}`, 'info');
+    addCoT(`NEURAL SCORE: ${score} | LEAKED: ${(result.leaked || 0).toFixed(1)}`, 'info');
+    (result.tactical_assignments || []).forEach(a => {
+      const thr = threats.find(x => x.id === a.threat_id);
+      if (thr) {
+        thr.engineAssignment = a;
+        const fe = ENGINE_EFF_MAP[MODE]?.[a.effector] || null;
+        addCoT(`ENGINE → ${a.threat_id}: ${a.effector?.toUpperCase()} ≡ ${fe || 'LOCAL'} from ${a.base}`, 'success');
+      }
+    });
+  });
+  updateAccuracyDisplay();
+}
+window.launchStandaloneWave = launchStandaloneWave;
 
 function addCoT(msg, type) {
   if (!cotFeed) return;
   const p = document.createElement('p'); p.className = `cot-item ${type}`; p.innerText = `> ${msg}`;
   cotFeed.prepend(p);
+  if (window._addCoTHook) window._addCoTHook(msg, type);
 }
 
 function boot() {
@@ -814,10 +1065,22 @@ function boot() {
   cotFeed = document.getElementById('cot-feed');
   healthFill = document.getElementById('city-health');
 
+  // ── Neural Engine WebSocket uplink — streams CORTEX-1 telemetry to CoT log
+  try {
+    const _engWs = new WebSocket(`ws://${window.location.hostname}:8000/ws/logs`);
+    _engWs.onopen    = () => addCoT('CORTEX-1 NEURAL UPLINK ESTABLISHED — ENGINE ONLINE', 'success');
+    _engWs.onmessage = e => {
+      if (e.data === '[HEARTBEAT]') return;
+      addCoT(e.data.replace(/^\[(STRAT|LOG|SYS)\] ?/, '').substring(0, 100), 'info');
+    };
+    _engWs.onerror = () => addCoT('NEURAL ENGINE UPLINK OFFLINE — STANDALONE MODE ACTIVE', 'alert');
+  } catch(_) {}
+
   // DYNAMIC BENCHMARK FETCH (Theater-Specific)
-  fetch('data/model_benchmarks.json')
+  fetch('/data/model_benchmarks.json')
     .then(r => r.json())
     .then(data => {
+      BENCHMARKS = data; // Store globally for setModel()
       const theaterData = data[MODE] || data.boreal;
       Object.keys(theaterData).forEach(k => {
         if (MODEL_PROFILES[k]) {
@@ -832,7 +1095,7 @@ function boot() {
     .catch(e => console.warn("BENCHMARK FETCH FAILED :: USING ENGINE DEFAULTS", e));
 
   // GROUND TRUTH SCENARIO FETCH (1000 SEQUENCES)
-  fetch('data/ground_truth_scenarios.json')
+  fetch('/data/ground_truth_scenarios.json')
     .then(r => r.json())
     .then(data => {
       groundTruthData = data;
@@ -841,6 +1104,9 @@ function boot() {
     .catch(e => console.error("GROUND TRUTH FETCH FAILED", e));
 
   renderMap(); init3D(); initAmmo(); updateInventoryDisplay();
+  // Initialize live_view model display (no-op if element absent on dashboard)
+  const lvModel = document.getElementById('lv-active-model');
+  if (lvModel) lvModel.innerText = ACTIVE_MODEL.name;
 
   // --- BUTTON WIRING ---
   const el = id => document.getElementById(id);

@@ -20,7 +20,7 @@ import random
 import uvicorn
 
 # 1. CORE MODELS & LOGIC
-from core.models import Effector, Base, Threat, GameState, EFFECTORS
+from core.models import Effector, Base, Threat, GameState, EFFECTORS, load_battlefield_state
 from core.engine import evaluate_threats_advanced
 
 # 2. CONSTANTS & CONFIG
@@ -96,7 +96,12 @@ class TacticalRequest(BaseModel):
 
 async def format_report_with_llm(raw_decision_data):
     """Local heuristic analyst replacing"""
-    breach_risk = max(0, 100 - (raw_decision_data.get("rl_prediction", 0) / 8))
+    # Define variables BEFORE the f-string that uses them
+    t_count = len(raw_decision_data.get("tactical_assignments", []))
+    score = raw_decision_data.get("strategic_consequence_score", 0)
+    doctrine = raw_decision_data.get("active_doctrine", {}).get("primary", "balanced")
+    is_neural = raw_decision_data.get("rl_prediction") is not None
+    breach_risk = max(0, 100 - (raw_decision_data.get("rl_prediction", 0) or 0) / 8)
     
     prompt = f"""
     You are the Boreal Strategic AI (CORTEX-1), a military intelligence advisor to the Commander (Stridsledare).
@@ -115,10 +120,6 @@ async def format_report_with_llm(raw_decision_data):
     2. Provide a 1-sentence ADVISORY. Use NATO codes like 'WEAPONS FREE' or 'HOLD FIRE'.
     Keep it cold, professional, and precise. Use CAPITAL LETTERS for base names and threat types.
     """
-    t_count = len(raw_decision_data.get("tactical_assignments", []))
-    score = raw_decision_data.get("strategic_consequence_score", 0)
-    doctrine = raw_decision_data.get("active_doctrine", {}).get("primary", "balanced")
-    is_neural = raw_decision_data.get("rl_prediction") is not None
 
     if OPENROUTER_API_KEY:
         try:
@@ -225,20 +226,33 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
         }
     
     # --- STRATEGIC EVALUATION (Global Stream) ---
-    raw_decision = await asyncio.to_thread(
-        evaluate_threats_advanced, 
-        game_state, 
-        active_threats, 
-        50, 
-        GLOBAL_LOG_QUEUE, 
-        request.weather, 
-        2.0, 
-        request.doctrine_primary, 
-        doc_sec, 
-        request.doctrine_blend,
-        request.use_rl,
-        request.use_ppo
+    # evaluate_threats_advanced returns (score, details, rl_val) tuple.
+    # Pass only documented positional/keyword args — previous code incorrectly
+    # passed GLOBAL_LOG_QUEUE as salvo_ratio causing a TypeError (500 error).
+    result_tuple = await asyncio.to_thread(
+        evaluate_threats_advanced,
+        game_state,
+        active_threats,
+        50,    # mcts_iterations
+        2.0,   # salvo_ratio
+        None,  # doctrine_weights (handled internally by DoctrineManager)
+        weather=request.weather,
+        doctrine_primary=request.doctrine_primary,
     )
+    score, details, rl_val = result_tuple
+    raw_decision = {
+        "tactical_assignments": details.get("tactical_assignments", []),
+        "strategic_consequence_score": float(score),
+        "rl_prediction": float(rl_val) if rl_val else None,
+        "leaked": float(details.get("leaked", 0)),
+        "active_doctrine": {
+            "primary": request.doctrine_primary,
+            "secondary": doc_sec or "none",
+            "blend_ratio": f"{int(request.doctrine_blend*100)}/{int((1-request.doctrine_blend)*100)}",
+            "flags": {},
+            "weights": {}
+        }
+    }
 
     try:
         rl_display = raw_decision.get('rl_prediction') or 0.0

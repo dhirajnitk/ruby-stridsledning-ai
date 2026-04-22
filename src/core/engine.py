@@ -11,13 +11,17 @@ import numpy as np
 # --- DOMAIN MODELS ---
 from .models import Effector, Threat, Base, GameState
 
-# --- EFFECTOR SPECIFICATIONS ---
+# --- EFFECTOR SPECIFICATIONS (theater-scale ranges in SVG units; 1 unit ≈ 1.666 km) ---
 EFFECTORS = {
-    "patriot-pac3": Effector("Patriot PAC-3", 120, 5000, {"drone": 0.95, "cruise-missile": 0.95, "fighter": 0.90, "ballistic": 0.85, "hypersonic-pgm": 0.75, "decoy": 0.99}, 800),
-    "iris-t-sls": Effector("IRIS-T SLS", 12, 3500, {"drone": 0.90, "cruise-missile": 0.85, "fighter": 0.80, "decoy": 0.95}, 150),
-    "saab-nimbrix": Effector("Saab Nimbrix", 5, 200, {"drone": 0.95, "decoy": 0.99}, 20, "soft-kill-unjammable"),
-    "meteor": Effector("Meteor", 150, 4900, {"fighter": 0.95, "cruise-missile": 0.90, "hypersonic-pgm": 0.80}, 1200, "no-escape-zone"),
-    "nasams": Effector("NASAMS", 40, 3200, {"drone": 0.92, "cruise-missile": 0.88, "fighter": 0.85}, 300),
+    "patriot-pac3":  Effector("Patriot PAC-3",  5000, 800, 300, {"drone": 0.95, "cruise-missile": 0.95, "fighter": 0.90, "ballistic": 0.85, "hypersonic-pgm": 0.75, "decoy": 0.99}),
+    "iris-t-sls":    Effector("IRIS-T SLS",      3500, 150, 120, {"drone": 0.90, "cruise-missile": 0.85, "fighter": 0.80, "decoy": 0.95}),
+    "saab-nimbrix":  Effector("Saab Nimbrix",     200,  20,  50, {"drone": 0.95, "decoy": 0.99}, "soft-kill-unjammable"),
+    "meteor":        Effector("Meteor",           4900, 1200, 400, {"fighter": 0.95, "cruise-missile": 0.90, "hypersonic-pgm": 0.80}, "no-escape-zone"),
+    "nasams":        Effector("NASAMS",           3200, 300, 250, {"drone": 0.92, "cruise-missile": 0.88, "fighter": 0.85}),
+    "coyote-block2": Effector("RTX Coyote B2",    800,   5,  80, {"drone": 0.95, "cruise-missile": 0.30}),
+    "merops-interceptor": Effector("Merops",       400,   2,  30, {"drone": 0.95}),
+    "thaad":         Effector("THAAD",            7200, 800, 500, {"ballistic": 0.98, "hypersonic-pgm": 0.80, "cruise-missile": 0.40}),
+    "lids-ew":       Effector("LIDS EW",       300000,   1,  60, {"drone": 0.85}, "soft-kill-unjammable"),
 }
 
 # --- GLOBAL NEURAL MODELS ---

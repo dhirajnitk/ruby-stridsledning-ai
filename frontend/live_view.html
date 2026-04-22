@@ -107,7 +107,15 @@
   </div>
   <div id="base-list"></div>
   <div id="demo-controls">
-    <button class="dbtn red" id="btn-saturation">⚠ SATURATION WAVE</button>
+    <select id="lv-sel-weapon" class="dbtn" style="margin-bottom:5px;cursor:pointer;">
+      <option value="">⚡ RANDOM WEAPON</option>
+      <option value="CRUISE">🔴 CRUISE MISSILE</option>
+      <option value="HYPERSONIC">🟡 HYPERSONIC GLIDE</option>
+      <option value="LOITER">🟣 LOITERING MUNITION</option>
+      <option value="BALLISTIC">🟠 BALLISTIC</option>
+    </select>
+    <div id="lv-base-info" style="font-size:0.42rem;color:rgba(0,242,255,0.6);padding:5px 2px 3px;letter-spacing:1px;min-height:30px;line-height:1.7;">CLICK A BASE TO BEGIN</div>
+    <button class="dbtn red" id="btn-lv-saturation">⚠ SATURATION WAVE</button>
     <button class="dbtn"     id="btn-reset">↺ CLEAR THEATRE</button>
     <button class="dbtn"     id="btn-back" onclick="window.location.href='dashboard.html?mode='+MODE">◄ BACK TO DASHBOARD</button>
   </div>
@@ -163,22 +171,23 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.base-card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active');
       document.getElementById('sel-label').textContent = `▶ ${node.id} — ${node.name}`;
+      const infoEl = document.getElementById('lv-base-info');
+      if (infoEl) {
+        const effs = (node.effectors || []).join(' · ') || 'DEFAULT';
+        const tag = node.type === 'HVA' ? '⬟ HVA' : '◉ BASE';
+        infoEl.innerHTML = `${tag} | SAM: ${node.sam || 0} rds<br>${effs}`;
+      }
       triggerDemo(node.id);  // from viz_engine.js
     });
     list.appendChild(card);
   });
 
-  // Saturation wave
-  document.getElementById('btn-saturation').addEventListener('click', () => {
+  // Saturation wave — standalone mode (no ground-truth dependency)
+  document.getElementById('btn-lv-saturation').addEventListener('click', () => {
     document.querySelectorAll('.base-card').forEach(c=>c.classList.remove('active'));
     document.getElementById('sel-label').textContent = '▶ SATURATION — ALL ASSETS';
-    startEngagement();  // from viz_engine.js
-    // Reset camera overview
-    if (typeof camera !== 'undefined' && camera && typeof orbitControls !== 'undefined' && orbitControls) {
-      camera.position.set(0, 900000, 700000);
-      orbitControls.target.set(0,0,0);
-      orbitControls.update();
-    }
+    document.getElementById('lv-base-info').innerHTML = 'SATURATION WAVE INBOUND — CORTEX-1 ENGAGING';
+    launchStandaloneWave();  // from viz_engine.js
   });
 
   document.getElementById('btn-reset').addEventListener('click', ()=>location.reload());
