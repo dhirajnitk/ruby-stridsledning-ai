@@ -1,0 +1,12 @@
+record_type,feature_id,feature_name,side,subtype,location_context,geometry_type,notes,latitude,longitude,x_km,y_km
+location,F21,Luleå Air Base (F 21),north,air_base,mainland,point,Northernmost air wing,65.5436,22.1211,185.0,691.0
+location,F16,Uppsala Air Base (F 16),north,air_base,mainland,point,Strategic base near capital,59.8972,17.5886,-27.0,63.0
+location,VID,Vidsel Air Base,north,air_base,mainland,point,Missile and aerospace test range,65.8753,20.1500,95.0,728.0
+location,STO,Stockholm (Capital),north,capital,mainland,point,Political heart of Sweden,59.3293,18.0686,0.0,0.0
+location,MUS,Muskö Naval Base,north,naval_base,island,point,Underground mountain base,58.9167,18.1333,4.0,-46.0
+location,F7,Såtenäs Air Base (F 7),south,air_base,mainland,point,JAS 39 Gripen training wing,58.4419,12.7108,-313.0,-99.0
+location,F17,Ronneby Air Base (F 17),south,air_base,mainland,point,Primary southern fighter wing,56.2667,15.2653,-172.0,-340.0
+location,MAL,Malmen Air Base,south,air_base,mainland,point,Helicopter wing and flight school,58.3967,15.5261,-150.0,-104.0
+location,KRL,Karlskrona Naval Base,south,naval_base,mainland,point,Largest naval base; Navy HQ,56.1612,15.5869,-153.0,-352.0
+location,GOT,Gotland (Visby Base),south,major_city,island,point,Unsinkable aircraft carrier,57.6591,18.3458,16.0,-186.0
+location,GBG,Gothenburg,south,major_city,mainland,point,Major western port,57.7089,11.9746,-364.0,-180.0

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BOREAL LIVE KINETIC AUDIT | V5.0</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background:#010a12; display:flex; height:100vh; overflow:hidden;
+           font-family:'Orbitron',monospace; color:#00f2ff; }
+
+    /* ── LEFT PANEL ─────────────────────────── */
+    #base-panel {
+      width:230px; min-width:230px; display:flex; flex-direction:column;
+      border-right:1px solid rgba(0,242,255,0.2);
+      background:rgba(0,242,255,0.02);
+    }
+    #base-panel-header {
+      padding:14px 14px 10px; border-bottom:1px solid rgba(0,242,255,0.12);
+    }
+    #base-panel-header h3 { font-size:0.62rem; letter-spacing:2px; margin-bottom:4px; }
+    #base-panel-header p  { font-size:0.45rem; color:rgba(0,242,255,0.5); letter-spacing:1px; }
+
+    #base-list { flex:1; overflow-y:auto; padding:8px; }
+    .base-card {
+      padding:9px 11px; margin-bottom:5px; cursor:pointer; border-radius:3px;
+      border:1px solid rgba(0,242,255,0.2); background:rgba(0,242,255,0.03);
+      transition:all 0.18s;
+    }
+    .base-card:hover { background:rgba(0,242,255,0.1); border-color:rgba(0,242,255,0.5);
+                       box-shadow:0 0 10px rgba(0,242,255,0.15); }
+    .base-card.active { background:rgba(0,242,255,0.14); border-color:#00f2ff; }
+    .base-card.hva    { border-color:rgba(0,255,136,0.25); background:rgba(0,255,136,0.03); }
+    .base-card.hva:hover { background:rgba(0,255,136,0.1); border-color:rgba(0,255,136,0.6); }
+    .base-card.active.hva { border-color:#00ff88; }
+    .bc-id   { font-size:0.65rem; font-weight:bold; margin-bottom:2px; }
+    .bc-name { font-size:0.46rem; color:rgba(0,242,255,0.55); letter-spacing:1px; }
+    .bc-meta { font-size:0.42rem; color:rgba(0,242,255,0.38); margin-top:3px; }
+    .base-card.hva .bc-id, .base-card.hva .bc-name { color:#00ff88; }
+    .base-card.hva .bc-meta { color:rgba(0,255,136,0.4); }
+
+    #demo-controls { padding:9px; border-top:1px solid rgba(0,242,255,0.12); }
+    .dbtn {
+      width:100%; padding:8px; margin-bottom:5px; cursor:pointer; border-radius:3px;
+      font-family:'Orbitron',monospace; font-size:0.48rem; letter-spacing:1.5px;
+      background:rgba(0,242,255,0.08); border:1px solid rgba(0,242,255,0.35);
+      color:#00f2ff; transition:all 0.18s;
+    }
+    .dbtn:hover { background:rgba(0,242,255,0.18); box-shadow:0 0 8px rgba(0,242,255,0.2); }
+    .dbtn.red { background:rgba(255,62,62,0.1); border-color:rgba(255,62,62,0.45); color:#ff3e3e; }
+    .dbtn.red:hover { background:rgba(255,62,62,0.22); }
+
+    /* ── MAIN VIEW ──────────────────────────── */
+    #main-view { flex:1; display:flex; flex-direction:column; }
+
+    #view-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:9px 18px; border-bottom:1px solid rgba(0,242,255,0.15);
+      background:rgba(0,0,0,0.45); flex-shrink:0;
+    }
+    #view-header .vtitle { font-size:0.58rem; letter-spacing:2.5px; }
+    #sel-label {
+      font-size:0.52rem; color:#00ff88; padding:3px 9px;
+      border:1px solid rgba(0,255,136,0.4); border-radius:3px;
+      background:rgba(0,255,136,0.06);
+    }
+    #view-header .hint { font-size:0.44rem; color:rgba(0,242,255,0.45); }
+
+    #canvas-container { flex:1; overflow:hidden; cursor:crosshair; }
+    #canvas-container canvas { width:100%!important; height:100%!important; }
+
+    /* ── COT FEED ───────────────────────────── */
+    #cot-panel {
+      height:130px; flex-shrink:0; overflow-y:auto;
+      border-top:1px solid rgba(0,242,255,0.15); background:rgba(0,0,0,0.5);
+      padding:7px 14px;
+    }
+    #cot-feed p { font-size:0.47rem; letter-spacing:1px; margin-bottom:2px; line-height:1.5; }
+    #cot-feed p.alert   { color:#ff3e3e; }
+    #cot-feed p.success { color:#00ff88; }
+    #cot-feed p.info    { color:rgba(0,242,255,0.55); }
+
+    /* Weapon legend */
+    #wep-legend {
+      padding:7px 14px; border-top:1px solid rgba(0,242,255,0.1);
+      display:flex; gap:16px; flex-shrink:0; background:rgba(0,0,0,0.3);
+    }
+    .wl-item { display:flex; align-items:center; gap:5px; font-size:0.42rem;
+               color:rgba(0,242,255,0.5); }
+    .wl-dot  { width:8px; height:8px; border-radius:50%; }
+  </style>
+  <style>
+    #lv-freeze{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;flex-direction:column}
+    #lv-freeze.on{display:flex}
+    #lv-freeze h2{font-size:1.6rem;letter-spacing:8px;color:#ffcc00;text-shadow:0 0 24px rgba(255,204,0,.9);animation:lv-blink .7s infinite}
+    #lv-freeze p{font-size:.6rem;color:rgba(255,204,0,.65);letter-spacing:3px;margin-top:8px}
+    @keyframes lv-blink{0%,100%{opacity:1}50%{opacity:.2}}
+  </style>
+</head>
+<body>
+
+<!-- LEFT: Base Selector -->
+<aside id="base-panel">
+  <div id="base-panel-header">
+    <h3>FORTRESS HUB REGISTRY</h3>
+    <p>CLICK BASE → DEMO INTERCEPT</p>
+  </div>
+  <div id="base-list"></div>
+  <div id="demo-controls">
+    <button class="dbtn red" id="btn-saturation">⚠ SATURATION WAVE</button>
+    <button class="dbtn"     id="btn-reset">↺ CLEAR THEATRE</button>
+    <button class="dbtn"     id="btn-back" onclick="window.location.href='dashboard.html?mode='+MODE">◄ BACK TO DASHBOARD</button>
+  </div>
+</aside>
+
+<!-- FREEZE OVERLAY (live_view) -->
+<div id="lv-freeze"><h2>⏸ TACTICAL FREEZE</h2><p>RETURN TO DASHBOARD TO APPROVE / REJECT</p></div>
+
+<!-- RIGHT: 3D View -->
+<div id="main-view">
+  <div id="view-header">
+    <div class="vtitle">LIVE KINETIC AUDIT :: <span id="lv-active-model" style="color:#ffcc00;">LOADING CORE...</span></div>
+    <div id="sel-label">SELECT A BASE TO DEMO</div>
+    <div class="hint">CLICK BASE · DRAG ORBIT · SCROLL ZOOM</div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div id="wep-legend">
+    <div class="wl-item"><div class="wl-dot" style="background:#ff3e3e"></div>CRUISE</div>
+    <div class="wl-item"><div class="wl-dot" style="background:#ffcc00"></div>HYPERSONIC</div>
+    <div class="wl-item"><div class="wl-dot" style="background:#ff00ff"></div>LOITER</div>
+    <div class="wl-item"><div class="wl-dot" style="background:#ff5500"></div>BALLISTIC</div>
+    <div class="wl-item"><div class="wl-dot" style="background:#00f2ff"></div>SAM INTERCEPTOR</div>
+  </div>
+
+  <div id="cot-panel">
+    <div id="cot-feed">
+      <p class="info">> System primed. Click a base on the left to trigger a demo intercept.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="viz_engine.js"></script>
+<script>
+// NOTE: SAAB_CH and all engine functions are provided by viz_engine.js
+// We only do UI wiring here — NO redeclarations.
+document.addEventListener('DOMContentLoaded', () => {
+  // Build base cards from THEATER_DATA (defined in viz_engine.js)
+  const list = document.getElementById('base-list');
+  THEATER_DATA.forEach(node => {
+    const card = document.createElement('div');
+    card.className = 'base-card' + (node.type==='HVA' ? ' hva' : '');
+    card.dataset.id = node.id;
+    card.innerHTML = `
+      <div class="bc-id">${node.id}</div>
+      <div class="bc-name">${node.name}</div>
+      <div class="bc-meta">${node.domain ? 'DOMAIN: '+node.domain : 'HIGH-VALUE ASSET'}${node.sam ? ' · SAM: '+node.sam : ''}</div>
+    `;
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.base-card').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+      document.getElementById('sel-label').textContent = `▶ ${node.id} — ${node.name}`;
+      triggerDemo(node.id);  // from viz_engine.js
+    });
+    list.appendChild(card);
+  });
+
+  // Saturation wave
+  document.getElementById('btn-saturation').addEventListener('click', () => {
+    document.querySelectorAll('.base-card').forEach(c=>c.classList.remove('active'));
+    document.getElementById('sel-label').textContent = '▶ SATURATION — ALL ASSETS';
+    startEngagement();  // from viz_engine.js
+    // Reset camera overview
+    if (typeof camera !== 'undefined' && camera && typeof orbitControls !== 'undefined' && orbitControls) {
+      camera.position.set(0, 900000, 700000);
+      orbitControls.target.set(0,0,0);
+      orbitControls.update();
+    }
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', ()=>location.reload());
+
+  // Dashboard sync handled by viz_engine.js Mirror Mode
+});
+</script>
+</body>
+</html>

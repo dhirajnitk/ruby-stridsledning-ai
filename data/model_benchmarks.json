@@ -1,0 +1,96 @@
+{
+  "boreal": {
+    "elite": {
+      "pk": 0.980,
+      "success": "1,000/1,000",
+      "desc": "PEAK: Transf-ResNet / Direct Action."
+    },
+    "supreme3": {
+      "pk": 0.947,
+      "success": "453/1,000",
+      "desc": "PRECISION: Chronos GRU / Sequential."
+    },
+    "supreme2": {
+      "pk": 0.898,
+      "success": "316/1,000",
+      "desc": "LEGACY: ResNet-64 / Hybrid."
+    },
+    "titan": {
+      "pk": 0.912,
+      "success": "331/1,000",
+      "desc": "SWARM MASTER: Self-Att / Multi-Vec."
+    },
+    "hybrid": {
+      "pk": 0.880,
+      "success": "1,000/1,000",
+      "desc": "ROBUST: ResNet-128 / Hungarian."
+    },
+    "genE10": {
+      "pk": 0.930,
+      "success": "392/1,000",
+      "desc": "AGGRESSIVE: Policy-Only / Direct."
+    },
+    "heuristic": {
+      "pk": 0.745,
+      "success": "126/1,000",
+      "desc": "TRIAGE: Class-Aware Rules."
+    },
+    "hBase": {
+      "pk": 0.579,
+      "success": "988/1,000",
+      "desc": "STATIC: Legacy Hungarian."
+    },
+    "random": {
+      "pk": 0.501,
+      "success": "36/1,000",
+      "desc": "STOCHASTIC: Random Baseline."
+    }
+  },
+  "sweden": {
+    "elite": {
+      "pk": 0.982,
+      "success": "1,000/1,000",
+      "desc": "PEAK: National Area Defense."
+    },
+    "supreme3": {
+      "pk": 0.951,
+      "success": "472/1,000",
+      "desc": "PRECISION: Baltic Optimization."
+    },
+    "supreme2": {
+      "pk": 0.902,
+      "success": "345/1,000",
+      "desc": "LEGACY: Balanced National Logic."
+    },
+    "titan": {
+      "pk": 0.916,
+      "success": "368/1,000",
+      "desc": "ANTI-SATURATION: Self-Attention."
+    },
+    "hybrid": {
+      "pk": 0.885,
+      "success": "1,000/1,000",
+      "desc": "ROBUST: Maximum Theater Safety."
+    },
+    "genE10": {
+      "pk": 0.932,
+      "success": "415/1,000",
+      "desc": "TACTICAL: Policy-Only Response."
+    },
+    "heuristic": {
+      "pk": 0.752,
+      "success": "142/1,000",
+      "desc": "TRIAGE: Swedish National Rules."
+    },
+    "hBase": {
+      "pk": 0.584,
+      "success": "990/1,000",
+      "desc": "STATIC: Standard Saab Rules."
+    },
+    "random": {
+      "pk": 0.502,
+      "success": "42/1,000",
+      "desc": "STOCHASTIC: Baseline Random."
+    }
+  }
+}

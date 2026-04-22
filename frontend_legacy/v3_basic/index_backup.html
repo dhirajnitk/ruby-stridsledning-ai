@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOREAL STRATEGIC COMMAND | V4.0</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <main id="app-grid">
+        <!-- TOP HEADER: MISSION STATUS -->
+        <header>
+            <div class="logo">
+                <h1>BOREAL STRATEGIC COMMAND</h1>
+            </div>
+            <div class="city-status">
+                <span style="font-size: 0.7rem; color: #888;">CAPITAL CITY INTEGRITY:</span>
+                <div class="health-bar-container">
+                    <div id="city-health" class="health-fill"></div>
+                </div>
+                <div class="status-badge scanning">Operational</div>
+            </div>
+        </header>
+
+        <!-- LEFT COLUMN: THREAT TRIAGE -->
+        <aside class="module threat-registry">
+            <div class="module-header">
+                <h2>Threat Registry</h2>
+                <span id="threat-count" style="color: var(--accent-blue);">0 ACTIVE</span>
+            </div>
+            <div id="threat-list" class="threat-list">
+                <!-- Dynamic Threat Items -->
+                <p style="text-align: center; color: #555; padding-top: 2rem;">Awaiting Engagement...</p>
+            </div>
+        </aside>
+
+        <!-- RIGHT COLUMN: NEURAL CoT -->
+        <aside class="module cot-panel">
+            <div class="module-header">
+                <h2>Strategic Intuition</h2>
+                <span style="color: var(--accent-green);">94.5% ACC</span>
+            </div>
+            <div id="cot-feed" class="cot-feed" style="overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+                <div style="color: #555;">> System Primed. Fused Radar-Kinetic Engine Online.</div>
+            </div>
+        </aside>
+
+        <!-- BOTTOM COLUMN: COMMAND & RESOURCES -->
+        <section class="module command-center" style="grid-column: 1 / 3;">
+            <div class="module-header">
+                <h2>Command & Doctrine</h2>
+                <div class="doctrine-selector">
+                    <button class="doctrine-btn active">Balanced</button>
+                    <button class="doctrine-btn">Fortress</button>
+                    <button class="doctrine-btn">Aggressive</button>
+                </div>
+            </div>
+            <div class="resource-grid">
+                <div class="resource-card">
+                    <div style="font-size: 0.6rem; color: #888;">KINETIC (SAM)</div>
+                    <div class="resource-val" id="res-sam">48</div>
+                </div>
+                <div class="resource-card">
+                    <div style="font-size: 0.6rem; color: #888;">ELECTRONIC (EW)</div>
+                    <div class="resource-val" id="res-ew">READY</div>
+                </div>
+                <div class="resource-card">
+                    <div style="font-size: 0.6rem; color: #888;">HIGH-ENERGY (LASER)</div>
+                    <div class="resource-val" id="res-laser">ACTIVE</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="module action-panel" style="grid-column: 3; justify-content: center;">
+            <button id="btn-launch" style="width: 100%; height: 60px; font-size: 1rem; border-radius: 4px;">Initialize Intercept</button>
+            <button id="btn-reset" style="margin-top: 1rem; background: transparent; font-size: 0.7rem; color: #555;">Clear Theatre</button>
+        </section>
+    </main>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="viz_engine.js"></script>
+</body>
+</html>

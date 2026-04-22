@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boreal Chessmaster: Strategic DNA Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Cascadia+Code&display=swap');
+        
+        body, html { margin: 0; padding: 0; height: 100%; background: #0b0b11; font-family: 'Outfit', sans-serif; color: #cdd6f4; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 20px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #313244; padding-bottom: 20px; }
+        .logo { color: #fab387; font-weight: bold; letter-spacing: 2px; font-size: 20px; }
+        
+        .controls { display: flex; gap: 15px; margin-bottom: 30px; }
+        select, button { background: #181825; border: 1px solid #45475a; color: #cdd6f4; padding: 12px 20px; border-radius: 8px; font-family: 'Outfit'; cursor: pointer; }
+        button { background: #a6e3a1; color: #11111b; font-weight: bold; border: none; }
+        button:hover { background: #94e2d5; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .panel { background: #11111b; border: 1px solid #313244; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .panel-header { font-size: 14px; font-weight: bold; color: #89b4fa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+        
+        .dna-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e1e2e; font-size: 13px; }
+        .dna-val { font-family: 'Cascadia Code', monospace; color: #a6e3a1; }
+        
+        .weight-pill { display: inline-block; padding: 4px 12px; border-radius: 20px; background: #1e1e2e; border: 1px solid #45475a; font-size: 11px; margin-right: 5px; }
+        .weight-val { color: #fab387; font-weight: bold; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">STRATEGIC DNA EXPLORER</div>
+            <div style="font-size: 12px; color: #6c7086;">BOREAL AI VAULT v1.0</div>
+        </div>
+        
+        <div class="controls">
+            <select id="dataset-select">
+                <option value="eval_shared_gold.npz">SHARED EVALUATION GOLD</option>
+                <option value="rl_train_20k.npz">RL HEURISTIC TRAINING</option>
+            </select>
+            <button onclick="fetchSample()">ACQUIRE NEW SNAPSHOT</button>
+        </div>
+        
+        <div class="grid">
+            <div class="panel">
+                <div class="panel-header">Tactical DNA Profile</div>
+                <div style="height: 300px;"><canvas id="dnaChart"></canvas></div>
+                <div id="dna-stats" style="margin-top: 20px;">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">Oracle Tactical Verdict</div>
+                <div id="oracle-data">
+                    <div style="font-size: 13px; margin-bottom: 20px; color: #9399b2;">The MCTS Oracle analyzed this scenario and assigned the following strategic weights:</div>
+                    <div id="weight-container">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+                
+                <div class="panel-header" style="margin-top: 40px;">Strategic Consequence Score</div>
+                <div id="score-val" style="font-size: 48px; font-weight: bold; color: #f38ba8; font-family: 'Cascadia Code';">---</div>
+                <div style="font-size: 11px; color: #6c7086; margin-top: 5px;">(Predicted threat volume / 1000km theater)</div>
+            </div>
+        </div>
+        
+        <button style="margin-top: 40px; background: #45475a; color: #cdd6f4;" onclick="window.location.href='index.html'">RETURN TO COMMAND HUB</button>
+    </div>
+
+    <script>
+        let dnaChart;
+        const featureNames = [
+            "Avg Threat Velocity", "Avg Threat Prox", "Threat Density (N)", "Threat Density (S)", "Threat Density (E)",
+            "Threat Density (W)", "Airspace Saturation", "Capital X Health", "Capital Y Health", "SAM Inventory (Total)",
+            "Active Combat Wings", "Electronic Warfare Level", "Detection Confidence", "Strategic Attrition", "Combat Urgency"
+        ];
+
+        function initChart() {
+            const ctx = document.getElementById('dnaChart').getContext('2d');
+            dnaChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: featureNames.slice(0, 8), // Just show top 8 for clarity
+                    datasets: [{
+                        label: 'Tactical Features',
+                        data: Array(8).fill(0),
+                        backgroundColor: 'rgba(137, 180, 250, 0.2)',
+                        borderColor: '#89b4fa',
+                        pointBackgroundColor: '#89b4fa'
+                    }]
+                },
+                options: {
+                    scales: { r: { grid: { color: '#313244' }, angleLines: { color: '#313244' }, ticks: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        async function fetchSample() {
+            const dataset = document.getElementById('dataset-select').value;
+            const res = await fetch(`/get_dataset_sample?dataset=${dataset}`);
+            const data = await res.json();
+            
+            if (data.error) { alert(data.error); return; }
+
+            // Update Score
+            document.getElementById('score-val').innerText = data.score.toFixed(1);
+            
+            // Update DNA Chart
+            dnaChart.data.datasets[0].data = data.features.slice(0, 8);
+            dnaChart.update();
+
+            // Update Stats List
+            const statList = document.getElementById('dna-stats');
+            statList.innerHTML = '';
+            data.features.forEach((v, i) => {
+                const row = document.createElement('div');
+                row.className = 'dna-stat';
+                row.innerHTML = `<span>${featureNames[i]}</span><span class="dna-val">${v.toFixed(3)}</span>`;
+                statList.appendChild(row);
+            });
+
+            // Update Oracle Weights
+            const weightCont = document.getElementById('weight-container');
+            weightCont.innerHTML = '';
+            const labels = ["Balanced", "Aggressive", "Fortress"];
+            data.weights.forEach((w, i) => {
+                const pill = document.createElement('div');
+                pill.className = 'weight-pill';
+                pill.innerHTML = `<span>${labels[i] || 'ALT'}</span><span class="weight-val">${(w * 100).toFixed(0)}%</span>`;
+                weightCont.appendChild(pill);
+            });
+        }
+
+        initChart();
+        fetchSample();
+    </script>
+</body>
+</html>

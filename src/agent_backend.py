@@ -6,9 +6,7 @@ import json
 import math
 import hashlib
 import httpx
-import asyncio
-import queue
-import hashlib
+import fastapi
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
@@ -16,6 +14,9 @@ from fastapi.responses import JSONResponse
 from collections import OrderedDict
 from pydantic import BaseModel
 from typing import List, Optional
+import queue
+import asyncio
+import random
 import uvicorn
 
 # 1. CORE MODELS & LOGIC
@@ -38,11 +39,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
-    print(f"VALIDATION ERROR: {exc}")
-    return JSONResponse(status_code=400, content={"detail": str(exc.errors())})
 
 # 4. WEBSOCKET & CACHE
 class ConnectionManager:
@@ -96,32 +92,7 @@ class TacticalRequest(BaseModel):
     use_ppo: bool = False
 
 # 6. HELPERS
-def load_battlefield_state(filepath) -> GameState:
-    bases = []
-    try:
-        with open(filepath, mode='r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row['subtype'] in ['air_base', 'capital', 'major_city']:
-                    name = row['feature_name']
-                    # Inject inventory based on base type/importance
-                    inv = {"sam": 10, "fighter": 4, "drone": 15}
-                    if "Capital" in name: inv = {"sam": 20, "fighter": 0, "drone": 0}
-                    
-                    bases.append(Base(name, float(row['x_km']), float(row['y_km']), inv))
-    except Exception as e: print(f"Error loading state: {e}")
-    
-    # Fall back to a canonical base layout if the CSV yields nothing.
-    if not bases:
-        bases = [
-            Base("Northern Vanguard Base", 198.3, 335.0, {"sam": 10, "fighter": 4, "drone": 15}),
-            Base("Highridge Command", 838.3, 75.0, {"sam": 10, "fighter": 4, "drone": 15}),
-            Base("Arktholm (Capital X)", 418.3, 95.0, {"sam": 20, "fighter": 0, "drone": 0}),
-            Base("Boreal Watch Post", 1158.3, 385.0, {"sam": 10, "fighter": 4, "drone": 5}),
-            Base("Nordvik", 140.0, 323.3, {"sam": 0, "fighter": 0, "drone": 0}),
-            Base("Valbrek", 1423.3, 213.3, {"sam": 0, "fighter": 0, "drone": 0})
-        ]
-    return GameState(bases=bases, blind_spots=[(656.7, 493.3)])
+# load_battlefield_state moved to models.py to prevent FastAPI import locks during data generation.
 
 async def format_report_with_llm(raw_decision_data):
     """Local heuristic analyst replacing"""
@@ -280,6 +251,34 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
     raw_decision["human_sitrep"] = formatted_report
     EVALUATION_CACHE[payload_hash] = raw_decision
     return raw_decision
+
+# 7. STRATEGIC DATASET EXPLORATION
+@app.get("/get_dataset_sample")
+async def get_dataset_sample(dataset: str = "eval_shared_gold.npz"):
+    path = os.path.join("data/training/strategic_mega_corpus", dataset)
+    if not os.path.exists(path):
+        return {"error": "Dataset not found"}
+    
+    try:
+        data = np.load(path)
+        idx = random.randint(0, len(data['features']) - 1)
+        
+        # In a real C2 system, we'd reverse-map the 15-dim features back to a full scene.
+        # For the viewer, we'll return the features and the target weights.
+        return {
+            "index": idx,
+            "features": data['features'][idx].tolist(),
+            "score": float(data['scores'][idx]),
+            "weights": data['weights'][idx].tolist(),
+            "dataset": dataset
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+# 8. STATIC ASSET SERVING (Phase 4)
+from fastapi.staticfiles import StaticFiles
+# Mount the frontend directory to serve the Strategic Hub and CZML streams
+app.mount("/", StaticFiles(directory="frontend"), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,0 +1,8 @@
+record_type,feature_id,feature_name,side,subtype,location_context,geometry_type,notes,x_km,y_km,coordinates_km
+BASE,BASE-01,STOCKHOLM_BASE,BOREAL,SAM_SITE,Stockholm,POINT,Primary Kinetic Node,0,0,(0,0)
+BASE,BASE-02,GOTLAND_BASE,BOREAL,EW_SITE,Gotland,POINT,Primary Electronic Node,200,100,(200,100)
+HVA,HVA-01,CAPITAL_CENTER,BOREAL,CIVILIAN,Stockholm,POINT,High Value Asset,0,0,(0,0)
+RADAR,RAD-01,COASTAL_EYE_1,BOREAL,RADAR,Nykoping,POINT,Coastal Surveillance,-100,50,(-100,50)
+RADAR,RAD-02,MARITIME_WATCH_2,BOREAL,RADAR,Visby,POINT,Maritime Surveillance,210,90,(210,90)
+WAYPOINT,WP-01,BALTIC_PASSAGE_ALPHA,NEUTRAL,TRANSIT,Baltic Sea,POINT,Key Threat Vector,400,200,(400,200)
+WAYPOINT,WP-02,BALTIC_PASSAGE_BETA,NEUTRAL,TRANSIT,Baltic Sea,POINT,Key Threat Vector,400,-200,(400,-200)

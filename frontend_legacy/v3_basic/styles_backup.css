@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+    --bg-deep: #020408;
+    --accent-blue: #00f2ff;
+    --accent-red: #ff3e3e;
+    --accent-green: #00ff88;
+    --accent-yellow: #ffcc00;
+    --glass-panel: rgba(10, 20, 30, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-deep);
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* --- GRID LAYOUT --- */
+#app-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr 380px;
+    grid-template-rows: 80px 1fr 200px;
+    height: 100vh;
+    gap: 1rem;
+    padding: 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+#canvas-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* --- REUSABLE MODULE --- */
+.module {
+    background: var(--glass-panel);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.module-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15rem;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+}
+
+/* --- TOP HEADER --- */
+header {
+    grid-column: 1 / 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+.logo h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    background: linear-gradient(90deg, #fff, var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.city-status {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.health-bar-container {
+    width: 200px;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.health-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--accent-green);
+    box-shadow: 0 0 10px var(--accent-green);
+    transition: width 0.5s ease;
+}
+
+/* --- THREAT REGISTRY --- */
+.threat-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.threat-item {
+    display: grid;
+    grid-template-columns: 30px 1fr 60px;
+    padding: 0.8rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+}
+
+.threat-item.high-risk { color: var(--accent-red); background: rgba(255,62,62,0.05); }
+
+/* --- DOCTRINE SELECTION --- */
+.doctrine-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.doctrine-btn {
+    padding: 0.6rem;
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #888;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.doctrine-btn.active {
+    background: var(--accent-blue);
+    color: #000;
+    border-color: var(--accent-blue);
+}
+
+/* --- RESOURCE MATRIX --- */
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.resource-card {
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.resource-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--accent-blue);
+    margin-top: 0.5rem;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+.scanning {
+    animation: pulse 2s infinite ease-in-out;
+}

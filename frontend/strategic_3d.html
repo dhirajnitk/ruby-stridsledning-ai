@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boreal Chessmaster: Visual Sensor Hub</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Cascadia+Code&display=swap');
+        
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0b0b11; font-family: 'Outfit', sans-serif; }
+        #cesiumContainer { width: 100%; height: 100%; }
+        
+        /* C2 Elements */
+        .c2-sidebar {
+            position: absolute; top: 20px; right: 20px; z-index: 100;
+            background: rgba(17, 17, 27, 0.9); border: 1px solid #f38ba8;
+            border-radius: 12px; padding: 20px; width: 320px; height: 85vh;
+            backdrop-filter: blur(15px); box-shadow: 0 0 40px rgba(243, 139, 168, 0.2);
+            color: #cdd6f4; display: flex; flex-direction: column;
+        }
+        
+        .overlay {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: rgba(17, 17, 27, 0.9); border: 1px solid #89b4fa;
+            border-radius: 12px; padding: 20px; width: 340px;
+            backdrop-filter: blur(15px); color: #cdd6f4;
+        }
+        
+        #warning-banner {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 200; width: 60%; padding: 15px; border-radius: 8px;
+            background: rgba(243, 139, 168, 0.9); border: 2px solid #f38ba8;
+            color: #11111b; font-weight: bold; font-size: 20px; text-align: center;
+            display: none; animation: flash 1s infinite alternate;
+        }
+        
+        @keyframes flash { from { opacity: 0.6; box-shadow: 0 0 0px #f38ba8; } to { opacity: 1; box-shadow: 0 0 20px #f38ba8; } }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .logo { color: #fab387; font-weight: bold; letter-spacing: 2px; font-size: 14px; }
+        
+        /* Sensor Status */
+        .sensor-panel {
+            background: rgba(166, 227, 161, 0.1); border: 1px solid #a6e3a1;
+            padding: 10px; border-radius: 8px; margin-top: 15px;
+        }
+        .sensor-row { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; }
+        .sensor-val { color: #a6e3a1; font-weight: bold; font-family: 'Cascadia Code', monospace; }
+
+        .track-list { flex-grow: 1; overflow-y: auto; margin-top: 10px; }
+        .track-item {
+            background: #181825; border: 1px solid #45475a; border-radius: 8px;
+            padding: 12px; margin-bottom: 10px; font-size: 11px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .track-item:hover { border-color: #f38ba8; background: #1e1e2e; transform: scale(1.02); }
+        .track-id { color: #f38ba8; font-weight: bold; font-size: 12px; }
+        
+        .btn-intercept {
+            margin-top: 10px; width: 100%; padding: 8px;
+            background: #f38ba8; color: #11111b; border: none;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        
+        .btn-toggle {
+            width: 100%; padding: 12px; background: #1e1e2e; color: #89b4fa;
+            border: 1px solid #89b4fa; border-radius: 6px; cursor: pointer;
+            font-weight: bold; margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <div id="warning-banner">SECTOR BREACH: UNIDENTIFIED HOSTILE INGRESS</div>
+    
+    <div class="overlay">
+        <div class="header">
+            <div class="logo">BOREAL VISUAL SENSOR</div>
+            <div style="font-size: 10px; color: #89b4fa;">STOCKHOLM THEATER</div>
+        </div>
+        
+        <button id="toggle-clutter" class="btn-toggle" onclick="toggleClutter()">FILTER CLUTTER: OFF</button>
+        
+        <div class="sensor-panel">
+            <div class="sensor-row"><span>Sensor Status</span><span class="sensor-val">ACTIVE</span></div>
+            <div class="sensor-row"><span>Acquisition</span><span class="sensor-val">100%</span></div>
+            <div class="sensor-row"><span>Neural Link</span><span class="sensor-val">VETERAN-98K</span></div>
+        </div>
+        
+        <button style="margin-top: 25px; width: 100%; padding: 10px; background: #45475a; color: #cdd6f4; border: none; border-radius: 6px; cursor: pointer;" onclick="window.location.href='index.html'">EXIT TO REFLEX HUD</button>
+    </div>
+
+    <div class="c2-sidebar">
+        <div class="header"><div class="logo">HOSTILE MANIFEST</div></div>
+        <div id="track-list" class="track-list">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <script>
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            terrain: Cesium.Terrain.fromWorldTerrain(),
+            baseLayerPicker: false, geocoder: false, homeButton: false, infoBox: false,
+            navigationHelpButton: false, sceneModePicker: false, timeline: true,
+            animation: true, fullscreenButton: true, scene3DOnly: true,
+            // Fallback grid if internet fails
+            imageryProvider: new Cesium.GridImageryProvider({
+                color: Cesium.Color.fromAlpha(Cesium.Color.DODGERBLUE, 0.05)
+            })
+        });
+
+        // Try to load dark map if available
+        try {
+            viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+                url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                credit: 'CartoDB'
+            }));
+        } catch(e) { console.log("Imagery restricted, using tactical grid."); }
+
+        viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0b0b11');
+        
+        let commercialSource = null;
+        let hostileSource = null;
+
+        async function initStreams() {
+            try {
+                commercialSource = await Cesium.CzmlDataSource.load('scenario_commercial.czml');
+                viewer.dataSources.add(commercialSource);
+                
+                hostileSource = await Cesium.CzmlDataSource.load('scenario_hostile.czml');
+                viewer.dataSources.add(hostileSource);
+                
+                // FORCE CLOCK SYNC
+                viewer.clock.currentTime = hostileSource.clock.startTime;
+                viewer.clock.startTime = hostileSource.clock.startTime;
+                viewer.clock.stopTime = hostileSource.clock.stopTime;
+                viewer.clock.multiplier = 15;
+                viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+                
+                viewer.zoomTo(hostileSource);
+
+                viewer.clock.onTick.addEventListener(() => {
+                    const currentTime = viewer.clock.currentTime;
+                    const hostiles = [];
+                    let breach = false;
+
+                    for (let entity of hostileSource.entities.values) {
+                        if (entity.id.startsWith('HOSTILE') && entity.isAvailable(currentTime)) {
+                            hostiles.push(entity);
+                            const pos = entity.position.getValue(currentTime);
+                            if (pos) {
+                                const lon = Cesium.Math.toDegrees(Cesium.Ellipsoid.WGS84.cartesianToCartographic(pos).longitude);
+                                if (lon < 18.5) breach = true;
+                            }
+                        }
+                    }
+                    updateSidebar(hostiles);
+                    document.getElementById('warning-banner').style.display = breach ? 'block' : 'none';
+                });
+            } catch (e) { console.error("Visual Sensor Stream Error:", e); }
+        }
+
+        function toggleClutter() {
+            if (!commercialSource) return;
+            commercialSource.show = !commercialSource.show;
+            const btn = document.getElementById('toggle-clutter');
+            btn.innerText = `FILTER CLUTTER: ${commercialSource.show ? 'OFF' : 'ON'}`;
+            btn.style.borderColor = commercialSource.show ? '#89b4fa' : '#45475a';
+        }
+
+        function updateSidebar(hostiles) {
+            const list = document.getElementById('track-list');
+            let html = '';
+            hostiles.slice(0, 15).forEach(h => {
+                html += `
+                    <div class="track-item" onclick="focusTrack('${h.id}')">
+                        <div class="track-id">${h.id}</div>
+                        <div style="color: #9399b2; margin-top: 4px;">THREAT: FAST-MOVER | ALPHA-LOCKED</div>
+                        <button class="btn-intercept" onclick="intercept('${h.id}')">EXECUTE INTERCEPT</button>
+                    </div>
+                `;
+            });
+            list.innerHTML = html || '<div style="color: #9399b2; text-align: center; margin-top: 50px;">Acquiring tactical vectors...</div>';
+        }
+
+        function focusTrack(id) {
+            const entity = hostileSource.entities.getById(id);
+            if (entity) viewer.trackedEntity = entity;
+        }
+
+        function intercept(id) {
+            alert(`BOREAL DEFENSE: PPO-Veteran intercepting ${id}. Combat authorization confirmed.`);
+        }
+
+        initStreams();
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(18.0686, 59.3293, 1000000),
+            duration: 4
+        });
+    </script>
+</body>
+</html>

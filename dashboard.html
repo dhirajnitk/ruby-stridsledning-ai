@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOREAL STRATEGIC COMMAND | V8.3</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .module-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .stat-box { text-align:center; padding:0.7rem; border:1px solid rgba(0,242,255,0.2); border-radius:4px; }
+        .stat-val { font-family:'Orbitron',sans-serif; font-size:1.3rem; margin-top:2px; }
+        .stat-lbl { font-size:0.5rem; color:#888; letter-spacing:1px; }
+        .bench-row { display:flex; justify-content:space-between; align-items:center;
+                     padding:0.3rem 0; border-bottom:1px solid rgba(255,255,255,0.06);
+                     font-family:'JetBrains Mono',monospace; font-size:0.65rem; }
+        .bench-label { color:#888; }
+        .bench-truth { color:var(--accent-yellow); }
+        .bench-live  { color:var(--accent-blue); }
+        .bench-delta.good { color:var(--accent-green); }
+        .bench-delta.bad  { color:var(--accent-red); }
+        .sep { border:none; border-top:1px solid rgba(255,255,255,0.08); margin:0.5rem 0; }
+
+        /* ── HITL MODE PANEL ─────────────────────────────────── */
+        .hitl-panel { background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,255,0.15); border-radius:6px; padding:10px 12px; margin-top:6px; }
+        .mode-btn-row { display:flex; gap:6px; margin-bottom:8px; }
+        .mode-btn {
+          flex:1; padding:7px 4px; font-family:'Orbitron',monospace; font-size:0.48rem;
+          letter-spacing:1px; cursor:pointer; border-radius:4px; border:1px solid rgba(0,242,255,0.3);
+          background:rgba(0,242,255,0.05); color:rgba(0,242,255,0.6); transition:all 0.2s;
+        }
+        .mode-btn:hover { background:rgba(0,242,255,0.12); color:#00f2ff; }
+        .mode-btn.active-auto  { border-color:#00ff88; background:rgba(0,255,136,0.12); color:#00ff88; box-shadow:0 0 10px rgba(0,255,136,0.2); }
+        .mode-btn.active-hitl  { border-color:#ffcc00; background:rgba(255,204,0,0.1);  color:#ffcc00; box-shadow:0 0 10px rgba(255,204,0,0.2); }
+        .mode-btn.active-manual{ border-color:#ff3e3e; background:rgba(255,62,62,0.1);  color:#ff3e3e; box-shadow:0 0 10px rgba(255,62,62,0.2); }
+        .mode-desc { font-size:0.48rem; color:#666; letter-spacing:.5px; margin-bottom:8px; min-height:28px; }
+        /* Approval Queue */
+        #approval-queue { max-height:160px; overflow-y:auto; margin-top:6px; }
+        .approval-card {
+          border:1px solid rgba(255,204,0,0.3); border-radius:4px; padding:7px 9px; margin-bottom:5px;
+          background:rgba(255,204,0,0.05); font-family:'JetBrains Mono',monospace; font-size:0.55rem;
+          animation: fadeIn 0.3s ease;
+        }
+        .approval-card .ath { color:#ffcc00; margin-bottom:4px; }
+        .approval-card .arow { display:flex; gap:5px; margin-top:5px; }
+        .approval-card button { flex:1; padding:4px; font-size:0.48rem; cursor:pointer; border-radius:3px; border:none; font-family:'Orbitron',monospace; }
+        .approval-card .approve { background:rgba(0,255,136,0.2); color:#00ff88; border:1px solid #00ff88; }
+        .approval-card .reject  { background:rgba(255,62,62,0.15); color:#ff3e3e; border:1px solid #ff3e3e; }
+        /* Manual Override Panel */
+        #manual-panel { margin-top:6px; }
+        #manual-panel select, #manual-panel input[type=range] { width:100%; margin-bottom:5px; }
+        #manual-panel select { background:rgba(0,0,0,.6); border:1px solid rgba(255,62,62,.4); color:#ff3e3e; padding:5px; font-size:0.55rem; border-radius:3px; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body>
+    <main id="app-grid">
+        <!-- TOP HEADER -->
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:0 2rem; background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(0,242,255,0.2);">
+            <div class="logo" style="display:flex; align-items:center; gap:3rem;">
+                <h1>BOREAL STRATEGIC COMMAND</h1>
+                <div id="live-feed-header" style="width:280px; height:60px; border:1px solid var(--accent-blue); border-radius:4px; overflow:hidden; position:relative;">
+                    <video autoplay muted loop style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
+                        <source src="video/AI_Prevents_Missile_Strike.mp4" type="video/mp4">
+                    </video>
+                    <div style="position:absolute; top:2px; left:5px; color:var(--accent-blue); font-size:0.4rem; font-family:'Orbitron';">LIVE FEED :: KINETIC OVERLAY</div>
+                </div>
+            </div>
+            <div class="city-status" style="flex-grow:1; display:flex; justify-content:flex-end; align-items:center; gap:1rem;">
+                <span style="font-size:0.7rem; color:#888;">CAPITAL INTEGRITY:</span>
+                <div class="health-bar-container" style="width:200px;">
+                    <div id="city-health" class="health-fill"></div>
+                </div>
+                <div class="status-badge scanning">Operational</div>
+            </div>
+        </header>
+
+        <!-- CENTER COLUMN: SVG MAP -->
+        <section class="module map-module" style="grid-column:2; grid-row:2; overflow:hidden; position:relative;">
+            <div class="module-header" style="position:absolute; top:1rem; left:1rem; right:1rem; z-index:10;">
+                <h2 id="map-title">Strategic Map :: Baltic Theater</h2>
+                <div style="display:flex;gap:8px;">
+                    <button id="btn-kinetic-3d" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,255,136,0.1); border-color:var(--accent-green); color:var(--accent-green);">🎯 3D KINETIC SIM ↗</button>
+                    <button id="btn-live-audit" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,242,255,0.1); border-color:var(--accent-blue); color:var(--accent-blue);">Launch Live 3D Audit ↗</button>
+                </div>
+            </div>
+            <svg id="baltic-map" viewBox="0 0 1000 800" style="width:100%; height:100%; background:#050a0f;">
+                <g id="map-geometry"></g>
+                <g id="base-icons"></g>
+                <g id="threat-layer-2d"></g>
+            </svg>
+        </section>
+
+        <!-- LEFT COLUMN: ENGAGEMENT MONITOR -->
+        <aside class="module threat-registry">
+            <div class="module-header">
+                <h2>Engagement Monitor</h2>
+                <span id="threat-count" style="color:var(--accent-blue);">0 ACTIVE</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.8rem;">
+                <div class="stat-box">
+                    <div class="stat-lbl">TACTICAL ACC</div>
+                    <div id="stat-tactical" class="stat-val" style="color:var(--accent-blue);">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-lbl">STRATEGIC ACC</div>
+                    <div id="stat-strategic" class="stat-val" style="color:var(--accent-green);">--</div>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.3rem; font-family:'JetBrains Mono'; font-size:0.72rem; margin-bottom:0.8rem;">
+                <div>SAM FIRED: <span id="stat-fired" style="color:var(--accent-blue);">0</span></div>
+                <div>KILLS: <span id="stat-intercepts" style="color:var(--accent-green);">0</span></div>
+                <div>IMPACTS: <span id="stat-impacts" style="color:var(--accent-red);">0</span></div>
+                <div>LEAKED: <span id="stat-missed" style="color:var(--accent-yellow);">0</span></div>
+            </div>
+            <hr class="sep">
+            <!-- BENCHMARK COMPARISON -->
+            <div style="font-size:0.55rem; color:#888; letter-spacing:1px; margin-bottom:0.4rem;">MONTE CARLO BENCHMARK (1000 SCENARIOS)</div>
+            <div id="bench-panel" style="font-family:'JetBrains Mono'; font-size:0.65rem;">
+                <div class="bench-row">
+                    <span class="bench-label">MC Tactical Acc</span>
+                    <span id="mc-tac-acc" class="bench-truth">--</span>
+                </div>
+                <div class="bench-row">
+                    <span class="bench-label">MC Strategic Acc</span>
+                    <span id="mc-str-acc" class="bench-truth">--</span>
+                </div>
+                <div class="bench-row">
+                    <span class="bench-label">MC Avg Score</span>
+                    <span id="mc-avg-score" class="bench-truth">--</span>
+                </div>
+                <hr class="sep">
+                <div id="replay-scenario" style="color:#555; font-size:0.6rem;">Load benchmark to replay</div>
+                <button id="btn-replay" class="action-btn" style="width:100%; margin-top:0.4rem; font-size:0.55rem; padding:5px;">▶ RUN BENCHMARK SCENARIO</button>
+            </div>
+        </aside>
+
+        <!-- RIGHT COLUMN: STRATEGIC INTUITION + TARGETS -->
+        <aside class="module intuition-feed">
+            <div class="module-header">
+                <h2>Strategic Intuition</h2>
+                <span id="acc-badge" style="color:var(--accent-blue);">LIVE</span>
+            </div>
+            <!-- Target hit/miss summary -->
+            <div id="target-hits" style="font-family:'JetBrains Mono'; font-size:0.65rem; margin-bottom:0.6rem; padding:0.5rem; border:1px solid rgba(255,255,255,0.08); border-radius:3px; max-height:120px; overflow-y:auto;">
+                <div style="color:#888; font-size:0.55rem; letter-spacing:1px; margin-bottom:0.3rem;">TARGET STATUS</div>
+                <div id="target-status-list" style="color:#555;">Awaiting engagement...</div>
+            </div>
+            <div id="cot-feed" class="cot-feed" style="height:calc(100% - 200px); overflow-y:auto;">
+                <p style="color:#444;">> System Primed. Fused Radar-Kinetic Engine Online.</p>
+            </div>
+        </aside>
+
+        <!-- BOTTOM PANEL: COMMAND, DOCTRINE & HITL -->
+        <footer class="module command-doctrine" style="grid-column: 1 / span 3; display:grid; grid-template-columns:1fr 2fr 1fr; gap:1rem; padding:1rem 1.5rem;">
+
+            <!-- LEFT: INVENTORY & DOCTRINE -->
+            <div>
+                <div class="module-header" style="margin-bottom:0.6rem;">
+                    <h2 style="font-size:0.65rem;">Doctrine &amp; Inventory</h2>
+                    <div class="doctrine-selector" id="doctrine-selector">
+                        <button class="doctrine-btn active" data-doctrine="balanced">Balanced</button>
+                        <button class="doctrine-btn" data-doctrine="fortress">Fortress</button>
+                        <button class="doctrine-btn" data-doctrine="aggressive">Aggressive</button>
+                    </div>
+                </div>
+                <div id="doctrine-meta" style="font-size:0.48rem; color:#888; background:rgba(0,0,0,0.3); padding:6px; border-radius:3px; border-left:2px solid var(--accent-blue);">
+                    <b>ENGINE STATE</b>: Balanced cost-matrix enabled. Standard engagement perimeter (250km).
+                </div>
+                <div class="command-controls">
+                    <div class="inventory-dash">
+                        <div class="node-status"><span id="node-1-name">STOCKHOLM</span> SAM: <span id="node-1-sam">--</span></div>
+                        <div class="node-status"><span id="node-2-name">GOTLAND</span> SAM: <span id="node-2-sam">--</span></div>
+                        <div class="node-status">TOTAL NATIONAL: <span id="res-sam">--</span></div>
+                    </div>
+                    <div class="action-cluster" style="margin-top:0.5rem;">
+                        <button id="btn-rebalance" class="action-btn">Rebalance Grid</button>
+                        <button id="btn-scale" class="action-btn">Align to Threat</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER: HITL MODE SELECTOR -->
+            <div>
+                <div style="font-size:0.5rem; color:#888; letter-spacing:2px; margin-bottom:6px;">COMMAND MODE</div>
+                <div class="mode-btn-row">
+                    <button class="mode-btn active-auto" id="mode-auto" data-mode="auto">🤖 AUTONOMOUS</button>
+                    <button class="mode-btn" id="mode-hitl" data-mode="hitl">👤 HUMAN-IN-LOOP</button>
+                    <button class="mode-btn" id="mode-manual" data-mode="manual">🎯 MANUAL OVERRIDE</button>
+                </div>
+                <div class="hitl-panel">
+                    <div class="mode-desc" id="mode-desc">
+                        ✅ <b>AUTONOMOUS</b>: AI selects all assignments. Optimal Pk with no latency. Doctrine drives weighting.
+                    </div>
+
+                    <!-- HITL Approval Queue (shown in hitl mode) -->
+                    <div id="approval-queue" style="display:none;">
+                        <div style="font-size:0.48rem; color:#888; letter-spacing:1px; margin-bottom:4px;">PENDING ASSIGNMENTS (AWAITING COMMANDER APPROVAL)</div>
+                    </div>
+
+                    <!-- Manual Override Panel (shown in manual mode) -->
+                    <div id="manual-panel" style="display:none;">
+                        <div style="font-size:0.48rem; color:#888; letter-spacing:1px; margin-bottom:5px;">MANUAL TARGET ASSIGNMENT</div>
+                        <select id="manual-target"><option>— Select Active Threat —</option></select>
+                        <select id="manual-effector">
+                            <option value="sam">SAM (Long Range)</option>
+                            <option value="fighter">FIGHTER (Intercept)</option>
+                            <option value="drone">DRONE (Economy)</option>
+                        </select>
+                        <select id="manual-base"><option>— Select Launch Base —</option></select>
+                        <button id="btn-manual-fire" style="width:100%;padding:7px;background:rgba(255,62,62,0.15);border:1px solid #ff3e3e;color:#ff3e3e;font-family:'Orbitron',monospace;font-size:0.52rem;cursor:pointer;border-radius:3px;">🎯 COMMIT ENGAGEMENT ORDER</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: MISSION CONTROL -->
+            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                <div style="font-size:0.5rem; color:#888; letter-spacing:2px;">NEURAL ARCHITECTURE</div>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <select id="sel-model-core" style="background:rgba(0,242,255,0.15); border:2px solid rgba(0,242,255,0.4); color:#00f2ff; font-family:'Orbitron',sans-serif; font-size:0.55rem; padding:6px 12px; border-radius:4px; outline:none; cursor:pointer; font-weight:bold; text-shadow: 0 0 5px rgba(0,242,255,0.5);">
+                        <option value="elite">Elite V3.5 (Final Boss) 👑</option>
+                        <option value="supreme3">Supreme V3.1 (Chronos) 👁️</option>
+                        <option value="supreme2">Supreme V2 (Legacy) 🏛️</option>
+                        <option value="titan">Titan Transformer 🌪️</option>
+                        <option value="hybrid">Hybrid RL V8.4 🛡️</option>
+                        <option value="genE10">Generalist E10 🧬</option>
+                        <option value="heuristic" selected>Heuristic (Triage-Aware) ⚙️</option>
+                        <option value="hBase">Heuristic V2 (Base) 📜</option>
+                        <option value="random">Random Assignment 🎲</option>
+                    </select>
+                    <div id="arch-badge" style="background:var(--accent-blue); border:2px solid #fff; color:#000; font-size:0.5rem; padding:4px 10px; border-radius:4px; letter-spacing:1px; font-weight:900; box-shadow: 0 0 15px rgba(0,242,255,0.4);">CLASS-AWARE LOGIC</div>
+                </div>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:0.4rem; align-items:flex-end;">
+                <div style="font-size:0.5rem; color:#888; letter-spacing:2px; margin-bottom:4px;">MISSION CONTROL</div>
+                <button id="btn-launch" class="mission-btn primary" style="margin-bottom:6px;">Initialize Intercept</button>
+                <button id="btn-reset"  class="mission-btn secondary">Clear Theatre</button>
+            </div>
+        </footer>
+
+    </main>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="viz_engine.js"></script>
+    <script>
+    // Load benchmark scenarios for replay
+    fetch('data/ground_truth_scenarios.json')
+      .then(r => r.json())
+      .then(data => {
+        const ids = Object.keys(data);
+        
+        // Benchmark replay — pick scenario and visualize with comparison
+        document.getElementById('btn-replay').addEventListener('click', () => {
+          const idx = Math.floor(Math.random() * ids.length);
+          const scId = ids[idx];
+          const sc = data[scId];
+          const gt = sc.ground_truth;
+
+          const info = `SCENARIO #${scId} | ${sc.threats.length} THREATS | ` +
+            `TYPES: ${[...new Set(sc.threats.map(t=>t.type))].join(',')}`;
+          document.getElementById('replay-scenario').innerText = info;
+
+          // Log ground truth to CoT feed
+          addCoT('── MONTE CARLO GROUND TRUTH ──', 'info');
+          addCoT(`MC Tactical Acc: ${(gt.expected_kills/Math.max(1,gt.n_assigned)*100).toFixed(1)}%`, 'info');
+          addCoT(`MC Intercepts: ${gt.expected_kills.toFixed(1)} / ${gt.n_assigned} assigned`, 'info');
+          addCoT(`MC Score Range: [${gt.mc_min_score} → ${gt.mc_max_score}]`, 'info');
+          addCoT(`MC Std Dev: ±${gt.mc_std}`, 'info');
+          addCoT('── RUNNING LIVE ENGINE... ──', 'alert');
+
+          // Convert scenario threats to THEATER_DATA coords and launch
+          runBenchmarkScenario(sc.threats, gt);
+        });
+      })
+      .catch(() => {
+        document.getElementById('replay-scenario').innerText =
+          'Run: python src/precompute_truth.py';
+      });
+
+    // Track hits per target
+    const targetHits = {};
+    function recordTargetEvent(targetName, hit) {
+      if (!targetHits[targetName]) targetHits[targetName] = {hits:0, kills:0};
+      targetHits[targetName].hits++;
+      if (!hit) targetHits[targetName].kills++;
+      updateTargetStatus();
+    }
+    function updateTargetStatus() {
+      const list = document.getElementById('target-status-list');
+      if (!list) return;
+      const entries = Object.entries(targetHits);
+      if (!entries.length) { list.innerHTML = '<span style="color:#555">No engagements yet</span>'; return; }
+      list.innerHTML = entries.map(([name, d]) => {
+        const survived = d.hits - d.kills;
+        const col = survived > 0 ? '#ff3e3e' : '#00ff88';
+        return `<div style="color:${col}">${name}: ${d.kills} INTERCEPTED / ${survived} IMPACTED</div>`;
+      }).join('');
+    }
+
+    // Hook into engine events via override
+    const _origAddCoT = window.addCoT;
+    window.addCoT = function(msg, type) {
+      _origAddCoT && _origAddCoT(msg, type);
+      // Parse intercept/impact messages
+      if (msg.includes('NEUTRALIZED')) {
+        const m = msg.match(/NEUTRALIZED (T-\S+)/);
+        // success
+      }
+      if (msg.includes('IMPACT AT')) {
+        const m = msg.match(/IMPACT AT (.+?) —/);
+        if (m) recordTargetEvent(m[1], true);
+      }
+    };
+    // --- HITL & OPERATIONAL MODES ---
+    let COMMAND_MODE = 'auto'; // auto, hitl, manual
+    const el = id => document.getElementById(id);
+    const queueEl = el('approval-queue');
+    const manualEl = el('manual-panel');
+    const descEl = el('mode-desc');
+
+    const modeDescriptions = {
+        auto: "✅ <b>AUTONOMOUS</b>: AI selects all assignments. Optimal Pk with no latency. Doctrine drives weighting.",
+        hitl: "👤 <b>HITL</b>: AI suggests pairings. Commander must approve/reject before launch.",
+        manual: "🎯 <b>MANUAL OVERRIDE</b>: Commander selects all Target-Effector-Base pairings."
+    };
+
+    function setCommandMode(mode) {
+        COMMAND_MODE = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.className = 'mode-btn');
+        el(`mode-${mode}`).classList.add(`active-${mode}`);
+        descEl.innerHTML = modeDescriptions[mode];
+        
+        queueEl.style.display = (mode === 'hitl') ? 'block' : 'none';
+        manualEl.style.display = (mode === 'manual') ? 'block' : 'none';
+        
+        // Sync with engine
+        if (window.setEngineMode) window.setEngineMode(mode);
+        addCoT(`COMMAND MODE UPDATED: ${mode.toUpperCase()}`, 'info');
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => setCommandMode(btn.dataset.mode));
+    });
+
+    // --- MANUAL ENGAGEMENT UI ---
+    function updateManualTargets() {
+        const targetSel = el('manual-target');
+        const baseSel = el('manual-base');
+        if (!targetSel || !baseSel) return;
+        
+        // Populate threats
+        const activeThreats = (window.threats || []).filter(t => !t.hit);
+        targetSel.innerHTML = '<option value="">— Select Active Threat —</option>' + 
+            activeThreats.map(t => `<option value="${t.id}">${t.id} (${t.estimated_type})</option>`).join('');
+            
+        // Populate bases
+        const theaterBases = Object.values(window.BASES || {});
+        baseSel.innerHTML = '<option value="">— Select Launch Base —</option>' + 
+            theaterBases.map(b => `<option value="${b.id}">${b.name} (${window.ammo[b.id] || 0} SAM)</option>`).join('');
+
+        // Populate effectors based on theater
+        const effSel = el('manual-effector');
+        if (effSel) {
+            const theaterEffs = EFFECTORS[MODE] || {};
+            effSel.innerHTML = Object.keys(theaterEffs).map(k => 
+                `<option value="${k}">${theaterEffs[k].name}</option>`
+            ).join('');
+        }
+    }
+
+    el('btn-manual-fire').addEventListener('click', () => {
+        const tid = el('manual-target').value;
+        const bid = el('manual-base').value;
+        const eff = el('manual-effector').value;
+        if (!tid || !bid) return addCoT("INVALID MANUAL ORDER: Select Target and Base", "alert");
+        
+        if (window.commitManualEngagement) {
+            window.commitManualEngagement(tid, bid, eff);
+            addCoT(`MANUAL ENGAGEMENT COMMITTED: ${eff.toUpperCase()} -> ${tid}`, "success");
+            updateManualTargets();
+        }
+    });
+
+    // --- DOCTRINE SELECTION ---
+    const doctrineMeta = {
+        balanced: "<b>ENGINE STATE</b>: Balanced cost-matrix enabled. Standard engagement perimeter (250km).",
+        fortress: "<b>ENGINE STATE</b>: HVA Target Weighting x10. Defensive overlap priority enabled.",
+        aggressive: "<b>ENGINE STATE</b>: Aggressive Range Multiplier x1.5. Ammunition conservation suspended."
+    };
+
+    document.querySelectorAll('.doctrine-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.doctrine-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const d = btn.dataset.doctrine;
+            if (window.setDoctrine) window.setDoctrine(d);
+            el('doctrine-meta').innerHTML = doctrineMeta[d];
+            addCoT(`DOCTRINE PROFILE: ${d.toUpperCase()}`, 'info');
+        });
+    });
+
+    // Approval Queue Hook (called by viz_engine.js)
+    window.requestApproval = function(assignment) {
+        const card = document.createElement('div');
+        card.className = 'approval-card';
+        card.id = `approval-${assignment.threat_id}`;
+        card.innerHTML = `
+            <div class="ath">ENGAGE ${assignment.threat_id}?</div>
+            <div style="font-size:0.5rem;">EFF: ${assignment.effector.toUpperCase()} | FROM: ${assignment.base_name}</div>
+            <div class="arow">
+                <button class="approve" onclick="confirmApproval('${assignment.threat_id}')">APPROVE</button>
+                <button class="reject" onclick="rejectApproval('${assignment.threat_id}')">REJECT</button>
+            </div>
+        `;
+        queueEl.appendChild(card);
+    };
+
+    window.confirmApproval = function(tid) {
+        if (window.processApprovedAssignment) window.processApprovedAssignment(tid);
+        el(`approval-${tid}`)?.remove();
+    };
+
+    window.rejectApproval = function(tid) {
+        el(`approval-${tid}`)?.remove();
+        if (window.cancelApproval) window.cancelApproval(tid);
+        addCoT(`ENGAGEMENT REJECTED: ${tid} continues flight path`, 'alert');
+    };
+
+    // Keep manual targets updated
+    setInterval(() => {
+        if (COMMAND_MODE === 'manual') updateManualTargets();
+    }, 1000);
+
+    // 3D Kinetic Sim button
+    const btn3d = document.getElementById('btn-kinetic-3d');
+    if (btn3d) {
+      btn3d.addEventListener('click', () => {
+        const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
+        window.open(`kinetic_3d.html?theater=${mode}`, '_blank');
+      });
+    }
+
+    // --- MODEL CORE SELECTION ---
+    const modelCore = document.getElementById('sel-model-core');
+    if (modelCore) {
+        modelCore.addEventListener('change', (e) => {
+            if (window.setModel) window.setModel(e.target.value);
+        });
+    }
+    </script>
+</body>
+</html>
