@@ -9,39 +9,7 @@ import torch
 import numpy as np
 
 # --- DOMAIN MODELS ---
-
-@dataclass
-class Effector:
-    name: str
-    range_km: float
-    speed_kmh: float
-    pk_matrix: Dict[str, float]
-    cost_weight: float
-    special_logic: str = "none"
-
-@dataclass
-class Threat:
-    id: str
-    x: float
-    y: float
-    speed_kmh: float
-    heading: str
-    estimated_type: str
-    threat_value: float
-    spawn_tick: int = 0
-
-@dataclass
-class Base:
-    name: str
-    x: float
-    y: float
-    inventory: Dict[str, int]
-    priority: int = 1
-
-@dataclass
-class GameState:
-    bases: List[Base]
-    weather: str = "clear"
+from .models import Effector, Threat, Base, GameState
 
 # --- EFFECTOR SPECIFICATIONS ---
 EFFECTORS = {

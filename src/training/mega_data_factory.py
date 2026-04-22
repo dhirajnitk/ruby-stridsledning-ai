@@ -4,8 +4,8 @@ import random
 import time
 import json
 import multiprocessing
-from engine import evaluate_threats_advanced, extract_rl_features
-from models import Threat, load_battlefield_state, CSV_FILE_PATH
+from core.engine import evaluate_threats_advanced, extract_rl_features
+from core.models import Threat, load_battlefield_state, CSV_FILE_PATH
 
 # --- CONFIGURATION ---
 TOTAL_SAMPLES = 2000 

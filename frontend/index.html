@@ -3,405 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boreal Chessmaster - Tactical Display</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>BOREAL COMMAND PORTAL | SAAB HACKATHON</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;}
-        .top-nav { background: #11111b; border: 1px solid #313244; border-radius: 8px; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;}
-        .controls { display: flex; align-items: center; gap: 8px; }
-        .doctrine-console { background: #181825; border: 1px solid #45475a; border-radius: 6px; padding: 3px 8px; display: flex; align-items: center; gap: 8px; }
-        #btn-fire { background-color: #f38ba8; display: none; margin-top: 10px; border: 2px solid #fff; animation: pulse 1s infinite; }
-        
-        /* CHRONOSTASIS: Tactical Time Freeze UI */
-        #freeze-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(17, 17, 27, 0.5);
-            backdrop-filter: blur(8px);
-            display: none; z-index: 1000;
-            border: 8px solid #f38ba8;
-            box-sizing: border-box;
-            pointer-events: none;
+        body, html {
+            height: 100%;
+            margin: 0;
             overflow: hidden;
-            animation: borderPulse 2s infinite;
-        }
-        #freeze-overlay::after {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: rgba(243, 139, 168, 0.8);
-            box-shadow: 0 0 15px #f38ba8;
-            animation: scanline 3s linear infinite;
-        }
-        #freeze-overlay::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(243, 139, 168, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(243, 139, 168, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        @keyframes scanline {
-            0% { top: 0; }
-            100% { top: 100%; }
-        }
-        #freeze-ui {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #1e1e2e; padding: 30px; border-radius: 12px;
-            box-shadow: 0 0 50px rgba(243, 139, 168, 0.5);
-            text-align: center; color: #f38ba8;
-            pointer-events: auto; max-width: 500px;
-        }
-        #freeze-ui h1 { font-family: 'Outfit', sans-serif; letter-spacing: 5px; margin-bottom: 10px; }
-        #freeze-advice { color: #cdd6f4; font-size: 0.9em; margin: 20px 0; font-style: italic; line-height: 1.4; }
-        #btn-commence {
-            background: #a6e3a1; color: #11111b; font-weight: bold;
-            padding: 15px 40px; border-radius: 8px; cursor: pointer;
-            border: none; text-transform: uppercase; letter-spacing: 2px;
+            background: #000;
         }
 
-        @keyframes borderPulse {
-            0% { border-color: rgba(243, 139, 168, 1); }
-            50% { border-color: rgba(243, 139, 168, 0.3); }
-            100% { border-color: rgba(243, 139, 168, 1); }
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            filter: brightness(0.4) contrast(1.2);
         }
 
-        button { background: #45475a; color: #cdd6f4; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 11px;}
-        button:hover { background: #585b70; transform: translateY(-1px); }
-        button.danger { background: #f38ba8; color: #11111b; }
-        button.ai-btn { background: #a6e3a1; color: #11111b; }
-        .main-layout { display: flex; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
-        .map-section { flex: 1; background: #181825; border: 1px solid #313244; border-radius: 10px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
-        .data-stack { width: 300px; display: flex; flex-direction: column; gap: 10px; min-height: 0; flex-shrink: 0; }
-        .panel { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-height: 0; }
-        .panel-header { font-size: 11px; font-weight: bold; margin-bottom: 8px; color: #89b4fa; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 1px;}
-        #canvas-container { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #11111b; border-radius: 6px; position: relative;}
-        #radarCanvas { background: url('the-boreal-passage-map.svg'); background-size: cover; border-radius: 6px; cursor: crosshair; }
-        .trace-log { flex: 1; background: #11111b; border-radius: 6px; padding: 8px; font-family: 'Cascadia Code', monospace; font-size: 10px; overflow-y: auto; white-space: pre-wrap; color: #a6adc8; border: 1px solid #313244;}
-        .status-light { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .light-on { background: #a6e3a1; box-shadow: 0 0 5px #a6e3a1; }
-        .light-off { background: #f38ba8; }
-        .toggle-box { font-size: 9px; color: #a6adc8; display: flex; align-items: center; gap: 3px; cursor: pointer; }
+        .portal-overlay {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .portal-card {
+            background: rgba(10, 20, 30, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+            max-width: 800px;
+        }
+
+        .portal-card h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, #fff, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.3rem;
+        }
+
+        .portal-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .option-btn {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+
+        .option-btn:hover {
+            background: var(--accent-blue);
+            color: black;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.4);
+        }
+
+        .option-btn h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .option-btn p {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .option-btn:hover p {
+            color: rgba(0, 0, 0, 0.6);
+        }
     </style>
 </head>
 <body>
-    <div class="top-nav">
-        <div style="font-size: 16px; font-weight: bold; color: #fab387;">BOREAL CHESSMASTER <span style="font-size: 9px; color: #89b4fa; margin-left:5px;">v4.0</span></div>
-        <div class="controls">
-            <div class="doctrine-console">
-                <select id="primary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option><option value="economy">ECONOMY</option><option value="ambush">AMBUSH</option><option value="saturation">SATURATION</option></select>
-                <span style="color: #45475a;">|</span>
-                <select id="secondary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="none">NONE</option><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option></select>
+    <video autoplay muted loop id="bg-video">
+        <source src="video/Military_Command_Dashboard_Video_Generation.mp4" type="video/mp4">
+    </video>
+
+    <div class="portal-overlay">
+        <div class="portal-card">
+            <h1>STRATEGIC PORTAL</h1>
+            <div class="portal-options">
+                <a href="dashboard.html?mode=boreal" class="option-btn">
+                    <h2>BOREAL BASELINE</h2>
+                    <p>Standardized Baltic engagement theatre. Heuristic audit & baseline logic.</p>
+                </a>
+                <a href="dashboard.html?mode=sweden" class="option-btn">
+                    <h2>SWEDISH DEFENSE</h2>
+                    <p>Real-world military installations. Luleå, Gotland, & Stockholm hubs.</p>
+                </a>
             </div>
-            <div style="display: flex; align-items: center; gap: 5px; font-size: 10px;">
-                <input type="range" id="blend-ratio" min="0" max="100" value="70">
-                <span id="blend-val">70% P</span>
-            </div>
-            <label class="toggle-box" title="Toggle RL Neural Logic"><input type="checkbox" id="use-rl" checked> NEURAL</label>
-            <label class="toggle-box" title="Use PPO Direct Action Matrix"><input type="checkbox" id="use-ppo"> PPO</label>
-            <label class="toggle-box" title="Auto-pause on low confidence"><input type="checkbox" id="dynamic-hitl"> DYNAMIC</label>
-            <label class="toggle-box" title="Strict Human Approval Mode"><input type="checkbox" id="manual-override"> OVERRIDE</label>
-            <label class="toggle-box" title="Toggle Autonomous Mode"><input type="checkbox" id="auto-poll" checked> AUTO</label>
-            <button id="btn-threat">Spawn</button>
-            <button id="btn-3d" class="ai-btn" onclick="window.location.href='strategic_3d.html'">3D VIEW</button>
-            <button id="btn-dna" style="background: #cba6f7; color: #11111b;" onclick="window.location.href='dataset_viewer.html'">DATA DNA</button>
-            <button id="btn-blind" class="danger">Ambush</button>
-            <button id="btn-ai" class="ai-btn">Execute AI</button>
-            <button id="btn-fire" style="background: #f38ba8; color: #11111b; display: none;">FIRE</button>
         </div>
     </div>
-    <div class="main-layout">
-        <div class="map-section">
-            <div class="panel-header" style="padding: 5px 10px;">TACTICAL THEATER <span>BOREAL PASSAGE</span></div>
-            <div id="canvas-container"><canvas id="radarCanvas" width="1000" height="780"></canvas></div>
-        </div>
-        <div class="data-stack">
-            <div class="panel" style="flex: 1;">
-                <div class="panel-header">SITREP & DOCTRINE</div>
-                <div id="active-posture-label" style="font-size: 13px; font-weight: bold; color: #a6e3a1;">INITIALIZING...</div>
-                <div id="blend-ratio-pill" style="font-size: 9px; color: #89b4fa; margin-bottom: 5px;">SYNCING...</div>
-                <div style="background: #1e1e2e; border-radius: 4px; padding: 6px; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;"><span style="font-size: 10px; font-weight: bold; color: #fab387;">NEURAL CONFIDENCE</span></div>
-                    <div style="display: flex; align-items: baseline; gap: 5px;"><div id="neural-value" style="font-size: 18px; font-weight: bold; color: #89b4fa;">SCANNING</div><div id="policy-status" style="font-size: 10px; color: #cba6f7;">STANDBY</div></div>
-                </div>
-                <div id="flag-lights" style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 8px; color: #9399b2;"></div>
-            </div>
-            <div class="panel" style="height: 150px;"><div class="panel-header">SURVIVAL TREND</div><div style="flex: 1; position: relative;"><canvas id="scoreChart"></canvas></div></div>
-            <div class="panel" style="flex: 1.5;"><div class="panel-header">ENGINE TRACE</div><div id="ws-output" class="trace-log">Connecting...</div></div>
-        </div>
-    </div>
-    <div id="freeze-overlay">
-        <div id="freeze-ui">
-            <h1>CHRONOSTASIS ACTIVE</h1>
-            <p>Strategic Override Triggered: Simulation Frozen</p>
-            <div id="freeze-advice">Analyzing sensor data...</div>
-            <button id="btn-commence">COMMENCE ENGAGEMENT</button>
-        </div>
-    </div>
-    <script>
-        const canvas = document.getElementById('radarCanvas'); const ctx = canvas.getContext('2d');
-        const container = document.getElementById('canvas-container'); const wsOutput = document.getElementById('ws-output');
-        let activeThreats = []; let explosions = []; let latestAssignments = []; let scoreChart; const SCALE = 0.6; 
-        const bases = [
-            // --- NORTHERN TERRITORIES (Restored to working reference coordinates) ---
-            { name: "Arktholm (Capital X)", x_km: 418.3, y_km: 95.0, color: "#ffcc00", type: "capital", inventory: { sam: 20 } },
-            { name: "Northern Vanguard Base", x_km: 198.3, y_km: 335.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
-            { name: "Highridge Command", x_km: 838.3, y_km: 75.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
-            { name: "Boreal Watch Post", x_km: 1158.3, y_km: 385.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
-            { name: "Nordvik", x_km: 140, y_km: 323.3, color: "#ffffff", type: "city", inventory: {} },
-            { name: "Valbrek", x_km: 1423.3, y_km: 213.3, color: "#ffffff", type: "city", inventory: {} },
-            
-            // --- SOUTHERN UNION (Synced with reference logic) ---
-            { name: "Meridia (Capital Y)", x_km: 1225, y_km: 1208.3, color: "#ffcc00", type: "capital", inventory: {} },
-            { name: "Spear Point Base", x_km: 918.3, y_km: 835.0, color: "#f38ba8", type: "base", inventory: {} },
-            { name: "Southern Redoubt", x_km: 321.7, y_km: 1238.3, color: "#f38ba8", type: "base", inventory: {} },
-            { name: "Firewatch Station", x_km: 1398.3, y_km: 1071.7, color: "#f38ba8", type: "base", inventory: {} },
-            { name: "Callhaven", x_km: 96.7, y_km: 1150.0, color: "#ffffff", type: "city", inventory: {} },
-            { name: "Solano", x_km: 576.7, y_km: 1236.7, color: "#ffffff", type: "city", inventory: {} }
-        ];
-        // Terrain is now handled by the SVG layer
-        const terrain = [];
-        function fitCanvas() { const s = Math.min(container.clientWidth / 1000, container.clientHeight / 780, 1.0); canvas.style.transform = `scale(${s})`; canvas.style.transformOrigin = 'center center'; }
-        window.addEventListener('resize', fitCanvas); fitCanvas();
-        let ws;
-        function connectWebSocket() {
-            const host = window.location.hostname || "127.0.0.1";
-            ws = new WebSocket(`ws://${host}:8000/ws/logs`);
-            ws.onopen = () => {
-                wsOutput.innerHTML = `<span style="color: #a6e3a1;">[SYSTEM] Strategic Link Established. Monitoring Boreal Sector...</span>\n`;
-                console.log("WebSocket Connected");
-            };
-            ws.onerror = (err) => {
-                wsOutput.innerHTML += `<span style="color: #f38ba8;">[ERROR] WebSocket Connection Failed. Check if backend is running on port 8000.</span>\n`;
-            };
-            ws.onmessage = (e) => {
-                const msg = e.data;
-                const span = document.createElement("span");
-                
-                // --- STRATEGIC COLOR CODING ---
-                if (msg.includes("[STRAT]")) span.style.color = "#f9e2af"; // Gold
-                else if (msg.includes("[NEURAL]")) span.style.color = "#89dceb"; // Cyan
-                else if (msg.includes("[HITL]")) span.style.color = "#f38ba8"; // Rose (Alert)
-                else if (msg.includes("[COMMAND]")) span.style.color = "#a6e3a1"; // Green
-                else if (msg.includes("KILL") || msg.includes("DESTROYED")) span.style.color = "#f38ba8";
-                else span.style.color = "#cdd6f4";
-
-                span.textContent = msg + "\n";
-                wsOutput.appendChild(span);
-                wsOutput.scrollTop = wsOutput.scrollHeight;
-            };
-            ws.onclose = () => setTimeout(connectWebSocket, 2000);
-        }
-        connectWebSocket();
-        async function requestAIOrders(isAuto = false) {
-            const btn = document.getElementById('btn-ai');
-            if (!isAuto) { btn.style.opacity = "0.5"; const logSpan = document.createElement("span"); logSpan.style.color = "#a6e3a1"; logSpan.textContent = `[COMMAND] Manual strategic override dispatched...\n`; wsOutput.appendChild(logSpan); wsOutput.scrollTop = wsOutput.scrollHeight; }
-            try {
-                const host = window.location.hostname || "127.0.0.1";
-                const response = await fetch(`http://${host}:8000/evaluate_advanced`, {
-                    method: 'POST', headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        state: { bases: bases.filter(b => b.type.includes("base") || b.type.includes("capital")).map(b => ({name: b.name, x: b.x_km, y: b.y_km, inventory: b.inventory})) },
-                        threats: activeThreats.map(t => ({ id: t.id, x: t.x_km, y: t.y_km, speed_kmh: t.speed_kmh, heading: "Capital X", estimated_type: t.estimated_type, threat_value: t.threat_value })),
-                        doctrine_primary: document.getElementById('primary-doctrine').value,
-                        doctrine_secondary: document.getElementById('secondary-doctrine').value,
-                        doctrine_blend: document.getElementById('blend-ratio').value / 100,
-                        use_rl: document.getElementById('use-rl').checked,
-                        use_ppo: document.getElementById('use-ppo').checked
-                    })
-                });
-                const data = await response.json(); latestAssignments = data.tactical_assignments || [];
-                if (data.active_doctrine) {
-                    const ad = data.active_doctrine; document.getElementById('active-posture-label').textContent = `${ad.primary.toUpperCase()}`;
-                    document.getElementById('blend-ratio-pill').textContent = `BLEND: ${ad.blend_ratio}`;
-                    const lights = document.getElementById('flag-lights'); lights.innerHTML = '';
-                    Object.entries(ad.active_flags || ad.flags || {}).forEach(([k, v]) => {
-                        const item = document.createElement('div'); item.innerHTML = `<span class="status-light ${v ? 'light-on' : 'light-off'}"></span> ${k.replace('enable_', '').toUpperCase()}`; lights.appendChild(item);
-                    });
-                    if (data.rl_prediction !== undefined && activeThreats.length > 0 && document.getElementById('use-rl').checked) {
-                        const rlNorm = Math.min(100, Math.max(0, (data.rl_prediction / 800) * 100));
-                        document.getElementById('neural-value').textContent = rlNorm.toFixed(1) + "%";
-                        document.getElementById('neural-value').style.color = rlNorm > 80 ? "#a6e3a1" : "#89b4fa";
-
-                        // --- DYNAMIC HITL LOGIC ---
-                        const isDynamic = document.getElementById('dynamic-hitl').checked;
-                        const isOverride = document.getElementById('manual-override').checked;
-
-                        if (isOverride) {
-                            document.getElementById('auto-poll').checked = false;
-                            document.getElementById('btn-fire').style.display = 'inline-block';
-                        } else {
-                            document.getElementById('btn-fire').style.display = 'none';
-                            if (isDynamic && rlNorm < 75 && document.getElementById('auto-poll').checked) {
-                                document.getElementById('auto-poll').checked = false;
-                                const hitlLog = document.createElement("span");
-                                hitlLog.style.color = "#f38ba8";
-                                hitlLog.style.fontWeight = "bold";
-                                hitlLog.textContent = `[HITL] Neural Confidence Breach (${rlNorm.toFixed(1)}%). Auto-eval PAUSED. Commander intervention required.\n`;
-                                wsOutput.appendChild(hitlLog);
-                                wsOutput.scrollTop = wsOutput.scrollHeight;
-                            }
-                        }
-                    } else { document.getElementById('neural-value').textContent = "HEURISTIC"; }
-                }
-                if(data.strategic_consequence_score !== undefined) {
-                    const scoreVal = data.strategic_consequence_score;
-                    scoreChart.data.labels.push(""); 
-                    scoreChart.data.datasets[0].data.push(scoreVal);
-                    
-                    // Visual warning if score is dropping
-                    if (scoreVal < 300) scoreChart.data.datasets[0].borderColor = "#f38ba8";
-                    else scoreChart.data.datasets[0].borderColor = "#fab387";
-                    if(scoreChart.data.labels.length > 20) { scoreChart.data.labels.shift(); scoreChart.data.datasets[0].data.shift(); }
-                    scoreChart.update('none');
-                }
-            } catch(e) {
-                console.error("AI Request Failed:", e);
-                const errSpan = document.createElement("span");
-                errSpan.style.color = "#f38ba8";
-                errSpan.textContent = `[ERROR] AI Link Failure: ${e.message}\n`;
-                wsOutput.appendChild(errSpan);
-                wsOutput.scrollTop = wsOutput.scrollHeight;
-            } finally { if (!isAuto) btn.style.opacity = "1.0"; }
-        }
-        let overrideActive = false;
-        let isFrozen = false;
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // --- DRAW HOLOGRAPHIC TERRAIN ---
-            terrain.forEach(t => {
-                ctx.fillStyle = t.isBlind ? "rgba(243, 139, 168, 0.1)" : "rgba(137, 180, 250, 0.1)";
-                ctx.strokeStyle = t.stroke;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                t.coords.forEach((c, i) => {
-                    if (i === 0) ctx.moveTo(c[0] * SCALE, c[1] * SCALE);
-                    else ctx.lineTo(c[0] * SCALE, c[1] * SCALE);
-                });
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                
-                if (t.isBlind) {
-                    ctx.fillStyle = "rgba(243, 139, 168, 0.2)";
-                    ctx.font = "italic 9px Segoe UI";
-                    ctx.fillText("RADAR BLIND SPOT", t.coords[0][0] * SCALE, t.coords[0][1] * SCALE - 5);
-                }
-            });
-
-            bases.forEach(b => { 
-                const pxX = b.x_km * SCALE; const pxY = b.y_km * SCALE; ctx.fillStyle = b.color; ctx.beginPath();
-                // Increased base sizes: 12x12 for capitals/cities, radius 8 for bases
-                if(b.type.includes("city") || b.type.includes("capital")) { ctx.rect(pxX-6, pxY-6, 12, 12); } else { ctx.arc(pxX, pxY, 8, 0, 7); }
-                ctx.fill(); ctx.fillStyle="#ffffff"; ctx.font = "bold 10px Segoe UI"; ctx.fillText(b.name, pxX-20, pxY-12); 
-            });
-            activeThreats.forEach(t => { 
-                const pxX = t.x_km * SCALE; const pxY = t.y_km * SCALE;
-                // Aircraft as larger tactical triangles (radius 6)
-                ctx.fillStyle = "#f38ba8"; ctx.beginPath();
-                ctx.moveTo(pxX, pxY - 7); ctx.lineTo(pxX + 6, pxY + 5); ctx.lineTo(pxX - 6, pxY + 5);
-                ctx.closePath(); ctx.fill(); 
-                ctx.font = "bold 10px monospace"; ctx.fillText(t.id, pxX+8, pxY+3);
-            });
-            if (Array.isArray(latestAssignments)) {
-                latestAssignments.forEach(ass => {
-                    const b = bases.find(base => base.name === ass.base_name); const t = activeThreats.find(th => th.id === ass.threat_id);
-                    if (b && t) { ctx.strokeStyle = "#a6e3a1"; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(b.x_km * SCALE, b.y_km * SCALE); ctx.lineTo(t.x_km * SCALE, t.y_km * SCALE); ctx.stroke(); ctx.setLineDash([]); }
-                });
-            }
-            explosions.forEach((exp, i) => { ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`; ctx.beginPath(); ctx.arc(exp.x_km * SCALE, exp.y_km * SCALE, (30-exp.life)*2, 0, 7); ctx.fill(); exp.life--; if(exp.life <= 0) explosions.splice(i, 1); });
-            
-            // --- AUTOMATIC VS MANUAL EXECUTION ---
-            const isOverride = document.getElementById('manual-override').checked;
-            const targetedForKill = [];
-
-            if (!isOverride) {
-                activeThreats.forEach(t => {
-                    // Increased kill probability for fast ambush targets (0.94 -> 0.85 threshold)
-                    if (latestAssignments.some(ass => ass.threat_id === t.id) && t.x_km < 1200 && Math.random() > 0.85) {
-                        explosions.push({x_km: t.x_km, y_km: t.y_km, life: 30}); targetedForKill.push(t.id);
-                        // Deduct ammo on auto-kill
-                        const ass = latestAssignments.find(a => a.threat_id === t.id);
-                        if (ass) { const b = bases.find(base => base.name === ass.base_name); if (b) b.inventory.sam--; }
-                    }
-                });
-            }
-            activeThreats = activeThreats.filter(t => !targetedForKill.includes(t.id) && t.x_km > 0);
-            updatePhysics();
-            requestAnimationFrame(draw);
-        }
-        draw(); // Start the engine
-
-        // Toggles
-        document.getElementById('manual-override').addEventListener('change', (e) => {
-            overrideActive = e.target.checked;
-            if (!overrideActive) resumeTime(); // Auto-resume if toggled off
-        });
-
-        document.getElementById('btn-commence').addEventListener('click', () => {
-            if (overrideActive) {
-                // In override, Commence means "Fire and then resume"
-                fireWeapons();
-            }
-            resumeTime();
-        });
-
-        function freezeTime(advice) {
-            isFrozen = true;
-            document.getElementById('freeze-overlay').style.display = 'block';
-            document.getElementById('freeze-advice').innerText = advice || "The AI has proposed a tactical plan. Review and authorize below.";
-        }
-
-        function resumeTime() {
-            isFrozen = false;
-            document.getElementById('freeze-overlay').style.display = 'none';
-        }
-
-        function updatePhysics() {
-            if (isFrozen) return; 
-            
-            activeThreats.forEach(t => {
-                const speedPerFrame = (t.speed_kmh / 3600) * (120 / 60); // 120x Strategic Acceleration for demo
-                if (!t.heading || t.heading === "Capital X") {
-                    t.x_km -= speedPerFrame; 
-                } else {
-                    const target = bases.find(b => b.name === t.heading);
-                    if (target) {
-                        const dx = target.x_km - t.x_km;
-                        const dy = target.y_km - t.y_km;
-                        const dist = Math.hypot(dx, dy);
-                        if (dist > 5) {
-                            t.x_km += (dx / dist) * speedPerFrame;
-                            t.y_km += (dy / dist) * speedPerFrame;
-                        }
-                    }
-                }
-            });
-            activeThreats = activeThreats.filter(t => t.x_km > 0);
-        }
-
-        function fireWeapons() {
-            const targetedForKill = [];
-            currentAssignments.forEach(ass => {
-                const t = activeThreats.find(th => th.id === ass.threat_id);
-                if (t) {
-                    explosions.push({x_km: t.x_km, y_km: t.y_km, life: 30});
-                    targetedForKill.push(t.id);
-                    const b = bases.find(base => base.name === ass.base_name);
-                    if (b) b.inventory.sam--;
-                }
-            });
-            activeThreats = activeThreats.filter(t => !targetedForKill.includes(t.id));
-            currentAssignments = []; // Clear current proposed plan
-            const logSpan = document.createElement("span");
-            logSpan.style.color = "#a6e3a1";
-            logSpan.textContent = `[COMMAND] Manual firing authorization executed.\n`;
-            wsOutput.appendChild(logSpan);
-        }
-        document.getElementById('btn-threat').onclick = () => activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x_km: 1600, y_km: 100+Math.random()*600, speed_kmh: 2000, estimated_type: "bomber", threat_value: 80});
-        document.getElementById('btn-blind').onclick = () => { for(let i=0; i<10; i++) activeThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: 1600+(i*40), y_km: 50+Math.random()*700, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150}); };
-        document.getElementById('btn-ai').onclick = () => requestAIOrders(false);
-        document.getElementById('blend-ratio').oninput = (e) => document.getElementById('blend-val').textContent = e.target.value + "% P";
-        const ctxChart = document.getElementById('scoreChart').getContext('2d');
-        scoreChart = new Chart(ctxChart, { type: 'line', data: { labels: [], datasets: [{ label: 'S', data: [], borderColor: '#fab387', tension: 0.3, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1000, grid: { display: false } }, x: { display: false } }, plugins: { legend: { display: false } } } });
-        setInterval(() => { if(document.getElementById('auto-poll').checked) requestAIOrders(true); }, 3000);
-    </script>
 </body>
 </html>

@@ -20,8 +20,8 @@ import random
 import uvicorn
 
 # 1. CORE MODELS & LOGIC
-from models import Effector, Base, Threat, GameState, EFFECTORS
-from engine import evaluate_threats_advanced
+from core.models import Effector, Base, Threat, GameState, EFFECTORS
+from core.engine import evaluate_threats_advanced
 
 # 2. CONSTANTS & CONFIG
 CSV_FILE_PATH = "data/input/Boreal_passage_coordinates.csv"
@@ -278,6 +278,8 @@ async def get_dataset_sample(dataset: str = "eval_shared_gold.npz"):
 # 8. STATIC ASSET SERVING (Phase 4)
 from fastapi.staticfiles import StaticFiles
 # Mount the frontend directory to serve the Strategic Hub and CZML streams
+app.mount("/data", StaticFiles(directory="data"), name="data")
+app.mount("/video", StaticFiles(directory="video"), name="video")
 app.mount("/", StaticFiles(directory="frontend"), name="static")
 
 if __name__ == "__main__":
