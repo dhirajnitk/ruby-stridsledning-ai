@@ -39,10 +39,16 @@ The final policy is a high-density, 512-unit MLP architecture that maps the Stra
 
 ## 3. EMPIRICAL RESULTS: BENCHMARK PERFORMANCE
 
-| Intelligence Tier | Strategic Acc | Decision Latency | Response Time Delta |
-| :--- | :--- | :--- | :--- |
-| **Legacy MCTS (Oracle)** | 100.0% | 8,500.0 ms | Baseline |
-| **Hackathon Final PPO** | **90.1%** | **0.001 ms** | **- 8,499,999 ms** |
+| Intelligence Tier | Architecture | Tactical Pk | Latency (ms) | Throughput |
+| :--- | :--- | :---: | :---: | :--- |
+| **Elite V3.5** | Transf-ResNet | **98.0%** | **0.012 ms** | 85,000+ /s |
+| **Supreme V3.1** | Chronos GRU | **94.7%** | **0.010 ms** | 100,000+ /s |
+| **Supreme V2** | ResNet-64 | 89.8% | **0.008 ms** | 125,000+ /s |
+| **Titan** | Self-Attention | 91.2% | **0.015 ms** | 65,000+ /s |
+| **Hybrid RL V8.4** | ResNet-128+RL | 88.0% | 39.89 ms | 25 /s |
+| **Generalist E10** | Policy-Only | 93.0% | **0.005 ms** | 200,000+ /s |
+| **Heuristic** | Rule-Based | 74.5% | 39.95 ms | 25 /s |
+| *Legacy MCTS* | Oracle Search | 100.0% | 8,500.0 ms | 0.1 /s |
 
 ---
 

@@ -27,12 +27,11 @@ The project supports two distinct strategic philosophies to ensure absolute miss
 
 ## 4. Performance Matrix (Unseen Engagements)
 
-| Metric | Legacy Oracle (MCTS) | **Supreme Direct (Neural)** |
-| :--- | :--- | :--- |
-| **Tactical Accuracy** | 100.0% | **99.5%** |
-| **Strategic Loss** | 0.000 | **0.473** |
-| **Inference Latency** | 8500.0 ms | **0.010 ms** |
-| **Throughput** | 0.1 engagements/sec | **100,000+ engagements/sec** |
+| Metric | Legacy Oracle (MCTS) | **Supreme Direct (Neural)** | **Elite V3.5** | **Generalist E10** | **Hybrid RL** | **Heuristic** |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Tactical Accuracy** | 100.0% | **94.7%** | **98.0%** | 93.0% | 88.0% | 74.5% |
+| **Inference Latency** | 8500.0 ms | **0.010 ms** | **0.012 ms** | **0.005 ms** | 39.89 ms | 39.95 ms |
+| **Throughput (per sec)**| 0.1 | 100,000+ | 85,000+ | 200,000+ | 25 | 25 |
 
 ## 5. Deployment Guide
 The Boreal Suite is unified under a single inference factory:

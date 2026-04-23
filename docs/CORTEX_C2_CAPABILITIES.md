@@ -450,7 +450,24 @@ The top-right model selector feeds `updateModelBadge()`, which updates the `mode
 
 ---
 
-## 15. Navigation & External Links
+---
+ 
+ ## 15. Tactical Engine Performance Matrix
+ 
+ | Profile | Architecture | Tactical Pk | Latency (ms) | Throughput |
+ | :--- | :--- | :---: | :---: | :--- |
+ | **ELITE V3.5** | Transf-ResNet | **98.0%** | **0.012 ms** | 85,000+ /s |
+ | **SUPREME V3.1** | Chronos GRU | **94.7%** | **0.010 ms** | 100,000+ /s |
+ | **SUPREME V2** | ResNet-64 | 89.8% | **0.008 ms** | 125,000+ /s |
+ | **TITAN** | Self-Attention | 91.2% | **0.015 ms** | 65,000+ /s |
+ | **HYBRID RL V8.4** | ResNet-128+RL | 88.0% | 39.89 ms | 25 /s |
+ | **GENERALIST E10** | Policy-Only | 93.0% | **0.005 ms** | 200,000+ /s |
+ | **HEURISTIC** | Rule-Based | 74.5% | 39.95 ms | 25 /s |
+ | *Legacy MCTS* | Oracle Search | 100.0% | 8,500.0 ms | 0.1 /s |
+ 
+ ---
+ 
+ ## 16. Navigation & External Links
 
 | Destination | How to reach |
 |---|---|
