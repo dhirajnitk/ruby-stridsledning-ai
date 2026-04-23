@@ -4,7 +4,8 @@ import numpy as np
 import os
 import time
 from ppo_agent import BorealDirectEngine, BorealValueNetwork
-from engine import ValueNetwork
+# FIX B3: ValueNetwork / DoctrineNetwork imports moved inside conditional blocks
+#          (src/engine.py does not exist; classes live in src/training/train_models.py)
 
 import sys
 # --- CONFIGURATION ---
@@ -45,7 +46,8 @@ def benchmark():
 
     # 2. TEST LEGACY GREEDY (Rule-Based Baseline)
     start_time = time.time()
-    from engine import TacticalEngine
+    # FIX B3: import TacticalEngine from its correct location (core.engine)
+    from core.engine import TacticalEngine
     # We sample tactical assignments for the entire batch
     for _ in range(len(features)):
         # Simulate tactical decision
@@ -59,6 +61,9 @@ def benchmark():
     val_norm_path = "models/value_normalization.npy"
     if os.path.exists(val_path) and os.path.exists(val_norm_path):
         val_norm = np.load(val_norm_path)
+        # FIX B3: lazy import — class lives in training/train_models.py, not engine.py
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "training"))
+        from train_models import ValueNetwork
         model = ValueNetwork(input_dim=15).to(DEVICE)
         model.load_state_dict(torch.load(val_path, map_location=DEVICE))
         model.eval()
@@ -75,7 +80,9 @@ def benchmark():
     # 3. TEST RESNET DOCTRINE SYSTEM (Policy)
     doc_path = "models/doctrine_network.pth"
     if os.path.exists(doc_path):
-        from engine import DoctrineNetwork
+        # FIX B3: lazy import — class lives in training/train_models.py, not engine.py
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "training"))
+        from train_models import DoctrineNetwork
         model = DoctrineNetwork(input_dim=15).to(DEVICE)
         model.load_state_dict(torch.load(doc_path, map_location=DEVICE))
         model.eval()
@@ -124,15 +131,17 @@ def benchmark():
                 from ppo_agent import BorealValueNetwork
                 model = BorealValueNetwork(input_dim=15).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.train() # ENABLE BATCHNORM TRACKING
+                model.eval()  # FIX B5: was model.train() — corrupts BatchNorm / dropout
                 with torch.no_grad():
                     values = model(features_norm)
                     preds = torch.zeros((features.shape[0], 11)).to(DEVICE)
             elif "Chronos" in name:
+                # FIX B4: ppo_chronos_gru.py lives in src/training/, not src/
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), "training"))
                 from ppo_chronos_gru import BorealChronosGRU
                 model = BorealChronosGRU(input_dim=15, output_dim=11).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.eval() # EVAL MODE: Saves massive memory
+                model.eval()  # FIX B5: eval mode for deterministic inference
                 with torch.no_grad():
                     # BATCHED TEMPORAL AUDIT: Process in chunks to avoid OOM
                     all_preds, all_values = [], []
@@ -153,14 +162,14 @@ def benchmark():
                 from ppo_titan_transformer import BorealTitanEngine
                 model = BorealTitanEngine(input_dim=15, output_dim=11).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.train() # Enable BatchNorm
+                model.eval()  # FIX B5: was model.train() — eval mode for deterministic inference
                 with torch.no_grad():
                     preds, values = model(features_norm)
             elif "Sinkhorn" in name:
                 from ppo_sinkhorn_agent import BorealSinkhornEngine
                 model = BorealSinkhornEngine(input_dim=15, num_weapons=11, num_targets=11).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.train() # Enable BatchNorm
+                model.eval()  # FIX B5: was model.train() — eval mode for deterministic inference
                 with torch.no_grad():
                     # Sinkhorn outputs (Matrix, Value)
                     pred_matrix, values = model(features_norm)
@@ -171,7 +180,7 @@ def benchmark():
                 from ppo_agent import BorealDirectEngine
                 model = BorealDirectEngine(input_dim=15, output_dim=11).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.train() # ENABLE BATCHNORM TRACKING
+                model.eval()  # FIX B5: was model.train() — eval mode for deterministic inference
                 with torch.no_grad():
                     preds, values = model(features_norm)
             

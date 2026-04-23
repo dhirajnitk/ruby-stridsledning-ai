@@ -167,3 +167,42 @@ This section documents the outcomes of the CORTEX-C2 development sprint.
 | `genE10` | Generalist E10 |
 | `heuristic` | Heuristic (Triage-Aware) — default |
 | `hBase` | Heuristic V2 (Base) |
+
+---
+
+## Session 3 Updates (2026-04-24)
+
+### New Features Added
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| MODEL_PROFILES system (8 models, distinct scoring weights) | ✅ | pkWeight / costWeight / minPk / maxPerBase per model |
+| onModelChange() — live COA regeneration on dropdown change | ✅ | Commentary and COA cards update immediately |
+| Sensor Quality → Pk fully wired engine | ✅ | `computeSensorQuality()` + cuing matrix by threat type |
+| Backend payloads send real inventory + doctrine + model_id | ✅ | Was sending mocks; now sends live effAmmo state |
+| Sweden theater scenarios (3 scenarios: F21/STO/GOT) | ✅ | Confirmed working with 11-base inventory |
+| Theater label fix (shows "Sweden (11 nodes)" / "Boreal (21 nodes)") | ✅ | Was always showing "Boreal" |
+| Weapon swap Pk sensor-aware | ✅ | confirmSwap() applies getSensorPkMult() |
+| switchTheater() recomputes _currentSq before COA generation | ✅ | Sensor bars update on theater change |
+| LLM prompt includes sensor quality block + model info | ✅ | Full context sent to LLM |
+| approveCOACOA() Pk-weighted Monte Carlo simulation | ✅ | Realistic intercept count per approval |
+
+### Backend Bug Fixes Applied
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| B1 | ppo_agent.py | BorealDirectEngine returned single tensor; benchmark expected (policy, value) tuple | Added value_head; return (policy, value) |
+| B2 | ppo_agent.py | ActorCriticDirect + extract_direct_features missing; marathon trainer crashed on import | Implemented both in ppo_agent.py |
+| B3 | benchmark_boreal.py | `from engine import ValueNetwork` at module level; engine.py doesn't exist | Moved to lazy imports inside guarded blocks |
+| B4 | benchmark_boreal.py | ppo_chronos_gru.py missing from src/ | Created src/ppo_chronos_gru.py with tactical BorealChronosGRU(15→11) |
+| B5 | benchmark_boreal.py | .train() used during inference — corrupts BatchNorm/dropout | Changed all occurrences to .eval() |
+| B6 | core/inference.py | Titan/hybrid/generalist all loaded into TransformerResNet (wrong arch) | Added per-model architecture mapping; added GeneralistMLP |
+| B7 | core/inference.py | predict() crashed on (policy, value) tuple return from some models | Added isinstance(out, tuple) guard |
+| B8 | rl_data_collector.py | extract_features was 10-D, used wrong inventory keys (always zeros) | Rewrote to 15-D matching core/engine.py |
+| B9 | rl_data_collector.py | evaluate_threats_advanced returns tuple; code accessed it as dict | Unpacked (score, details, _) properly |
+
+### Architecture Documentation
+
+Full model architecture reference (all 8 models, input/output dimensions, pipeline) added to:
+
+→ `docs/MODEL_ARCHITECTURE_REFERENCE.md`

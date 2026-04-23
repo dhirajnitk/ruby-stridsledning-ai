@@ -78,6 +78,17 @@ Boreal Chessmaster is built on the principle of **Transparent AI**. The Stridsle
 - `src/`: Core AI Engine, RL Neural Networks, and Backend API.
 - `frontend/`: The 5Hz Ultra-Reflex Tactical Dashboard.
 - `docs/`: Strategic manuals, Architecture guides, and Pitch scripts.
+
+## 📚 Engineering Documentation
+
+| Document | Description |
+|---------|-------------|
+| [MODEL_ARCHITECTURE_REFERENCE.md](docs/MODEL_ARCHITECTURE_REFERENCE.md) | All 8 model architectures — input/output vectors, class names, bug report |
+| [BENCHMARKING_METHODOLOGY.md](docs/BENCHMARKING_METHODOLOGY.md) | Four-tier benchmark pipeline, scoring formulas, how to run tests |
+| [DATA_PIPELINE_AND_TRAINING.md](docs/DATA_PIPELINE_AND_TRAINING.md) | Scenario generation, Oracle labeling, corpus formats, real clutter fusion, missile range physics |
+| [COORDINATE_SYSTEMS.md](docs/COORDINATE_SYSTEMS.md) | WGS84 / Theater-km / SVG units — conversion formulas, file mapping |
+| [CORTEX_C2_REFERENCE.md](docs/CORTEX_C2_REFERENCE.md) | Frontend C2 console reference — panels, backend API, model profiles |
+| [boreal_chessmaster_deep_dive.md](docs/boreal_chessmaster_deep_dive.md) | System architecture deep dive |
 - `models/`: Pre-trained RL Value and Doctrine networks.
 - `data/`: Map coordinates and adversarial "Red Team" scenarios.
 

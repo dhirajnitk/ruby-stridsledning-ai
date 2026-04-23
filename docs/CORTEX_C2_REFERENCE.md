@@ -210,7 +210,7 @@ Start backend: `python src/agent_backend.py` (requires `.venv_saab`, port 8000)
 
 ```
 frontend/
-  cortex_c2.html      ← Main operator console (single file, ~2000 lines)
+  cortex_c2.html      ← Main operator console (single file, ~2400 lines)
   dashboard.html      ← Strategic dashboard (viz_engine physics)
   index.html          ← Unified portal (all module links)
   kinetic_3d.html     ← WebGL 3D kinetic simulation
@@ -224,4 +224,92 @@ src/
   agent_backend.py    ← FastAPI backend (port 8000)
 models/               ← PyTorch + numpy model files
 data/                 ← Scenarios, benchmarks, installations CSV
+```
+
+---
+
+## Session 3 Changes (2026-04-24)
+
+### 13. Model Profiles System
+
+Eight tactical models now have distinct scoring profiles in `MODEL_PROFILES` (JS object):
+
+| Model key | pkWeight | costWeight | maxPerBase | minPk | Label |
+|-----------|----------|------------|-----------|-------|-------|
+| `elite` | 1.20 | 0.010 | 8 | 0.28 | ELITE · Transformer/ResNet |
+| `supreme3` | 1.10 | 0.012 | 7 | 0.32 | SUPREME V3.1 · Chronos GRU |
+| `supreme2` | 1.00 | 0.015 | 6 | 0.30 | SUPREME V2 · LSTM |
+| `titan` | 0.90 | 0.025 | 5 | 0.40 | TITAN · Conservative LSTM |
+| `hybrid` | 1.05 | 0.008 | 8 | 0.25 | HYBRID RL · Value-Driven PPO |
+| `genE10` | 1.05 | 0.014 | 6 | 0.32 | GENERALIST E10 · Ensemble |
+| `heuristic` | 1.00 | 0.015 | 6 | 0.30 | HEURISTIC · Triage-Aware WTA |
+| `hBase` | 0.95 | 0.020 | 4 | 0.35 | HEURISTIC V2 · Base Greedy |
+
+Switching the model dropdown calls `onModelChange()`, which immediately regenerates all three COA cards using the new profile weights.
+
+### 14. onModelChange()
+
+New function `onModelChange()` wires the model dropdown to the full COA pipeline:
+1. Updates the model badge
+2. Regenerates COAs via `generateCOAs()` with the new `MODEL_PROFILES` weights
+3. Re-renders COA cards and commentary
+4. If HITL mode is active, refreshes the HITL queue
+
+### 15. Backend Payloads — Real Data
+
+`/evaluate_advanced` now receives live battlefield state instead of mocks:
+
+```javascript
+state: { bases: activeBases().map(b => {
+  const st = inventoryState[b.id] || {};
+  return { name, x, y, hp: st.hp ?? 100, inventory: {
+    thaad, 'patriot-pac3', nasams, helws, 'c-ram'
+  }};
+}) },
+doctrine_primary: ACTIVE_DOCTRINE,
+model_id: <dropdown value>,
+sensor_quality: _currentSq || null,
+```
+
+### 16. Sweden Theater Scenarios
+
+Three theater-aware scenarios added for the Sweden theater (11 bases: STO, F21, GOT, MAL, UPP, MUS, F7, VXJ, LLA, HRN, KAL):
+
+| Scenario | Description |
+|---------|-------------|
+| SWEDEN-C · 3 TRACKS | Stockholm approach, 3 bombers, AUTONOMOUS mode |
+| SWEDEN-S · 3 TRACKS | F21 Luleå sector, 5 mixed threats + jamming, DEFER mode |
+| SWEDEN-M · 9 TRACKS | 9 tracks targeting Stockholm/GOT/Gotland, ADVISE mode |
+
+Theater label now shows `"Sweden (11 nodes)"` / `"Boreal (21 nodes)"` correctly.
+
+### 17. Sensor Quality → Pk Wiring
+
+Sensor quality is now computed once per scenario load (`computeSensorQuality(sc, m)`) and stored in `_currentSq`. It propagates to:
+
+- **COA cards**: Each assignment shows `Pk_nom → Pk_eff` with tooltip formula
+- **Weapon SWAP**: `confirmSwap()` applies `getSensorPkMult()` to swapped weapon's Pk
+- **Theater switch**: `switchTheater()` recomputes `_currentSq` before regenerating COAs
+- **LLM prompt**: Sensor quality block included in `buildTacticalPrompt()`
+- **Commentary**: `renderCommentary()` shows per-modality percentages and avg multiplier
+
+### 18. COA Approval — Pk-Weighted Simulation
+
+`approveCOACOA()` now rolls a Pk-weighted Monte Carlo intercept estimate:
+
+```javascript
+let hits = 0;
+coa.assignments.forEach(a => { if (Math.random() < (a.pk || 0.5)) hits++; });
+// hits → increments INTERCEPTS counter
+```
+
+### 19. Sensor Quality Cuing Matrix
+
+```
+BALLISTIC  : radar 60% + esm 40%
+HYPERSONIC : radar 70% + ireo 30%
+CRUISE     : radar 50% + ireo 30% + link16 20%
+LOITER/DRONE: ireo 60% + radar 30% + link16 10%
+FIGHTER    : radar 50% + link16 40% + ireo 10%
+Floor      : 0.30 (minimum Pk multiplier regardless of sensor state)
 ```
