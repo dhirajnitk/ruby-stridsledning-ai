@@ -192,29 +192,47 @@ For each COA variant:
 
 ## 6. Theater Data
 
-### 6.1 Boreal Theater
+### 6.1 Boreal Theater (21 nodes)
 
-| ID | Name | SVG Coords | Type | SAM Count | Effectors |
-|---|---|---|---|---|---|
-| ARK | Arktholm | (251, 57) | HVA | 100 | THAAD, PAC-3, NASAMS, C-RAM |
-| NVB | Boden | (119, 197) | BASE | 40 | PAC-3, NASAMS, HELWS |
-| HRC | Highridge | (503, 41) | BASE | 30 | THAAD, PAC-3 |
-| BWP | Gotland | (695, 227) | BASE | 50 | NASAMS, C-RAM |
-| VAL | Valbrek | (854, 128) | HVA | 60 | PAC-3, HELWS |
-| NRD | Nordvik | (84, 194) | HVA | 40 | NASAMS, C-RAM |
-| MER | Meridia | (735, 725) | HVA | 40 | THAAD, PAC-3, NASAMS |
+| ID | Name | SVG Coords | Type | Effectors |
+|---|---|---|---|---|
+| ARK | Arktholm | (251, 57) | HVA | THAAD, PAC-3, NASAMS, C-RAM |
+| HRC | Highridge | (503, 41) | HVA | THAAD, PAC-3, NASAMS |
+| VAL | Valbrek | (780, 92) | HVA | THAAD, PAC-3, HELWS |
+| LUL | Luleå Wing | (340, 68) | BASE | PAC-3, NASAMS, C-RAM |
+| KAL | Kalix SAM | (430, 118) | BASE | NASAMS, C-RAM |
+| EST | Eastmark Radar | (630, 82) | BASE | PAC-3, NASAMS |
+| NVB | Boden | (119, 197) | BASE | PAC-3, NASAMS, HELWS |
+| NRD | Nordvik | (72, 255) | HVA | NASAMS, C-RAM, HELWS |
+| OBS | Obsburg | (165, 340) | BASE | PAC-3, NASAMS |
+| LIN | Lindvik | (128, 470) | BASE | NASAMS, C-RAM |
+| KNS | Kronstad Naval | (360, 310) | HVA | THAAD, PAC-3, NASAMS, C-RAM |
+| HAP | Häppala | (520, 370) | BASE | PAC-3, NASAMS |
+| VAD | Vadheim | (405, 495) | BASE | NASAMS, HELWS |
+| BWP | Bothvik | (695, 200) | BASE | NASAMS, C-RAM |
+| TOR | Torvald | (680, 400) | HVA | THAAD, PAC-3, NASAMS |
+| ROS | Rosen Battery | (620, 530) | BASE | PAC-3, NASAMS, C-RAM |
+| MER | Meridia HQ | (735, 680) | HVA | THAAD, PAC-3, NASAMS |
+| MAR | Markeby | (190, 560) | BASE | NASAMS, C-RAM |
+| SOL | Solberg AD | (460, 600) | BASE | PAC-3, NASAMS, HELWS |
+| FAL | Falmark | (550, 700) | BASE | NASAMS, C-RAM |
+| BRK | Burkland | (300, 660) | BASE | PAC-3, NASAMS |
 
-### 6.2 Sweden Theater
+### 6.2 Sweden Theater (11 nodes)
 
-| ID | Name | SVG Coords | Type | SAM Count | Effectors |
-|---|---|---|---|---|---|
-| STO | Stockholm | (480, 200) | HVA | 80 | THAAD, PAC-3, NASAMS, C-RAM |
-| GOT | Gothenburg | (120, 400) | HVA | 60 | PAC-3, NASAMS |
-| MAL | Malmö | (190, 540) | HVA | 40 | PAC-3, NASAMS, C-RAM |
-| UPP | Uppsala | (510, 135) | BASE | 30 | NASAMS, C-RAM |
-| ORE | Örebro | (310, 320) | BASE | 40 | PAC-3, NASAMS |
-| SUN | Sundsvall | (570, 70) | BASE | 20 | NASAMS, C-RAM |
-| UME | Umeå | (660, 45) | BASE | 20 | NASAMS, HELWS |
+| ID | Name | SVG Coords | Type | Effectors |
+|---|---|---|---|---|
+| F21 | Luleå (F21) | (854, 25) | HVA | THAAD, PAC-3, NASAMS, C-RAM |
+| VID | Vidsel Range | (714, 5) | BASE | PAC-3, NASAMS |
+| STO | Stockholm | (567, 500) | HVA | THAAD, PAC-3, NASAMS, C-RAM |
+| F16 | Uppsala (F16) | (524, 457) | BASE | PAC-3, NASAMS, C-RAM |
+| MUS | Muskö Naval | (572, 532) | HVA | NASAMS, C-RAM |
+| MAL | Malmen (MAL) | (333, 571) | BASE | PAC-3, NASAMS |
+| F7 | Såtenäs (F7) | (79, 568) | BASE | PAC-3, NASAMS, C-RAM |
+| GBG | Gothenburg | (0, 624) | HVA | PAC-3, NASAMS, C-RAM |
+| GOT | Gotland (GOT) | (591, 628) | HVA | THAAD, PAC-3, NASAMS |
+| F17 | Ronneby (F17) | (299, 734) | BASE | PAC-3, NASAMS, C-RAM |
+| KRL | Karlskrona | (328, 742) | HVA | NASAMS, C-RAM, HELWS |
 
 Switching theaters via the **BOREAL / SWEDEN** toggle redraws the tactical map, updates the inventory panel with theater-specific labeling (e.g., "Sweden (11 nodes)"), and recomputes sensor quality.
 

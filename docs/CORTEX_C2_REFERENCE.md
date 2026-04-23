@@ -50,8 +50,8 @@ Two theaters share the same console:
 
 | Theater | Bases | Notes |
 |---|---|---|
-| **BOREAL** | ARK, NVB, HRC, BWP, VAL, NRD, MER | Default. Fictional Baltic theater. |
-| **SWEDEN** | STO, GOT, MAL, UPP, ORE, SUN, UME | Swedish Military Installations. Real-world positions. |
+| **BOREAL** | 21 nodes (ARK, NVB, HRC, BWP, VAL, NRD, MER, etc.) | Default. Fictional Baltic theater. |
+| **SWEDEN** | 11 nodes (STO, F21, GOT, MAL, UPP, MUS, F7, etc.) | Swedish Military Installations. Real-world positions. |
 
 The AOR label, inventory grid, and COA engine all update on theater switch.
 
