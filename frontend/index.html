@@ -3,81 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOREAL COMMAND PORTAL | SAAB HACKATHON</title>
+    <title>CORTEX COMMAND PORTAL | SAAB HACKATHON</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-        }
+        body,html{height:100%;margin:0;overflow:hidden;background:#000}
+        #bg-video{position:fixed;right:0;bottom:0;min-width:100%;min-height:100%;z-index:-1;filter:brightness(0.35) contrast(1.15)}
+        .portal-overlay{height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;padding:20px;box-sizing:border-box}
+        .portal-card{background:rgba(5,12,20,0.88);backdrop-filter:blur(22px);border:1px solid rgba(0,242,255,0.18);border-radius:12px;padding:2.5rem 3rem;text-align:center;box-shadow:0 10px 50px rgba(0,0,0,0.85);max-width:920px;width:100%}
+        .portal-card h1{font-family:'Orbitron',sans-serif;font-size:2rem;margin-bottom:.25rem;background:linear-gradient(90deg,#fff,var(--accent-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.3rem}
+        .portal-sub{font-size:.55rem;color:rgba(0,242,255,0.5);letter-spacing:3px;text-transform:uppercase;margin-bottom:2rem}
+        /* ── section labels */
+        .sect-head{font-family:'Orbitron',sans-serif;font-size:.42rem;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin:1.4rem 0 .55rem;text-align:left;border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:.35rem}
+        /* ── grid rows */
+        .portal-row{display:grid;gap:1rem}
+        .portal-row.cols-2{grid-template-columns:1fr 1fr}
+        .portal-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+        /* ── cards */
+        .opt{padding:1.25rem 1.4rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.13);border-radius:8px;color:white;cursor:pointer;transition:all .28s cubic-bezier(.4,0,.2,1);text-decoration:none;display:flex;flex-direction:column;align-items:flex-start;gap:.3rem}
+        .opt:hover{transform:translateY(-4px);box-shadow:0 8px 28px rgba(0,242,255,0.25)}
+        .opt.primary{border-color:rgba(0,242,255,0.4)}
+        .opt.primary:hover{background:rgba(0,242,255,0.12);border-color:rgba(0,242,255,0.7)}
+        .opt.c2{border-color:rgba(250,204,21,0.35)}
+        .opt.c2:hover{background:rgba(250,204,21,0.1);border-color:rgba(250,204,21,0.7)}
+        .opt.kinetic{border-color:rgba(63,185,80,0.35)}
+        .opt.kinetic:hover{background:rgba(63,185,80,0.1);border-color:rgba(63,185,80,0.7)}
+        .opt.legacy{border-color:rgba(255,255,255,0.1)}
+        .opt.legacy:hover{background:rgba(255,255,255,0.06)}
+        .opt-icon{font-size:1.4rem;margin-bottom:.1rem}
+        .opt h2{font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:1px;margin:0}
+        .opt.primary h2{color:var(--accent-blue)}
+        .opt.c2 h2{color:#facc15}
+        .opt.kinetic h2{color:#3fb950}
+        .opt p{font-size:.58rem;color:rgba(255,255,255,0.45);line-height:1.5;margin:0;text-align:left}
+        .opt:hover p{color:rgba(255,255,255,0.6)}
+        .badge{display:inline-block;font-size:.42rem;padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;margin-top:.2rem}
+        .badge-new{background:rgba(63,185,80,0.15);border:1px solid rgba(63,185,80,0.5);color:#3fb950}
+        .badge-live{background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.4);color:#f85149;animation:blink .9s infinite alternate}
+        .badge-3d{background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.35);color:#58a6ff}
+        @keyframes blink{from{opacity:.6}to{opacity:1}}
+        /* ── sys info bar */
+        .sys-bar{margin-top:1.8rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:center;gap:2.5rem;font-size:.45rem;color:rgba(255,255,255,0.25);font-family:'JetBrains Mono',monospace;letter-spacing:.5px}
+        .sys-bar span{color:rgba(0,242,255,0.45)}
+    </style>
+</head>
+<body>
+    <video autoplay muted loop id="bg-video">
+        <source src="video/Military_Command_Dashboard_Video_Generation.mp4" type="video/mp4">
+    </video>
 
-        #bg-video {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            z-index: -1;
-            filter: brightness(0.4) contrast(1.2);
-        }
+    <div class="portal-overlay">
+        <div class="portal-card">
+            <h1>STRATEGIC PORTAL</h1>
+            <div class="portal-sub">CORTEX-C2 · SAAB HACKATHON 2026 · SELECT MODULE</div>
 
-        .portal-overlay {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
+            <!-- PRIMARY C2 CONSOLE -->
+            <div class="sect-head">C2 Operator Console</div>
+            <div class="portal-row cols-2">
+                <a href="cortex_c2.html" class="opt c2">
+                    <div class="opt-icon">🎯</div>
+                    <h2>CORTEX-C2 Console</h2>
+                    <p>Full operator console: HITL/AUTONOMOUS/MANUAL command modes, 3-COA planner, weapon swap, circular radar scope, sensor bars, LLM tactical analysis. Dual-theater (Boreal + Sweden).</p>
+                    <span class="badge badge-new">NEW</span>
+                    <span class="badge badge-live">LIVE</span>
+                </a>
+                <a href="dashboard.html" class="opt primary">
+                    <div class="opt-icon">📡</div>
+                    <h2>Strategic Dashboard</h2>
+                    <p>Real-time SVG Baltic Theater map. Monte Carlo benchmark, engagement monitor, tactical + strategic accuracy live counters, doctrine selector, and viz_engine physics simulation.</p>
+                    <span class="badge badge-live">SIM ENGINE</span>
+                </a>
+            </div>
 
-        .portal-card {
-            background: rgba(10, 20, 30, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 3rem;
-            text-align: center;
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
-            max-width: 800px;
-        }
+            <!-- 3D VIEWS -->
+            <div class="sect-head">3D Kinetic Simulation</div>
+            <div class="portal-row cols-3">
+                <a href="kinetic_3d.html?theater=boreal" class="opt kinetic">
+                    <div class="opt-icon">🌐</div>
+                    <h2>3D Kinetic — Boreal</h2>
+                    <p>Physics-based 3D engagement simulation for the Boreal theater. Proportional Navigation guidance, radar cross-section, evasion models.</p>
+                    <span class="badge badge-3d">3D · WebGL</span>
+                </a>
+                <a href="kinetic_3d.html?theater=sweden" class="opt kinetic">
+                    <div class="opt-icon">🌐</div>
+                    <h2>3D Kinetic — Sweden</h2>
+                    <p>Same physics engine mapped to Swedish Military Installations theater. Stockholm, Gotland, Boden.</p>
+                    <span class="badge badge-3d">3D · WebGL</span>
+                </a>
+                <a href="strategic_3d.html" class="opt kinetic">
+                    <div class="opt-icon">🛰️</div>
+                    <h2>Strategic 3D</h2>
+                    <p>Top-down orbital view with CZML scenario replay. Cesium-compatible scenario files included.</p>
+                    <span class="badge badge-3d">CZML</span>
+                </a>
+            </div>
 
-        .portal-card h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            background: linear-gradient(90deg, #fff, var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 0.3rem;
-        }
+            <!-- LEGACY + DATA -->
+            <div class="sect-head">Analysis &amp; Legacy Views</div>
+            <div class="portal-row cols-3">
+                <a href="dataset_viewer.html" class="opt legacy">
+                    <div class="opt-icon">📊</div>
+                    <h2>Dataset Viewer</h2>
+                    <p>Browse training scenarios, ground-truth assignments and model benchmark results.</p>
+                </a>
+                <a href="live_view.html" class="opt legacy">
+                    <div class="opt-icon">📺</div>
+                    <h2>Live View</h2>
+                    <p>Streaming live scenario feed from the Python backend when online.</p>
+                    <span class="badge badge-live">BACKEND</span>
+                </a>
+                <a href="tactical_legacy.html" class="opt legacy">
+                    <div class="opt-icon">🗺️</div>
+                    <h2>Tactical Legacy</h2>
+                    <p>V3 legacy tactical display — earlier iteration of the SVG map layer.</p>
+                </a>
+            </div>
 
-        .portal-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        .option-btn {
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-        }
-
-        .option-btn:hover {
-            background: var(--accent-blue);
-            color: black;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.4);
-        }
-
-        .option-btn h2 {
+            <!-- SYS INFO -->
+            <div class="sys-bar">
+                <div>SYSTEM <span>CORTEX-1 v8.3</span></div>
+                <div>MODELS <span>9 NEURAL ARCHITECTURES</span></div>
+                <div>THEATER <span>BOREAL + SWEDEN</span></div>
+                <div>BACKEND <span id="portal-backend">CHECKING…</span></div>
+                <div>BUILD <span>S28 · 2026-04-23</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Check backend health
+    fetch('http://localhost:8000/health', { signal: AbortSignal.timeout(2500) })
+      .then(r => { document.getElementById('portal-backend').textContent = r.ok ? 'ONLINE' : 'OFFLINE'; document.getElementById('portal-backend').style.color = r.ok ? '#3fb950' : '#f85149'; })
+      .catch(() => { document.getElementById('portal-backend').textContent = 'OFFLINE'; document.getElementById('portal-backend').style.color = '#f85149'; });
+    </script>
+</body>
+</html>
             font-family: 'Orbitron', sans-serif;
             font-size: 1rem;
             margin-bottom: 0.5rem;

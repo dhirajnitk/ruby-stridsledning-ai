@@ -18,6 +18,7 @@ import queue
 import asyncio
 import random
 import uvicorn
+from fastapi.responses import StreamingResponse
 
 # 1. CORE MODELS & LOGIC
 from core.models import Effector, Base, Threat, GameState, EFFECTORS, load_battlefield_state
@@ -90,6 +91,13 @@ class TacticalRequest(BaseModel):
     doctrine_blend: float = 0.5
     use_rl: bool = True
     use_ppo: bool = False
+
+class ProxyLLMRequest(BaseModel):
+    model: str
+    messages: List[dict]
+    stream: Optional[bool] = False
+    temperature: Optional[float] = 0.35
+    max_tokens: Optional[int] = 600
 
 # 6. HELPERS
 # load_battlefield_state moved to models.py to prevent FastAPI import locks during data generation.
@@ -265,6 +273,54 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
     raw_decision["human_sitrep"] = formatted_report
     EVALUATION_CACHE[payload_hash] = raw_decision
     return raw_decision
+
+@app.post("/llm/proxy")
+async def llm_proxy(request: ProxyLLMRequest):
+    """Secure proxy for LLM calls from Cortex C2 to OpenRouter (Supports Streaming)"""
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(status_code=503, detail="OpenRouter API Key not configured on backend.")
+    
+    async def stream_generator():
+        try:
+            async with httpx.AsyncClient() as client:
+                async with client.stream(
+                    "POST",
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                        "HTTP-Referer": "https://cortex-c2.saab.demo",
+                        "X-Title": "CORTEX-C2 Tactical AI (Proxy)",
+                    },
+                    json={
+                        "model": request.model,
+                        "messages": request.messages,
+                        "stream": request.stream,
+                        "temperature": request.temperature,
+                        "max_tokens": request.max_tokens
+                    },
+                    timeout=60.0
+                ) as response:
+                    if response.status_code != 200:
+                        yield f"data: {json.dumps({'error': 'Backend Proxy Error', 'status': response.status_code})}\n\n"
+                        return
+
+                    async for chunk in response.aiter_bytes():
+                        yield chunk
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    if request.stream:
+        return StreamingResponse(stream_generator(), media_type="text/event-stream")
+    else:
+        # Non-streaming fallback
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
+                json=request.dict(),
+                timeout=30.0
+            )
+            return resp.json()
 
 # 7. STRATEGIC DATASET EXPLORATION
 @app.get("/get_dataset_sample")

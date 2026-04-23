@@ -117,6 +117,8 @@ const WAVE_SEQ = [
 ];
 
 let ammo = {};
+let baseHealth = {};        // 0–100 structural integrity per base/HVA node
+let destroyedBases = new Set(); // IDs of fully destroyed nodes
 let balticMap, mapGeometry, baseIconsG, threatLayerG, cotFeed, healthFill;
 let cityHealth = 100, isSimulating = false, currentScenarioIdx = 0, currentWaveIdx = 0, waveTransitioning = false;
 let BENCHMARKS = {};
@@ -126,7 +128,9 @@ let rejectedThreats = new Set(); // Tracks HITL-rejected threat IDs so they aren
 // Expose live state to dashboard panels (manual override, HITL queue) via getters
 Object.defineProperty(window, 'threats',   { get: () => threats,   configurable: true });
 Object.defineProperty(window, 'BASES',     { get: () => BASES,     configurable: true });
-Object.defineProperty(window, 'ammo',      { get: () => ammo,      configurable: true });
+Object.defineProperty(window, 'ammo',        { get: () => ammo,           configurable: true });
+Object.defineProperty(window, 'baseHealth',  { get: () => baseHealth,     configurable: true });
+Object.defineProperty(window, 'destroyedBases', { get: () => destroyedBases, configurable: true });
 Object.defineProperty(window, 'EFFECTORS', { get: () => EFFECTORS, configurable: true });
 
 // --- LIVE ACCURACY TRACKING ---
@@ -201,12 +205,21 @@ SAAB_CH.onmessage = e => {
 
 // --- INITIALIZATION ---
 function initAmmo() {
-  THEATER_DATA.forEach(n => { if (n.type === 'BASE' || n.type === 'HVA') ammo[n.id] = n.sam || 0; });
+  THEATER_DATA.forEach(n => {
+    if (n.type === 'BASE' || n.type === 'HVA') {
+      ammo[n.id] = n.sam || 0;
+      baseHealth[n.id] = 100;
+    }
+  });
+  destroyedBases.clear();
+  // Re-render map to restore any destroyed-base visuals
+  if (baseIconsG) renderMap();
 }
 
 function restockAmmo() {
   Object.keys(BASES).forEach(id => {
-    const cap = BASES[id].sam || 0; // Guard: HVA nodes (MER/CAL/SOL) have no sam
+    if (destroyedBases.has(id)) return; // Cannot restock a destroyed base
+    const cap = BASES[id].sam || 0;
     if (cap <= 0) return;
     ammo[id] = Math.min(cap, (ammo[id]||0) + Math.ceil(cap * 0.5));
   });
@@ -232,14 +245,47 @@ function updateInventoryDisplay() {
     'HRC': 'HIGHRIDGE HUB'
   };
 
-  if (n1) n1.innerText = ammo[b1] || 0;
-  if (n2) n2.innerText = ammo[b2] || 0;
+  if (n1) n1.innerText = destroyedBases.has(b1) ? '⚠ DESTROYED' : (ammo[b1] || 0);
+  if (n2) n2.innerText = destroyedBases.has(b2) ? '⚠ DESTROYED' : (ammo[b2] || 0);
   if (n1Lbl) n1Lbl.innerText = displayNames[b1] || b1;
   if (n2Lbl) n2Lbl.innerText = displayNames[b2] || b2;
   if (res) res.innerText = total;
 
-  // Reactively update dashboard manual dropdown if it exists
-  if (window.updateManualTargets) window.updateManualTargets();
+  // Full theater inventory grid (dashboard only)
+  updateTheaterInventory();
+}
+
+// Full per-base theater inventory grid — writes to #theater-inventory-grid
+function updateTheaterInventory() {
+  const grid = document.getElementById('theater-inventory-grid');
+  if (!grid) return;
+  const nodes = Object.values(BASES);
+  if (!nodes.length) return;
+  grid.innerHTML = nodes.map(b => {
+    const destroyed = destroyedBases.has(b.id);
+    const hp = destroyed ? 0 : (baseHealth[b.id] ?? 100);
+    const sam = destroyed ? 0 : (ammo[b.id] ?? 0);
+    const cap = b.sam || 0;
+    const samPct = cap > 0 ? Math.round((sam / cap) * 100) : 0;
+    const hpCol  = destroyed ? '#555' : hp > 60 ? '#00ff88' : hp > 30 ? '#ffcc00' : '#ff3e3e';
+    const samCol = destroyed ? '#555' : samPct > 60 ? '#00f2ff' : samPct > 25 ? '#ffcc00' : '#ff3e3e';
+    const typeIcon = b.type === 'HVA' ? '⬟' : '▣';
+    const statusTxt = destroyed ? '<span style="color:#ff3e3e;font-weight:bold;">DESTROYED</span>' :
+                      `<span style="color:${samCol}">${sam}/${cap} SAM</span>`;
+    return `<div class="tinv-row${destroyed ? ' tinv-destroyed' : ''}">
+      <span class="tinv-id">${typeIcon} ${b.id}</span>
+      <span class="tinv-name">${b.name}</span>
+      <div class="tinv-bars">
+        <div class="tinv-bar-wrap" title="Structural Integrity: ${hp}%">
+          <div class="tinv-bar" style="width:${hp}%;background:${hpCol}"></div>
+        </div>
+        <div class="tinv-bar-wrap" title="SAM: ${sam}/${cap}">
+          <div class="tinv-bar" style="width:${samPct}%;background:${samCol}"></div>
+        </div>
+      </div>
+      <span class="tinv-stat">${statusTxt}</span>
+    </div>`;
+  }).join('');
 }
 
 window.cancelApproval = (threatId) => {
@@ -360,6 +406,52 @@ function missMarkerSvg(wx, wy) {
   let op = 1;
   const iv = setInterval(() => { op -= 0.05; g.setAttribute('opacity', op); if (op <= 0) { clearInterval(iv); g.remove(); } }, 200);
   setTimeout(() => { clearInterval(iv); g.remove(); }, 4500);
+}
+
+// --- BASE DAMAGE / DESTRUCTION VISUALS ---
+// Change base dot color to reflect damage level; add destroyed overlay on SVG map
+function _getBaseCircle(nodeId) {
+  if (!baseIconsG) return null;
+  const gs = baseIconsG.querySelectorAll('g');
+  for (const g of gs) {
+    const txt = g.querySelector('text');
+    if (txt && txt.textContent === nodeId) return g.querySelector('circle');
+  }
+  return null;
+}
+
+function markBaseDamaged(nodeId, hpPct) {
+  const dot = _getBaseCircle(nodeId);
+  if (!dot) return;
+  const col = hpPct > 60 ? '#00f2ff' : hpPct > 30 ? '#ffcc00' : '#ff3e3e';
+  dot.setAttribute('fill', col);
+  dot.setAttribute('filter', `drop-shadow(0 0 4px ${col})`);
+}
+
+function markBaseDestroyed(nodeId) {
+  const dot = _getBaseCircle(nodeId);
+  if (!dot) return;
+  // Grey-out the dot and add an X overlay
+  dot.setAttribute('fill', '#333');
+  dot.setAttribute('filter', 'none');
+  dot.setAttribute('stroke', '#ff3e3e');
+  dot.setAttribute('stroke-width', '2');
+  // Draw an X at the base location
+  const node = BASES[nodeId];
+  if (!node || !baseIconsG) return;
+  const sx = toSvgX(node.x), sy = toSvgY(node.y);
+  const sz = 7;
+  const gx = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  gx.id = `destroyed-${nodeId}`;
+  ['opacity','0.85'].forEach((a,i,arr) => i%2===0 && gx.setAttribute(a, arr[i+1]));
+  [[sx-sz,sy-sz,sx+sz,sy+sz],[sx+sz,sy-sz,sx-sz,sy+sz]].forEach(coords => {
+    const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    ['x1','y1','x2','y2'].forEach((a,i) => ln.setAttribute(a, coords[i]));
+    ln.setAttribute('stroke', '#ff3e3e'); ln.setAttribute('stroke-width', '2.5');
+    gx.appendChild(ln);
+  });
+  baseIconsG.appendChild(gx);
+  updateInventoryDisplay();
 }
 
 // --- BENCHMARK REPLAY ---
@@ -567,6 +659,36 @@ async function callEngine(threatList) {
     });
     return r.ok ? await r.json() : null;
   } catch(e) { return null; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DYNAMIC SALVO MODE — Neural Autonomy
+//
+// Elite V3.5 treats salvo_ratio as a MINIMUM, not a cap.
+// Even under "single-fire" doctrine the Elite neural model autonomously
+// escalates to double-tap for mission-critical threats (HYPERSONIC / BALLISTIC).
+// All other models respect doctrine restrictions.
+// ─────────────────────────────────────────────────────────────────────────────
+function getSalvoCount(threat) {
+  const type  = threat.wdef.type;
+  const isElite = ACTIVE_MODEL.brain === 'TRANSFORMER-RESNET'; // Elite V3.5 only
+
+  if (isElite) {
+    // Neural Autonomy: escalate regardless of doctrine
+    if (type === 'HYPERSONIC' || type === 'BALLISTIC') {
+      window._lastNeuralAutonomy = { threat: threat.id, type, ts: Date.now() };
+      addCoT(`⚡ NEURAL AUTONOMY: SALVO ESCALATION → ${threat.id} [${type}] — DOCTRINE OVERRIDE`, 'alert');
+      const el = document.getElementById('neural-autonomy-badge');
+      if (el) { el.style.display = 'inline-block'; clearTimeout(el._hide); el._hide = setTimeout(() => { el.style.display = 'none'; }, 5000); }
+      return 2;
+    }
+  }
+
+  // Non-elite or lower-value threats: respect doctrine
+  const doctrine = window._ACTIVE_DOCTRINE || 'balanced';
+  if (doctrine === 'aggressive') return (type === 'HYPERSONIC') ? 2 : 1;
+  if (doctrine === 'fortress')   return (type === 'HYPERSONIC' || type === 'BALLISTIC') ? 2 : 1;
+  return 1; // balanced / single-fire
 }
 
 function startEngagement() {
@@ -785,14 +907,26 @@ function updateSimulation() {
 
             // Best = highest utility (pk-driven), closest breaks ties
             candidates.sort((a, b) => (b.utility - a.utility) || (a.dToBase - b.dToBase));
-            const best = candidates[0];
-            if (best) {
-                ammo[best.baseId]--; updateInventoryDisplay();
-                const int = new Interceptor(BASES[best.baseId], best.effKey);
+            const salvoCount = getSalvoCount(t);
+            // Fire salvoCount interceptors (consuming top candidates; skip destroyed/empty bases)
+            const usedThisTick = {}; // extra spend this tick before ammo[] is decremented
+            let fired = 0;
+            for (const cand of candidates) {
+                if (fired >= salvoCount) break;
+                const pending = usedThisTick[cand.baseId] || 0;
+                if ((ammo[cand.baseId] - pending) <= 0) continue;
+                if (destroyedBases.has(cand.baseId)) continue;
+                usedThisTick[cand.baseId] = pending + 1;
+                ammo[cand.baseId]--; updateInventoryDisplay();
+                const int = new Interceptor(BASES[cand.baseId], cand.effKey);
                 int._threatType = t.wdef.type;
                 t.interceptors.push(int);
-                stats.fired++;
-                addCoT(`AUTO-ENGAGED ${t.id} → ${EFFECTORS[MODE][best.effKey].name} from ${BASES[best.baseId].name} (${(best.dToBase/1000).toFixed(0)}km)`, 'success');
+                stats.fired++; fired++;
+                if (fired === 1) {
+                    addCoT(`AUTO-ENGAGED ${t.id} → ${EFFECTORS[MODE][cand.effKey].name} from ${BASES[cand.baseId].name} (${(cand.dToBase/1000).toFixed(0)}km)`, 'success');
+                } else {
+                    addCoT(`⚡ SALVO +${fired} ${t.id} → ${EFFECTORS[MODE][cand.effKey].name} from ${BASES[cand.baseId].name}`, 'success');
+                }
             }
         } else if (ENGINE_MODE === 'hitl') {
             // HITL: queue threat for commander approval ONLY when it enters engagement range
@@ -856,11 +990,36 @@ function updateSimulation() {
       const wx = t.pos.x / 1666, wy = t.pos.z / 1666; // correct SVG coords
       blastSvg(wx, wy, '#ff3e3e');
       missMarkerSvg(wx, wy);
-      cityHealth -= 5; if (healthFill) healthFill.style.width = `${cityHealth}%`;
       stats.impacts++;
-      addCoT(`IMPACT AT ${t.targetNode.name} — DEFENSE BREACH`, 'alert');
+
+      const nodeId  = t.targetNode.id;
+      const nodeType = t.targetNode.type;
+
+      if (nodeType === 'BASE') {
+        // Structural damage to military base — can be destroyed
+        const dmgTable = { HYPERSONIC: 50, BALLISTIC: 40, CRUISE: 25, LOITER: 15, FIGHTER: 30 };
+        const dmg = dmgTable[t.wdef.type] || 25;
+        baseHealth[nodeId] = Math.max(0, (baseHealth[nodeId] ?? 100) - dmg);
+        if (baseHealth[nodeId] === 0 && !destroyedBases.has(nodeId)) {
+          destroyedBases.add(nodeId);
+          ammo[nodeId] = 0;
+          addCoT(`⚠ BASE DESTROYED: ${t.targetNode.name} — ALL SAM CAPACITY LOST`, 'error');
+          markBaseDestroyed(nodeId);
+        } else if (!destroyedBases.has(nodeId)) {
+          addCoT(`IMPACT AT ${t.targetNode.name} — BASE DAMAGED (${baseHealth[nodeId]}% integrity)`, 'alert');
+          markBaseDamaged(nodeId, baseHealth[nodeId]);
+        }
+        cityHealth -= 2; // Bases count less toward capital health
+      } else {
+        // HVA capital impact — direct capital integrity damage
+        cityHealth -= 5;
+        addCoT(`IMPACT AT ${t.targetNode.name} — DEFENSE BREACH`, 'alert');
+      }
+
+      if (healthFill) healthFill.style.width = `${Math.max(0, cityHealth)}%`;
       t.dispose();
       updateAccuracyDisplay();
+      updateInventoryDisplay();
     }
   });
 

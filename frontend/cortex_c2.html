@@ -1,0 +1,2465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CORTEX-C2 | Reliability-Aware Command &amp; Control · demo build 1.0.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090c0e; --s1:#0f1419; --s2:#131920; --s3:#1a2130;
+  --bd:rgba(255,255,255,0.07); --bd2:rgba(255,255,255,0.13);
+  --tx1:#c9d1d9; --tx2:#8b949e; --tx3:#484f58;
+  --grn:#3fb950; --ylw:#e3b341; --red:#f85149; --blu:#58a6ff;
+  --grn-bg:rgba(63,185,80,0.10); --ylw-bg:rgba(227,179,65,0.10); --red-bg:rgba(248,81,73,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--tx1);font-size:12px;
+  display:flex;flex-direction:column;
+}
+
+/* ── SCROLLBARS ─────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px}
+
+/* ── HEADER ─────────────────────── */
+.mission-bar{
+  background:rgba(10,35,14,0.95);border-bottom:1px solid rgba(63,185,80,0.30);
+  text-align:center;padding:2.5px 0;font-size:9px;font-weight:700;
+  color:rgba(63,185,80,0.75);letter-spacing:3.5px;text-transform:uppercase;flex-shrink:0;
+}
+.c2-hdr{
+  display:flex;align-items:center;padding:0 16px;height:42px;flex-shrink:0;
+  border-bottom:1px solid var(--bd);background:var(--s1);gap:0;
+}
+.hdr-mission-grp{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 11px;border-left:1px solid var(--bd2);gap:1px;
+}
+.hdr-mission-val{
+  font-size:11.5px;font-weight:700;color:var(--tx1);
+  font-family:'JetBrains Mono',monospace;line-height:1;
+}
+.hdr-mission-lbl{
+  font-size:7.5px;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase;
+}
+.c2-hdr-brand{font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.3px}
+.c2-hdr-sub{font-size:11px;color:var(--tx3);font-weight:400}
+.c2-hdr-sep{width:1px;height:16px;background:var(--bd2)}
+.c2-hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:10px;color:var(--tx3)}
+.backend-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn)}
+.backend-dot.offline{background:var(--tx3);box-shadow:none}
+
+/* ── BODY GRID ──────────────────── */
+.c2-body{
+  display:grid;grid-template-columns:220px 1fr 275px;
+  flex:1;min-height:0;overflow:hidden;
+}
+
+/* ── LEFT SIDEBAR ───────────────── */
+.c2-left{
+  border-right:1px solid var(--bd);overflow-y:auto;
+  padding:12px;display:flex;flex-direction:column;gap:6px;
+}
+.sect-lbl{
+  font-size:9px;font-weight:700;color:var(--tx3);
+  letter-spacing:1.8px;text-transform:uppercase;margin-bottom:4px;
+}
+.sc-card{
+  border:1px solid var(--bd);border-radius:6px;padding:9px 11px;
+  cursor:pointer;transition:border-color .15s,background .15s;
+}
+.sc-card:hover{border-color:var(--bd2);background:rgba(255,255,255,0.02)}
+.sc-card.active{border-color:var(--ylw);background:var(--ylw-bg)}
+.sc-card.active .sc-title{color:var(--ylw)}
+.sc-title{font-size:11.5px;font-weight:600;color:var(--tx1);margin-bottom:3px;line-height:1.35}
+.sc-desc{font-size:10.5px;color:var(--tx2);line-height:1.5}
+.about-blk{
+  margin-top:auto;padding-top:10px;border-top:1px solid var(--bd);
+  font-size:10.5px;color:var(--tx3);line-height:1.55;
+}
+.about-blk b{color:var(--tx2)}
+
+/* ── CENTER COLUMN ──────────────── */
+.c2-center{
+  display:flex;flex-direction:column;overflow:hidden;
+  border-right:1px solid var(--bd);
+}
+.c2-topbar{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 14px;border-bottom:1px solid var(--bd);flex-shrink:0;
+}
+.sa-wrap{position:relative;width:92px;height:92px;flex-shrink:0}
+.sa-svg{width:92px;height:92px;transform:rotate(-90deg)}
+.sa-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:5}
+.sa-arc{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dasharray .5s ease,stroke .4s ease}
+.sa-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;
+}
+.sa-num{font-size:25px;font-weight:700;line-height:1;color:#fff}
+.sa-lbl{font-size:7.5px;font-weight:600;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase}
+
+.mode-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:100px;font-size:11px;font-weight:700;
+  letter-spacing:1px;border:1.5px solid;cursor:pointer;transition:all .2s;
+  flex-shrink:0;
+}
+.mode-pill .mpd{width:7px;height:7px;border-radius:50%;background:currentColor}
+.mode-pill.auto{border-color:var(--grn);color:var(--grn);background:var(--grn-bg)}
+.mode-pill.advise{border-color:var(--ylw);color:var(--ylw);background:var(--ylw-bg)}
+.mode-pill.defer{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+
+.metrics-row{display:flex;gap:18px;margin-left:4px}
+.m-blk{display:flex;flex-direction:column;gap:1px}
+.m-lbl{font-size:8.5px;font-weight:600;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase}
+.m-val{font-size:19px;font-weight:600;color:var(--tx1);font-variant-numeric:tabular-nums;line-height:1.1}
+.m-val.v-red{color:var(--red)}
+.m-val.v-ylw{color:var(--ylw)}
+.m-val.v-grn{color:var(--grn)}
+
+.reasons-blk{
+  margin:8px 14px;padding:9px 11px;flex-shrink:0;
+  border:1px solid var(--bd);border-radius:6px;background:var(--s2);
+}
+.reasons-title{font-size:10px;font-weight:700;color:var(--tx1);margin-bottom:5px}
+.reasons-list{list-style:disc;padding-left:14px;display:flex;flex-direction:column;gap:2px}
+.reasons-list li{font-size:10.5px;color:var(--tx2);line-height:1.45}
+
+.tactical-wrap{
+  flex:1;margin:0 14px 8px;min-height:0;
+  border:1px solid var(--bd);border-radius:6px;background:var(--s1);
+  position:relative;overflow:hidden;
+}
+.tactical-label{
+  position:absolute;top:7px;left:10px;z-index:2;
+  font-size:8.5px;font-weight:700;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;
+}
+.tactical-open-btn{
+  position:absolute;top:6px;right:8px;z-index:2;
+  font-size:9px;color:var(--blu);background:none;border:1px solid rgba(88,166,255,0.3);
+  border-radius:3px;padding:2px 8px;cursor:pointer;font-family:'JetBrains Mono',monospace;
+}
+.tactical-open-btn:hover{background:rgba(88,166,255,0.1)}
+#tactical-svg{width:100%;height:100%}
+
+/* ── RIGHT SIDEBAR ──────────────── */
+.c2-right{
+  overflow-y:auto;padding:12px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.threat-header{
+  font-size:12px;font-weight:600;color:var(--tx1);
+  padding-bottom:8px;border-bottom:1px solid var(--bd);line-height:1.5;
+}
+.threat-header span{color:var(--ylw)}
+.info-panel{
+  border:1px solid var(--bd);border-radius:6px;
+  padding:9px 11px;background:var(--s2);
+}
+.ip-title{
+  font-size:9px;font-weight:700;color:var(--tx3);
+  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;
+}
+.ip-body{font-size:10.5px;color:var(--tx2);line-height:1.6}
+.ip-body b{color:var(--tx1);font-weight:600}
+.ip-body ul{padding-left:14px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.ip-body .tag{
+  display:inline-block;font-size:9px;padding:1px 6px;border-radius:2px;
+  font-family:'JetBrains Mono',monospace;font-weight:500;margin-bottom:2px;
+}
+.tag-auto{background:var(--grn-bg);color:var(--grn);border:1px solid rgba(63,185,80,0.3)}
+.tag-advise{background:var(--ylw-bg);color:var(--ylw);border:1px solid rgba(227,179,65,0.3)}
+.tag-defer{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,81,73,0.3)}
+.tag-neu{background:rgba(255,255,255,0.06);color:var(--tx2);border:1px solid var(--bd)}
+
+.ai-feed{
+  flex:1;border:1px solid var(--bd);border-radius:6px;
+  padding:9px 11px;background:var(--s1);overflow-y:auto;min-height:60px;
+}
+.ai-feed-title{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.ai-line{font-size:10.5px;color:var(--tx2);line-height:1.5;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
+.ai-line.hl{color:var(--ylw)}
+.ai-line.good{color:var(--grn)}
+.ai-line.warn{color:var(--red)}
+
+/* ── COA FOOTER ─────────────────── */
+.c2-coa{
+  border-top:1px solid var(--bd);background:var(--s1);flex-shrink:0;
+  padding:8px 14px 10px;
+}
+.coa-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:7px;
+}
+.coa-hdr-title{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:1.8px;text-transform:uppercase}
+.coa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+
+.coa-card{
+  border:1px solid var(--bd);border-radius:7px;
+  padding:10px 12px;background:var(--s2);position:relative;overflow:hidden;
+}
+.coa-card.coa-rec{border-color:rgba(63,185,80,0.35)}
+.coa-card.coa-rec::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grn);
+}
+.coa-card.coa-cons::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blu);
+}
+.coa-card.coa-risk::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ylw);
+}
+.coa-title-txt{font-size:11px;font-weight:700;color:var(--tx1);margin-bottom:2px}
+.coa-desc-txt{font-size:9.5px;color:var(--tx3);margin-bottom:7px;line-height:1.45}
+.coa-metrics{display:flex;gap:14px;margin-bottom:7px}
+.cm-blk{display:flex;flex-direction:column;gap:0}
+.cm-val{font-size:16px;font-weight:700;color:var(--tx1);line-height:1}
+.cm-lbl{font-size:8px;color:var(--tx3);letter-spacing:.5px}
+.coa-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.coa-tag{
+  font-size:9px;padding:2px 7px;border-radius:3px;
+  background:rgba(255,255,255,0.05);color:var(--tx3);
+  border:1px solid var(--bd);font-family:'JetBrains Mono',monospace;
+}
+.coa-assign-list{max-height:82px;overflow-y:auto}
+.coa-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.coa-row:last-child{border-bottom:none}
+.coa-row-lbl{font-size:10px;color:var(--tx2);font-family:'JetBrains Mono',monospace}
+.coa-row-lbl b{color:var(--tx1);font-weight:500}
+.coa-row-pk{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500}
+.pk-hi{color:var(--grn)} .pk-md{color:var(--ylw)} .pk-lo{color:var(--red)}
+.coa-empty{font-size:10px;color:var(--tx3);font-style:italic;padding:4px 0}
+
+/* ── OPERATOR MODE PILLS ─────────────────────────── */
+.op-mode-row{
+  display:flex;align-items:center;gap:8px;padding:6px 14px;flex-shrink:0;
+  border-bottom:1px solid var(--bd);background:var(--s1);
+}
+.op-mode-lbl{font-size:8.5px;font-weight:700;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;margin-right:4px;white-space:nowrap}
+.op-btn{
+  font-size:9.5px;font-weight:700;letter-spacing:.8px;border:1px solid var(--bd2);
+  background:transparent;color:var(--tx3);border-radius:4px;padding:3px 12px;
+  cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;
+}
+.op-btn:hover{color:var(--tx1);border-color:var(--tx2)}
+.op-btn.op-active-auto{border-color:var(--grn);color:var(--grn);background:var(--grn-bg)}
+.op-btn.op-active-hitl{border-color:var(--ylw);color:var(--ylw);background:var(--ylw-bg)}
+.op-btn.op-active-manual{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.theater-toggle{margin-left:auto;display:flex;gap:4px}
+.thr-btn{font-size:9px;padding:2px 10px;border-radius:3px;border:1px solid var(--bd);
+  color:var(--tx3);background:none;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+.thr-btn.active{border-color:var(--blu);color:var(--blu);background:rgba(88,166,255,0.08)}
+
+/* ── INVENTORY PANEL ─────────────────────────────── */
+.inv-blk{border:1px solid var(--bd);border-radius:6px;padding:8px 10px;background:var(--s2)}
+.inv-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.inv-title{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:1.3px;text-transform:uppercase}
+.inv-replenish{font-size:8px;font-weight:700;border:1px solid rgba(63,185,80,0.4);
+  color:var(--grn);background:var(--grn-bg);border-radius:3px;padding:2px 7px;
+  cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.5px}
+.inv-replenish:hover{background:rgba(63,185,80,0.2)}
+.inv-replenish:disabled{opacity:0.35;cursor:not-allowed}
+.inv-row{display:grid;grid-template-columns:26px 1fr 40px;gap:4px;align-items:center;
+  padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.inv-row:last-child{border-bottom:none}
+.inv-badge{font-size:7px;font-weight:700;padding:1px 3px;border-radius:2px;text-align:center;
+  font-family:'JetBrains Mono',monospace}
+.inv-badge-hva{background:rgba(63,185,80,0.15);color:var(--grn);border:1px solid rgba(63,185,80,0.3)}
+.inv-badge-base{background:rgba(88,166,255,0.12);color:var(--blu);border:1px solid rgba(88,166,255,0.25)}
+.inv-name{font-size:9.5px;color:var(--tx2);line-height:1.2}
+.inv-name.destroyed{text-decoration:line-through;color:var(--tx3);opacity:0.45}
+.inv-bars{display:flex;flex-direction:column;gap:1px;margin-top:1px}
+.inv-bar-wrap{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.inv-bar{height:3px;border-radius:2px;transition:width .4s ease}
+.inv-stat{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--tx2);text-align:right;font-weight:500}
+
+/* ── HITL QUEUE ──────────────────────────────────── */
+.hitl-queue{
+  padding:6px 14px;border-top:1px solid var(--bd);background:var(--s2);
+  display:none;flex-direction:column;gap:5px;flex-shrink:0;
+}
+.hitl-queue.visible{display:flex}
+.hitl-queue-lbl{font-size:8.5px;font-weight:700;color:var(--ylw);letter-spacing:1.5px;text-transform:uppercase}
+.hitl-item{
+  display:flex;align-items:center;gap:8px;padding:5px 9px;
+  border:1px solid rgba(227,179,65,0.25);border-radius:5px;background:var(--ylw-bg);
+  transition:all .2s;
+}
+.hitl-text{flex:1;font-size:10px;color:var(--tx1);font-family:'JetBrains Mono',monospace}
+.hitl-text b{color:var(--ylw)}
+.hitl-approve{font-size:9px;font-weight:700;border:1px solid rgba(63,185,80,0.5);color:var(--grn);
+  background:var(--grn-bg);border-radius:3px;padding:2px 10px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.hitl-approve:hover{background:rgba(63,185,80,0.2)}
+.hitl-reject{font-size:9px;font-weight:700;border:1px solid rgba(248,81,73,0.4);color:var(--red);
+  background:var(--red-bg);border-radius:3px;padding:2px 10px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.hitl-reject:hover{background:rgba(248,81,73,0.2)}
+
+/* ── MANUAL PANEL ────────────────────────────────── */
+.manual-panel{
+  padding:7px 14px;border-top:1px solid var(--bd);background:var(--s3);
+  display:none;align-items:center;gap:9px;flex-wrap:wrap;flex-shrink:0;
+}
+.manual-panel.visible{display:flex}
+.manual-lbl{font-size:8.5px;font-weight:700;color:var(--red);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+.manual-select{
+  font-size:10px;background:var(--s2);border:1px solid var(--bd2);color:var(--tx1);
+  border-radius:4px;padding:3px 8px;font-family:'JetBrains Mono',monospace;min-width:130px;
+}
+.manual-fire{font-size:9.5px;font-weight:700;border:1px solid rgba(248,81,73,0.5);color:var(--red);
+  background:var(--red-bg);border-radius:3px;padding:3px 14px;cursor:pointer;
+  font-family:'Inter',sans-serif;letter-spacing:.5px;white-space:nowrap}
+.manual-fire:hover{background:rgba(248,81,73,0.2)}
+
+/* ── KINEMATIC BRIDGE PANEL ──────────────────────── */
+.kin-panel{border:1px solid var(--bd);border-radius:6px;padding:9px 11px;background:var(--s1)}
+.kin-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kin-title{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase}
+.kin-dot{width:6px;height:6px;border-radius:50%;background:var(--tx3);flex-shrink:0}
+.kin-dot.live{background:var(--grn);box-shadow:0 0 5px var(--grn)}
+.kin-body{font-size:10px;color:var(--tx3);line-height:1.55;font-family:'JetBrains Mono',monospace}
+.kin-row{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.03);padding:1.5px 0}
+.kin-row:last-child{border-bottom:none}
+.kin-key{color:var(--tx3)}
+.kin-val{color:var(--blu);font-weight:500}
+.kin-offline{font-size:10px;color:var(--tx3);font-style:italic}
+
+/* ── MODEL BADGE ─────────────────────────────────── */
+.model-badge{
+  font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 8px;
+  border-radius:3px;background:rgba(88,166,255,0.09);border:1px solid rgba(88,166,255,0.28);
+  color:var(--blu);font-weight:500;white-space:nowrap;
+}
+
+/* ── LLM PANEL ───────────────────────────────────── */
+.llm-panel{
+  border:1px solid rgba(88,166,255,0.22);border-radius:6px;
+  background:var(--s1);flex-shrink:0;overflow:hidden;
+}
+.llm-hdr{
+  display:flex;align-items:center;gap:8px;padding:7px 11px;
+  border-bottom:1px solid var(--bd);background:rgba(88,166,255,0.04);
+}
+.llm-hdr-title,.llm-title{
+  font-size:9px;font-weight:700;color:var(--blu);
+  letter-spacing:1.5px;text-transform:uppercase;flex:1;
+}
+.llm-model-sel{
+  font-size:9px;background:var(--s2);border:1px solid var(--bd2);
+  color:var(--tx1);border-radius:3px;padding:1px 5px;
+  font-family:'JetBrains Mono',monospace;max-width:160px;
+}
+.llm-ask-btn{
+  font-size:9px;font-weight:700;padding:3px 11px;
+  border:1px solid rgba(88,166,255,0.5);color:var(--blu);
+  background:rgba(88,166,255,0.08);border-radius:3px;
+  cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;
+  transition:all .15s;
+}
+.llm-ask-btn:hover{background:rgba(88,166,255,0.18)}
+.llm-ask-btn:disabled{opacity:0.4;cursor:not-allowed}
+.llm-dot{width:6px;height:6px;border-radius:50%;background:var(--tx3);flex-shrink:0}
+.llm-dot.streaming{background:var(--blu);box-shadow:0 0 6px var(--blu);animation:llmPulse .6s infinite alternate}
+.llm-dot.done{background:var(--grn);box-shadow:0 0 5px var(--grn)}
+@keyframes llmPulse{from{opacity:.5}to{opacity:1}}
+.llm-body{
+  padding:8px 11px;font-size:10.5px;color:var(--tx2);
+  line-height:1.65;font-family:'Inter',sans-serif;
+  max-height:160px;overflow-y:auto;
+}
+.llm-body .llm-token{color:var(--tx1)}
+.llm-body .llm-placeholder{color:var(--tx3);font-style:italic}
+.llm-cursor{display:inline-block;width:7px;height:12px;background:var(--blu);
+  margin-left:1px;vertical-align:text-bottom;animation:llmBlink .7s infinite}
+@keyframes llmBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.llm-key-input{
+  font-size:9px;background:var(--s2);border:1px solid var(--bd2);color:var(--tx1);
+  border-radius:3px;padding:2px 7px;font-family:'JetBrains Mono',monospace;
+  flex:1;min-width:0;
+}
+.llm-key-input::placeholder{color:var(--tx3)}
+.llm-key-row{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 11px;border-top:1px solid var(--bd);
+  background:var(--s2);
+}
+.llm-key-lbl{font-size:8.5px;color:var(--tx3);white-space:nowrap;letter-spacing:.5px}
+.llm-save-btn{
+  font-size:9px;padding:2px 9px;border:1px solid var(--bd2);
+  color:var(--grn);background:var(--grn-bg);border-radius:3px;
+  cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;
+}
+.llm-save-btn:hover{background:rgba(63,185,80,.2)}
+.llm-stat{
+  font-size:8.5px;color:var(--tx3);font-family:'JetBrains Mono',monospace;
+  padding:3px 11px 5px;border-top:1px solid var(--bd);
+  display:flex;justify-content:space-between;
+}
+.llm-stat span{color:var(--tx2)}
+
+/* ── SENSOR QUALITY BARS ────────────────────── */
+.sensor-qual-blk{border:1px solid var(--bd);border-radius:6px;padding:8px 10px;background:var(--s2)}
+.sq-row{display:grid;grid-template-columns:46px 1fr 30px;align-items:center;gap:5px;padding:2px 0}
+.sq-lbl{font-size:8px;font-weight:700;color:var(--tx3);letter-spacing:.8px;font-family:'JetBrains Mono',monospace}
+.sq-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.sq-bar{height:4px;border-radius:2px;transition:width .5s ease;width:0}
+.sq-pct{font-size:8px;font-family:'JetBrains Mono',monospace;text-align:right}
+
+/* ── TIME TO DECISION ────────────────────────── */
+.ttd-blk{border:1px solid rgba(63,185,80,0.20);border-radius:6px;padding:9px 12px;background:var(--s1);flex-shrink:0}
+.ttd-hdr{font-size:8.5px;font-weight:700;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.ttd-row{display:flex;align-items:baseline;gap:3px}
+.ttd-num{font-size:30px;font-weight:700;color:var(--grn);font-family:'JetBrains Mono',monospace;line-height:1}
+.ttd-unit{font-size:11px;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+.ttd-sub{font-size:9px;color:var(--tx2);font-family:'JetBrains Mono',monospace;margin-top:2px}
+
+/* ── RADAR SWEEP ANIMATION ──────────────────── */
+.radar-sweep-grp{
+  transform-origin:430px 280px;
+  animation:radarSweep 6s linear infinite;
+}
+@keyframes radarSweep{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+/* ── WEAPON SWAP ─────────────────────────────── */
+.coa-row.frozen{background:rgba(227,179,65,0.09);border:1px solid rgba(227,179,65,0.35);border-radius:3px;padding:3px 5px;margin-bottom:2px}
+.coa-row-lock{font-size:10px;margin-right:3px;vertical-align:middle}
+.swap-inline{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:5px 2px 3px;border-top:1px dashed rgba(227,179,65,0.25);margin-top:3px}
+.swap-sel{font-size:8.5px;background:var(--s1);border:1px solid var(--bd2);color:var(--tx1);border-radius:3px;padding:2px 4px;font-family:'JetBrains Mono',monospace;flex:1;min-width:80px;max-width:130px}
+.swap-confirm{font-size:8.5px;font-weight:700;border:1px solid rgba(63,185,80,0.5);color:var(--grn);background:var(--grn-bg);border-radius:3px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+.swap-cancel{font-size:8.5px;border:1px solid var(--bd2);color:var(--tx3);background:none;border-radius:3px;padding:2px 6px;cursor:pointer}
+.swap-btn{font-size:7.5px;font-weight:700;border:1px solid rgba(227,179,65,0.4);color:var(--ylw);background:rgba(227,179,65,0.06);border-radius:3px;padding:1px 5px;cursor:pointer;margin-left:5px;vertical-align:middle;white-space:nowrap}
+.swap-btn:hover{background:rgba(227,179,65,0.18)}
+/* ── NAV BREADCRUMB ─────────────────────────── */
+.nav-back{font-size:9px;color:var(--tx3);text-decoration:none;border:1px solid var(--bd2);border-radius:3px;padding:2px 8px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;white-space:nowrap;transition:color .15s,border-color .15s}
+.nav-back:hover{color:var(--tx1);border-color:var(--bd2)}
+
+/* ── DOCTRINE SELECTOR ──────────────────────── */
+.doctrine-row{display:flex;align-items:center;gap:6px;padding:5px 14px;flex-shrink:0;border-bottom:1px solid var(--bd);background:rgba(88,166,255,0.03)}
+.doctrine-lbl{font-size:8.5px;font-weight:700;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;margin-right:4px}
+.doc-btn{font-size:9px;font-weight:700;letter-spacing:.5px;border:1px solid var(--bd2);background:transparent;color:var(--tx3);border-radius:4px;padding:2px 11px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.doc-btn:hover{color:var(--tx1);border-color:var(--tx2)}
+.doc-btn.doc-balanced{border-color:rgba(88,166,255,0.55);color:var(--blu);background:rgba(88,166,255,0.08)}
+.doc-btn.doc-fortress{border-color:rgba(63,185,80,0.55);color:var(--grn);background:rgba(63,185,80,0.08)}
+.doc-btn.doc-aggressive{border-color:rgba(248,81,73,0.55);color:var(--red);background:rgba(248,81,73,0.08)}
+.doctrine-desc{font-size:8px;color:var(--tx3);font-family:'JetBrains Mono',monospace;margin-left:auto;white-space:nowrap}
+
+/* ── ENGAGEMENT OUTCOME COUNTERS ──────────────── */
+.eng-bar{display:flex;align-items:center;gap:18px;padding:5px 14px;border-top:1px solid var(--bd);background:var(--s1);flex-shrink:0}
+.eng-lbl{font-size:7.5px;font-weight:700;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap;margin-right:6px}
+.eng-ctr{display:flex;flex-direction:column;align-items:center;gap:0;min-width:34px}
+.eng-val{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1;color:var(--tx1)}
+.eng-sub{font-size:7px;color:var(--tx3);letter-spacing:.8px;text-transform:uppercase}
+.eng-reset{font-size:8px;border:1px solid var(--bd2);color:var(--tx3);background:none;border-radius:3px;padding:1px 7px;cursor:pointer;font-family:'JetBrains Mono',monospace;margin-left:auto}
+.eng-reset:hover{color:var(--tx1)}
+</style>
+</head>
+<body>
+
+<div class="mission-bar">UNCLASSIFIED &middot; EXERCISE &middot; CORTEX-C2 &middot; PROTOTYPE S28</div>
+
+<!-- ── HEADER ──────────────────────────────────────── -->
+<header class="c2-hdr">
+  <span class="c2-hdr-brand" style="font-size:14px;padding-right:12px">CORTEX-C2</span>
+  <div class="c2-hdr-sep"></div>
+  <span class="c2-hdr-sub" style="padding:0 12px;color:var(--tx2);font-size:10.5px">RELIABILITY-AWARE COMMAND &amp; CONTROL</span>
+  <div class="c2-hdr-sep"></div>
+  <div class="hdr-mission-grp">
+    <div class="hdr-mission-val" id="hdr-zulu">--:--:--Z</div>
+    <div class="hdr-mission-lbl">ZULU</div>
+  </div>
+  <div class="hdr-mission-grp">
+    <div class="hdr-mission-val">BRL-0417-B</div>
+    <div class="hdr-mission-lbl">SORTIE</div>
+  </div>
+  <div class="hdr-mission-grp">
+    <div class="hdr-mission-val" id="hdr-aor">BOREAL-N</div>
+    <div class="hdr-mission-lbl">AOR</div>
+  </div>
+  <div class="hdr-mission-grp">
+    <div class="hdr-mission-val" id="hdr-link16" style="color:var(--grn)">NOMINAL</div>
+    <div class="hdr-mission-lbl">LINK-16</div>
+  </div>
+  <div class="c2-hdr-right">
+    <a href="dashboard.html" class="nav-back" title="Back to Main Dashboard">&#x2190; DASHBOARD</a>
+    <div class="c2-hdr-sep"></div>
+    <div class="backend-dot" id="backend-dot"></div>
+    <span id="backend-lbl">backend: checking</span>
+    <div class="c2-hdr-sep"></div>
+    <select id="model-select" onchange="onModelChange()" style="background:var(--s2);border:1px solid var(--bd2);color:var(--tx1);font-size:9.5px;border-radius:4px;padding:2px 6px;font-family:'JetBrains Mono',monospace;cursor:pointer">
+      <option value="elite">Elite V3.5 · TRANSFORMER-RESNET</option>
+      <option value="supreme3">Supreme V3.1 · GRU (Chronos)</option>
+      <option value="supreme2">Supreme V2 · Legacy</option>
+      <option value="titan">Titan · LSTM</option>
+      <option value="hybrid">Hybrid RL V8.4</option>
+      <option value="genE10">Generalist E10</option>
+      <option value="heuristic" selected>Heuristic (Triage-Aware)</option>
+      <option value="hBase">Heuristic V2 (Base)</option>
+    </select>
+    <button onclick="refreshFromEngine()" style="font-size:9px;padding:2px 9px;border:1px solid var(--bd2);color:var(--tx2);background:none;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace">&#8635; REFRESH</button>
+  </div>
+</header>
+
+<!-- ── DOCTRINE SELECTOR BAR ────────────────────────── -->
+<div class="doctrine-row" id="doctrine-row">
+  <span class="doctrine-lbl">Doctrine</span>
+  <button class="doc-btn doc-balanced" id="doc-balanced" onclick="setDoctrine('balanced')">BALANCED</button>
+  <button class="doc-btn" id="doc-fortress" onclick="setDoctrine('fortress')">FORTRESS</button>
+  <button class="doc-btn" id="doc-aggressive" onclick="setDoctrine('aggressive')">AGGRESSIVE</button>
+  <span class="doctrine-desc" id="doctrine-desc">Balanced cost-matrix · standard 250 km perimeter</span>
+</div>
+
+<!-- ── BODY ────────────────────────────────────────── -->
+<div class="c2-body">
+
+  <!-- LEFT: Demo Scenarios -->
+  <aside class="c2-left">
+    <div class="sect-lbl">Demo Scenarios</div>
+
+    <div class="sc-card active" data-sc="clean" onclick="loadScenario('clean')">
+      <div class="sc-title">Clean picture — three bombers</div>
+      <div class="sc-desc">High track quality, no sensor contention, moderate threat value. Demonstrates the AUTONOMOUS mode and the system's greedy WTA (Weapon-Target Assignment) engine with full sensor fusion at 100%.</div>
+    </div>
+
+    <div class="sc-card" data-sc="swarm" onclick="loadScenario('swarm')">
+      <div class="sc-title">Swarm with fast-mover breakthrough</div>
+      <div class="sc-desc">15 tracks: 12 drones, 2 fast-movers, 1 ghost with ambiguous classification. Exercises the ADVISE mode via elevated complexity and mixed track quality.</div>
+    </div>
+
+    <div class="sc-card" data-sc="jammed" onclick="loadScenario('jammed')">
+      <div class="sc-title">Jammed sensors + high-value threats</div>
+      <div class="sc-desc">Inbound hypersonic and multiple decoys, low sensor agreement, blind spot over the primary track. Demonstrates DEFER mode: system withdraws rather than act on degraded picture.</div>
+    </div>
+
+    <div class="sect-lbl" style="margin-top:8px">Theater Inventory</div>
+    <div class="inv-blk">
+      <div class="inv-title-row">
+        <div class="inv-title" id="inv-theater-lbl">■ HP &nbsp;■ SAM — Boreal</div>
+        <button class="inv-replenish" id="btn-replenish" onclick="replenishAll()">&#8593; REPLENISH</button>
+      </div>
+      <div id="inventory-grid"><div style="font-size:10px;color:var(--tx3)">Load a scenario…</div></div>
+    </div>
+    <div class="sect-lbl" style="margin-top:8px">Sensor Feed Quality → Pk</div>
+    <div style="font-size:8px;color:var(--tx3);font-family:'JetBrains Mono',monospace;padding:0 2px 4px;line-height:1.4">
+      Engine-produced from scenario. Multiplied into nominal Pk per cuing matrix.
+      <span id="sq-avg-mult" style="color:var(--ylw)"></span>
+    </div>
+    <div class="sensor-qual-blk" id="sensor-qual-blk">
+      <div class="sq-row"><span class="sq-lbl" title="Ballistic/hypersonic primary cuing (60%)">RADAR</span><div class="sq-bar-wrap"><div class="sq-bar" id="sq-radar"></div></div><span class="sq-pct" id="sq-radar-pct" style="color:var(--tx3)">-</span></div>
+      <div class="sq-row"><span class="sq-lbl" title="Loiter/drone primary cuing (60%); CRUISE secondary (30%)">IR/EO</span><div class="sq-bar-wrap"><div class="sq-bar" id="sq-ireo"></div></div><span class="sq-pct" id="sq-ireo-pct" style="color:var(--tx3)">-</span></div>
+      <div class="sq-row"><span class="sq-lbl" title="Ballistic secondary cuing (40%); emission detection">ESM</span><div class="sq-bar-wrap"><div class="sq-bar" id="sq-esm"></div></div><span class="sq-pct" id="sq-esm-pct" style="color:var(--tx3)">-</span></div>
+      <div class="sq-row"><span class="sq-lbl" title="Fighter / CRUISE secondary; data link quality">LINK-16</span><div class="sq-bar-wrap"><div class="sq-bar" id="sq-link16"></div></div><span class="sq-pct" id="sq-link16-pct" style="color:var(--tx3)">-</span></div>
+      <div class="sq-row"><span class="sq-lbl" title="Fusion of all sensors — applied as SQ multiplier to Pk_nominal">FUSION</span><div class="sq-bar-wrap"><div class="sq-bar" id="sq-fusion"></div></div><span class="sq-pct" id="sq-fusion-pct" style="color:var(--tx3)">-</span></div>
+    </div>
+    <div class="about-blk">
+      <b>ABOUT</b> CORTEX-C2 &middot; CORTEX-1 WTA + MCTS COA<br>
+      <a href="dashboard.html" style="color:var(--blu);text-decoration:none" target="_blank">→ Main Dashboard (viz_engine)</a>
+    </div>
+  </aside>
+
+  <!-- CENTER: Tactical Feed -->
+  <section class="c2-center">
+    <!-- Top bar: SA-Health + Mode + Metrics -->
+    <div class="c2-topbar">
+      <div class="sa-wrap">
+        <svg class="sa-svg" viewBox="0 0 76 76">
+          <circle class="sa-bg" cx="38" cy="38" r="32"/>
+          <circle class="sa-arc" id="sa-arc" cx="38" cy="38" r="32"
+                  stroke-dasharray="0 201" stroke="#3fb950"/>
+        </svg>
+        <div class="sa-center">
+          <div class="sa-num" id="sa-num">--</div>
+          <div class="sa-lbl">SA-HEALTH</div>
+        </div>
+      </div>
+
+      <div id="mode-pill" class="mode-pill auto">
+        <div class="mpd"></div>
+        <span id="mode-text">AUTONOMOUS</span>
+      </div>
+
+      <div class="metrics-row">
+        <div class="m-blk">
+          <div class="m-lbl">Tracks</div>
+          <div class="m-val" id="m-tracks">--</div>
+        </div>
+        <div class="m-blk">
+          <div class="m-lbl">Hostile</div>
+          <div class="m-val v-red" id="m-hostile">--</div>
+        </div>
+        <div class="m-blk">
+          <div class="m-lbl">Fusion</div>
+          <div class="m-val" id="m-fusion">--</div>
+        </div>
+        <div class="m-blk">
+          <div class="m-lbl">Closest</div>
+          <div class="m-val" id="m-closest">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operator Command Mode + Theater Toggle -->
+    <div class="op-mode-row">
+      <span class="op-mode-lbl">Command Mode</span>
+      <button class="op-btn op-active-auto" id="op-auto"  onclick="setOpMode('auto')">AUTONOMOUS</button>
+      <button class="op-btn" id="op-hitl"   onclick="setOpMode('hitl')">HUMAN-IN-LOOP</button>
+      <button class="op-btn" id="op-manual" onclick="setOpMode('manual')">MANUAL OVERRIDE</button>
+      <div class="theater-toggle">
+        <button class="thr-btn active" id="thr-boreal" onclick="switchTheater('boreal')">BOREAL</button>
+        <button class="thr-btn" id="thr-sweden" onclick="switchTheater('sweden')">SWEDEN</button>
+      </div>
+    </div>
+
+    <!-- Reasons block -->
+    <div class="reasons-blk">
+      <div class="reasons-title">Reasons</div>
+      <ul class="reasons-list" id="reasons-list">
+        <li>Awaiting scenario load…</li>
+      </ul>
+    </div>
+
+    <!-- Tactical Picture -->
+    <div class="tactical-wrap">
+      <div class="tactical-label" id="tac-label">TACTICAL DISPLAY · BOREAL-N</div>
+      <button class="tactical-open-btn" onclick="window.open('kinetic_3d.html?theater=boreal','_blank')">↗ 3D KINETIC</button>
+      <svg id="tactical-svg" viewBox="0 0 860 560" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto">
+            <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(255,255,255,0.25)"/>
+          </marker>
+          <radialGradient id="scopeGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(0,30,8,0.55)"/>
+            <stop offset="100%" stop-color="rgba(0,10,3,0.75)"/>
+          </radialGradient>
+        </defs>
+        <!-- Radar scope background -->
+        <circle cx="430" cy="280" r="293" fill="url(#scopeGrad)" stroke="rgba(63,185,80,0.12)" stroke-width="1"/>
+        <!-- Range rings and spokes -->
+        <g id="tac-grid" fill="none">
+          <!-- Rings -->
+          <circle cx="430" cy="280" r="73"  stroke="rgba(63,185,80,0.14)" stroke-width="1"/>
+          <circle cx="430" cy="280" r="146" stroke="rgba(63,185,80,0.12)" stroke-width="1"/>
+          <circle cx="430" cy="280" r="219" stroke="rgba(63,185,80,0.09)" stroke-width="1"/>
+          <circle cx="430" cy="280" r="292" stroke="rgba(63,185,80,0.07)" stroke-width="1"/>
+          <!-- Range labels -->
+          <text x="434" y="211" fill="rgba(63,185,80,0.40)" font-size="8" font-family="JetBrains Mono,monospace">50 km</text>
+          <text x="434" y="138" fill="rgba(63,185,80,0.40)" font-size="8" font-family="JetBrains Mono,monospace">100 km</text>
+          <text x="434" y="65"  fill="rgba(63,185,80,0.32)" font-size="8" font-family="JetBrains Mono,monospace">150 km</text>
+          <!-- Azimuth spokes — 6 diameters (12 sectors) -->
+          <line x1="430" y1="0"   x2="430" y2="560" stroke="rgba(63,185,80,0.07)" stroke-width="1"/>
+          <line x1="576" y1="27"  x2="284" y2="533" stroke="rgba(63,185,80,0.06)" stroke-width="1"/>
+          <line x1="683" y1="134" x2="177" y2="426" stroke="rgba(63,185,80,0.06)" stroke-width="1"/>
+          <line x1="722" y1="280" x2="138" y2="280" stroke="rgba(63,185,80,0.07)" stroke-width="1"/>
+          <line x1="683" y1="426" x2="177" y2="134" stroke="rgba(63,185,80,0.06)" stroke-width="1"/>
+          <line x1="576" y1="533" x2="284" y2="27"  stroke="rgba(63,185,80,0.06)" stroke-width="1"/>
+          <!-- Center cross -->
+          <line x1="424" y1="280" x2="436" y2="280" stroke="rgba(63,185,80,0.55)" stroke-width="1.2"/>
+          <line x1="430" y1="274" x2="430" y2="286" stroke="rgba(63,185,80,0.55)" stroke-width="1.2"/>
+          <circle cx="430" cy="280" r="3" fill="none" stroke="rgba(63,185,80,0.45)" stroke-width="1"/>
+          <!-- Cardinal labels -->
+          <text x="427" y="14"  fill="rgba(63,185,80,0.30)" font-size="9" font-family="JetBrains Mono,monospace">N</text>
+          <text x="716" y="284" fill="rgba(63,185,80,0.30)" font-size="9" font-family="JetBrains Mono,monospace">E</text>
+          <text x="427" y="558" fill="rgba(63,185,80,0.30)" font-size="9" font-family="JetBrains Mono,monospace">S</text>
+          <text x="135" y="284" fill="rgba(63,185,80,0.30)" font-size="9" font-family="JetBrains Mono,monospace">W</text>
+        </g>
+        <!-- Animated sweep line -->
+        <g class="radar-sweep-grp">
+          <line x1="430" y1="280" x2="430" y2="0" stroke="rgba(63,185,80,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="430" y1="280" x2="430" y2="80" stroke="rgba(63,185,80,0.12)" stroke-width="9" stroke-linecap="round"/>
+        </g>
+        <g id="tac-assign-lines"></g>
+        <g id="tac-bases"></g>
+        <g id="tac-threats"></g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- RIGHT: Threat Summary + AI Commentary -->
+  <aside class="c2-right">
+
+    <!-- Decision Window -->
+    <div class="ttd-blk">
+      <div class="ttd-hdr">Decision Window</div>
+      <div class="ttd-row"><span class="ttd-num" id="ttd-num">—</span><span class="ttd-unit">&thinsp;s</span></div>
+      <div class="ttd-sub" id="ttd-sub">T‑to‑intercept &middot; awaiting scenario</div>
+    </div>
+
+    <div class="threat-header" id="threat-header">
+      Awaiting scenario…
+    </div>
+
+    <div class="info-panel" id="panel-posture">
+      <div class="ip-title">Posture</div>
+      <div class="ip-body" id="body-posture">—</div>
+    </div>
+
+    <div class="info-panel" id="panel-threat-summary">
+      <div class="ip-title">Threat Summary</div>
+      <div class="ip-body" id="body-threat-summary">—</div>
+    </div>
+
+    <div class="info-panel" id="panel-recommendation">
+      <div class="ip-title">Recommendation</div>
+      <div class="ip-body" id="body-recommendation">—</div>
+    </div>
+
+    <div class="info-panel" id="panel-assurance">
+      <div class="ip-title">Assurance</div>
+      <div class="ip-body" id="body-assurance">—</div>
+    </div>
+
+    <div class="info-panel" id="panel-followon">
+      <div class="ip-title">Follow-On</div>
+      <div class="ip-body" id="body-followon">—</div>
+    </div>
+
+    <div class="kin-panel" id="kin-panel">
+      <div class="kin-title-row">
+        <span class="kin-title">Kinematic Bridge · 3D Physics</span>
+        <div class="kin-dot" id="kin-dot"></div>
+      </div>
+      <div id="kin-body"><div class="kin-offline">Engine offline — start Python backend for live kinematics (radar eq. + PN + evasion)</div></div>
+    </div>
+
+    <!-- LLM Analysis Panel -->
+    <div class="llm-panel" id="llm-panel">
+      <div class="llm-hdr">
+        <span class="llm-title">&#x2728; Tactical AI Analysis</span>
+        <select class="llm-model-sel" id="llm-model-sel">
+          <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+          <option value="anthropic/claude-3-haiku">Claude 3 Haiku (fast)</option>
+          <option value="openai/gpt-4o">GPT-4o</option>
+          <option value="openai/gpt-4o-mini">GPT-4o mini</option>
+          <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
+          <option value="mistralai/mistral-large">Mistral Large</option>
+          <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</option>
+        </select>
+        <button class="llm-ask-btn" id="llm-ask-btn" onclick="askLLM()">&#9654; ANALYSE</button>
+        <div class="llm-dot" id="llm-dot"></div>
+      </div>
+      <div class="llm-key-row" id="llm-key-row" style="display:none">
+        <span class="llm-key-lbl">API KEY</span>
+        <input type="password" class="llm-key-input" id="llm-key-input" placeholder="sk-or-… · stored locally">
+        <button class="llm-save-btn" onclick="saveLLMKey()">SAVE</button>
+      </div>
+      <div class="llm-key-row" id="llm-status-row" style="background:rgba(0,255,136,0.03);border-color:rgba(0,255,136,0.1)">
+        <span class="llm-key-lbl" style="color:var(--grn)">Status</span>
+        <span id="llm-status-txt" style="font-size:9px;color:var(--tx2);flex:1">Checking backend…</span>
+      </div>
+      <div class="llm-body" id="llm-body"><div class="llm-placeholder">Select scenario → click ANALYSE for LLM tactical assessment</div></div>
+      <div class="llm-stat" id="llm-stat">model — &nbsp;<span id="llm-tokens">0 tokens</span></div>
+    </div>
+
+    <div class="ai-feed">
+      <div class="ai-feed-title">AI Commentary</div>
+      <div id="ai-commentary"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- ── HITL APPROVAL QUEUE ─────────────────────────────── -->
+<div class="hitl-queue" id="hitl-queue">
+  <div class="hitl-queue-lbl">⚠ Pending COA Approvals — Commander Confirmation Required</div>
+  <div id="hitl-items"></div>
+</div>
+
+<!-- ── MANUAL OVERRIDE PANEL ─────────────────────────── -->
+<div class="manual-panel" id="manual-panel">
+  <span class="manual-lbl">♦ Manual Target Assignment</span>
+  <select id="manual-threat-sel" class="manual-select"><option value="">-- select threat --</option></select>
+  <select id="manual-base-sel" class="manual-select"><option value="">-- select base --</option></select>
+  <select id="manual-eff-sel" class="manual-select"><option value="">-- select effector --</option></select>
+  <button class="manual-fire" onclick="executeManualFire()">&#x2B22; FIRE</button>
+  <span id="manual-result" style="font-size:9.5px;color:var(--tx3);font-family:'JetBrains Mono',monospace"></span>
+</div>
+
+<!-- ── ENGAGEMENT OUTCOME COUNTERS ────────────────── -->
+<div class="eng-bar" id="eng-bar">
+  <span class="eng-lbl">Engagement Log</span>
+  <div class="eng-ctr"><div class="eng-val" id="eng-fired">0</div><div class="eng-sub">SAM FIRED</div></div>
+  <div class="eng-ctr"><div class="eng-val" id="eng-intercepts" style="color:var(--grn)">0</div><div class="eng-sub">INTERCEPTS</div></div>
+  <div class="eng-ctr"><div class="eng-val" id="eng-manual" style="color:var(--ylw)">0</div><div class="eng-sub">MANUAL</div></div>
+  <div class="eng-ctr"><div class="eng-val" id="eng-hitl" style="color:var(--blu)">0</div><div class="eng-sub">HITL APPROVALS</div></div>
+  <div class="eng-ctr"><div class="eng-val" id="eng-swap" style="color:rgba(227,179,65,0.9)">0</div><div class="eng-sub">WEAPON SWAPS</div></div>
+  <button class="eng-reset" onclick="resetEngCounters()" title="Reset counters">↺ RESET</button>
+</div>
+
+<!-- ── COA FOOTER ─────────────────────────────────── -->
+<footer class="c2-coa">
+  <div class="coa-hdr">
+    <div class="coa-hdr-title">Courses of Action</div>
+    <span class="model-badge" id="model-badge">HEURISTIC</span>
+  </div>
+  <div class="coa-grid" id="coa-grid">
+    <div class="coa-card"><div class="coa-empty">Load a scenario to generate COA analysis.</div></div>
+    <div class="coa-card"><div class="coa-empty"></div></div>
+    <div class="coa-card"><div class="coa-empty"></div></div>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+// BOREAL THEATER — 21 BASES
+// ═══════════════════════════════════════════════════
+const THEATER_BASES = [
+  // ── Northern / HVA nodes ──
+  { id:'ARK', name:'Arktholm',      x:251, y:57,  type:'HVA',  effectors:['THAAD','PAC3','NASAMS','CRAM']  },
+  { id:'HRC', name:'Highridge',     x:503, y:41,  type:'HVA',  effectors:['THAAD','PAC3','NASAMS']         },
+  { id:'VAL', name:'Valbrek',       x:780, y:92,  type:'HVA',  effectors:['THAAD','PAC3','HELWS']          },
+  { id:'LUL', name:'Luleå Wing',    x:340, y:68,  type:'BASE', effectors:['PAC3','NASAMS','CRAM']          },
+  { id:'KAL', name:'Kalix SAM',     x:430, y:118, type:'BASE', effectors:['NASAMS','CRAM']                 },
+  { id:'EST', name:'Eastmark Radar',x:630, y:82,  type:'BASE', effectors:['PAC3','NASAMS']                 },
+  // ── Western flank ──
+  { id:'NVB', name:'Boden',         x:119, y:197, type:'BASE', effectors:['PAC3','NASAMS','HELWS']         },
+  { id:'NRD', name:'Nordvik',       x:72,  y:255, type:'HVA',  effectors:['NASAMS','CRAM','HELWS']         },
+  { id:'OBS', name:'Obsburg',       x:165, y:340, type:'BASE', effectors:['PAC3','NASAMS']                 },
+  { id:'LIN', name:'Lindvik',       x:128, y:470, type:'BASE', effectors:['NASAMS','CRAM']                 },
+  // ── Central ──
+  { id:'KNS', name:'Kronstad Naval',x:360, y:310, type:'HVA',  effectors:['THAAD','PAC3','NASAMS','CRAM'] },
+  { id:'HAP', name:'Häppala',       x:520, y:370, type:'BASE', effectors:['PAC3','NASAMS']                 },
+  { id:'VAD', name:'Vadheim',       x:405, y:495, type:'BASE', effectors:['NASAMS','HELWS']                },
+  // ── Eastern / coastal ──
+  { id:'BWP', name:'Bothvik',       x:695, y:200, type:'BASE', effectors:['NASAMS','CRAM']                 },
+  { id:'TOR', name:'Torvald',       x:680, y:400, type:'HVA',  effectors:['THAAD','PAC3','NASAMS']        },
+  { id:'ROS', name:'Rosen Battery', x:620, y:530, type:'BASE', effectors:['PAC3','NASAMS','CRAM']          },
+  // ── Southern ──
+  { id:'MER', name:'Meridia HQ',    x:735, y:680, type:'HVA',  effectors:['THAAD','PAC3','NASAMS']        },
+  { id:'MAR', name:'Markeby',       x:190, y:560, type:'BASE', effectors:['NASAMS','CRAM']                 },
+  { id:'SOL', name:'Solberg AD',    x:460, y:600, type:'BASE', effectors:['PAC3','NASAMS','HELWS']         },
+  { id:'FAL', name:'Falmark',       x:550, y:700, type:'BASE', effectors:['NASAMS','CRAM']                 },
+  { id:'BRK', name:'Burkland',      x:300, y:660, type:'BASE', effectors:['PAC3','NASAMS']                 },
+];
+
+const EFFECTORS_DEF = {
+  THAAD:  { name:'THAAD',   range:200000, rounds:8,  cost:800, pk:{ HYPERSONIC:0.80,BALLISTIC:0.98,CRUISE:0.40,LOITER:0.10,FIGHTER:0.30 } },
+  PAC3:   { name:'PAC-3',   range:120000, rounds:24, cost:400, pk:{ HYPERSONIC:0.70,BALLISTIC:0.95,CRUISE:0.95,LOITER:0.80,FIGHTER:0.90 } },
+  NASAMS: { name:'NASAMS',  range:40000,  rounds:36, cost:100, pk:{ HYPERSONIC:0.50,BALLISTIC:0.50,CRUISE:0.88,LOITER:0.60,FIGHTER:0.90 } },
+  HELWS:  { name:'HELWS',   range:5000,   rounds:999,cost:5,   pk:{ LOITER:0.90,DRONE:0.95,CRUISE:0.20,HYPERSONIC:0.10 } },
+  CRAM:   { name:'C-RAM',   range:1500,   rounds:500,cost:10,  pk:{ CRUISE:0.70,LOITER:0.80,FIGHTER:0.20 } },
+};
+
+const UNIT_TO_M = 1666; // 1 SVG unit ≈ 1666 metres
+
+// ═══════════════════════════════════════════════════
+// SWEDEN THEATER — 11 BASES (real military installations)
+// coords normalised to SVG 854×742 space from CSV km offsets
+// ═══════════════════════════════════════════════════
+const SWEDEN_BASES = [
+  // Northern air bases
+  { id:'F21', name:'Luleå (F21)',    x:854, y:25,  type:'HVA',  effectors:['THAAD','PAC3','NASAMS','CRAM'] },
+  { id:'VID', name:'Vidsel Range',   x:714, y:5,   type:'BASE', effectors:['PAC3','NASAMS']                },
+  // Capital region
+  { id:'STO', name:'Stockholm',      x:567, y:500, type:'HVA',  effectors:['THAAD','PAC3','NASAMS','CRAM'] },
+  { id:'F16', name:'Uppsala (F16)',  x:524, y:457, type:'BASE', effectors:['PAC3','NASAMS','CRAM']         },
+  { id:'MUS', name:'Muskö Naval',    x:572, y:532, type:'HVA',  effectors:['NASAMS','CRAM']                },
+  // Central / western
+  { id:'MAL', name:'Malmen (MAL)',   x:333, y:571, type:'BASE', effectors:['PAC3','NASAMS']                },
+  { id:'F7',  name:'Såtenäs (F7)',   x:79,  y:568, type:'BASE', effectors:['PAC3','NASAMS','CRAM']         },
+  { id:'GBG', name:'Gothenburg',     x:0,   y:624, type:'HVA',  effectors:['PAC3','NASAMS','CRAM']         },
+  // Southern
+  { id:'GOT', name:'Gotland (GOT)',  x:591, y:628, type:'HVA',  effectors:['THAAD','PAC3','NASAMS']       },
+  { id:'F17', name:'Ronneby (F17)',  x:299, y:734, type:'BASE', effectors:['PAC3','NASAMS','CRAM']         },
+  { id:'KRL', name:'Karlskrona',     x:328, y:742, type:'HVA',  effectors:['NASAMS','CRAM','HELWS']        },
+];
+
+// ═══════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════
+let OPERATOR_MODE   = 'auto';    // 'auto' | 'hitl' | 'manual'
+let ACTIVE_THEATER  = 'boreal';  // 'boreal' | 'sweden'
+let ACTIVE_DOCTRINE = 'balanced'; // 'balanced' | 'fortress' | 'aggressive'
+let _currentSc      = null;
+let _currentCoas    = null;
+let _pendingHITL    = [];
+let _swapState      = null;      // { coaIdx, assignIdx } | null
+
+// Engagement counters
+const engCtrs = { fired:0, intercepts:0, manual:0, hitl:0, swap:0 };
+function bumpCtr(key) {
+  engCtrs[key]++;
+  const el = document.getElementById('eng-' + key);
+  if (el) { el.textContent = engCtrs[key]; el.animate([{transform:'scale(1.4)'},{transform:'scale(1)'}],{duration:220}); }
+}
+function resetEngCounters() {
+  Object.keys(engCtrs).forEach(k => { engCtrs[k]=0; const el=document.getElementById('eng-'+k); if(el) el.textContent='0'; });
+  logAI('Engagement counters reset','info');
+}
+
+// Doctrine
+const DOCTRINE_META = {
+  balanced:   { desc:'Balanced cost-matrix · standard 250 km perimeter', rangeMult:1.0, costMult:1.0, hvaMult:1.0 },
+  fortress:   { desc:'HVA protection x10 · defensive overlap priority',  rangeMult:0.9, costMult:1.2, hvaMult:10.0 },
+  aggressive: { desc:'Range ×1.5 · ammo conservation suspended',         rangeMult:1.5, costMult:0.6, hvaMult:1.0  },
+};
+function setDoctrine(d) {
+  ACTIVE_DOCTRINE = d;
+  const meta = DOCTRINE_META[d];
+  document.getElementById('doctrine-desc').textContent = meta.desc;
+  ['balanced','fortress','aggressive'].forEach(k => {
+    const btn = document.getElementById('doc-'+k);
+    if (!btn) return;
+    btn.className = 'doc-btn' + (k === d ? ' doc-'+k : '');
+  });
+  logAI(`Doctrine set: ${d.toUpperCase()} — ${meta.desc}`, 'info');
+  // Regenerate COAs with new doctrine weights
+  if (_currentSc) { if (_currentSq === null) _currentSq = computeSensorQuality(_currentSc, _extendMetrics(_currentSc, computeMetrics(_currentSc))); _currentCoas = generateCOAs(_currentSc); renderCOAs(_currentCoas); }
+}
+
+// Live inventory — per-effector ammo, persists across scenario switches
+const inventoryState = {};
+function _ensureInventory(bases) {
+  bases.forEach(b => {
+    if (!inventoryState[b.id]) {
+      const effAmmo = {};
+      (b.effectors || []).forEach(k => {
+        effAmmo[k] = EFFECTORS_DEF[k]?.rounds ?? 24;
+      });
+      inventoryState[b.id] = { hp:100, effAmmo, destroyed:false };
+    }
+  });
+}
+_ensureInventory(THEATER_BASES);
+_ensureInventory(SWEDEN_BASES);
+
+// Convenience: total SAM-type missiles remaining at a base
+function _totalSam(id) {
+  const st = inventoryState[id];
+  if (!st) return 0;
+  return ['THAAD','PAC3','NASAMS'].reduce((s,k) => s + (st.effAmmo[k] || 0), 0);
+}
+
+// Active bases for current theater
+function activeBases() { return ACTIVE_THEATER === 'sweden' ? SWEDEN_BASES : THEATER_BASES; }
+
+// ═══════════════════════════════════════════════════
+// INVENTORY
+// ═══════════════════════════════════════════════════
+const EFF_COLORS = { THAAD:'#58a6ff', PAC3:'#3fb950', NASAMS:'#e3b341', HELWS:'#bc8cff', CRAM:'#f0883e' };
+function renderInventory() {
+  const grid = document.getElementById('inventory-grid');
+  const lbl  = document.getElementById('inv-theater-lbl');
+  if (!grid) return;
+  const bases = activeBases();
+  const theaterName = ACTIVE_THEATER === 'sweden' ? `Sweden (${bases.length} nodes)` : `Boreal (${bases.length} nodes)`;
+  if (lbl) lbl.textContent = theaterName;
+
+  grid.innerHTML = bases.map(b => {
+    const st = inventoryState[b.id] || { hp:100, effAmmo:{}, destroyed:false };
+    const hpPct = st.hp;
+    const hpCol = hpPct > 60 ? '#3fb950' : hpPct > 30 ? '#e3b341' : '#f85149';
+    const dead  = st.destroyed || st.hp === 0;
+
+    const effRows = (b.effectors || []).map(k => {
+      const def   = EFFECTORS_DEF[k];
+      if (!def) return '';
+      const max   = def.rounds;
+      const cur   = st.effAmmo[k] ?? max;
+      const pct   = max > 0 ? Math.round(cur / max * 100) : 100;
+      const col   = EFF_COLORS[k] || '#aaa';
+      const label = k === 'HELWS' ? '∞' : `${cur}/${max}`;
+      return `<div style="display:grid;grid-template-columns:46px 1fr 34px;gap:2px;align-items:center;padding:1px 0">
+        <span style="font-size:8px;color:${col};font-family:'JetBrains Mono',monospace">${def.name}</span>
+        <div style="background:rgba(255,255,255,0.06);border-radius:2px;height:3px;overflow:hidden">
+          <div style="height:3px;border-radius:2px;width:${pct}%;background:${col};transition:width .4s"></div>
+        </div>
+        <span style="font-size:7.5px;color:${col};text-align:right;font-family:'JetBrains Mono',monospace;opacity:.85">${label}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="inv-row">
+      <span class="inv-badge ${b.type==='HVA'?'inv-badge-hva':'inv-badge-base'}">${b.id}</span>
+      <div style="flex:1;min-width:0">
+        <div class="inv-name${dead?' destroyed':''}">${b.name}</div>
+        <div style="margin:1px 0 2px">
+          <div style="background:rgba(255,255,255,0.06);border-radius:2px;height:3px;overflow:hidden">
+            <div style="height:3px;border-radius:2px;width:${hpPct}%;background:${hpCol};transition:width .4s"></div>
+          </div>
+        </div>
+        ${dead ? '<span style="font-size:8px;color:var(--red)">⚠ DESTROYED</span>' : effRows}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function replenishAll() {
+  const btn = document.getElementById('btn-replenish');
+  if (btn) { btn.disabled = true; btn.textContent = '↺ RESUPPLY…'; }
+  setTimeout(() => {
+    activeBases().forEach(b => {
+      const st = inventoryState[b.id];
+      if (!st || st.destroyed) return;
+      st.hp = 100;
+      (b.effectors || []).forEach(k => {
+        st.effAmmo[k] = EFFECTORS_DEF[k]?.rounds ?? 24;
+      });
+    });
+    renderInventory();
+    if (btn) { btn.disabled = false; btn.textContent = '↑ REPLENISH'; }
+    _addFeedLine(`THEATER RESUPPLY COMPLETE — all bases at full effector ammo`, 'good');
+  }, 1100);
+}
+
+// ═══════════════════════════════════════════════════
+// OPERATOR MODE
+// ═══════════════════════════════════════════════════
+function setOpMode(mode) {
+  OPERATOR_MODE = mode;
+  ['auto','hitl','manual'].forEach(m => {
+    const btn = document.getElementById('op-' + m);
+    if (!btn) return;
+    btn.className = 'op-btn' + (m === mode ? ` op-active-${m}` : '');
+  });
+  document.getElementById('hitl-queue')?.classList.toggle('visible', mode === 'hitl');
+  document.getElementById('manual-panel')?.classList.toggle('visible', mode === 'manual');
+  if (mode === 'manual' && _currentSc)    updateManualSelectors(_currentSc);
+  if (mode === 'hitl'   && _currentCoas) { updateHITLQueue(_currentCoas); renderCOAs(_currentCoas); }
+  if (mode === 'auto'   && _currentCoas) { _swapState = null; renderCOAs(_currentCoas); }
+  if (mode === 'manual' && _currentCoas)   renderCOAs(_currentCoas);
+}
+
+// ═══════════════════════════════════════════════════
+// HITL APPROVAL QUEUE
+// ═══════════════════════════════════════════════════
+function updateHITLQueue(coas) {
+  _pendingHITL = [...coas];
+  const items = document.getElementById('hitl-items');
+  if (!items) return;
+  items.innerHTML = coas.map((coa, idx) =>
+    `<div class="hitl-item" id="hitl-item-${idx}">
+      <div class="hitl-text"><b>${coa.name}</b> — ${coa.engagements} eng. · ${coa.coverage}% cov. · risk ${coa.followOnRisk.toFixed(2)}</div>
+      <button class="hitl-approve" onclick="approveCOA(${idx})">&#10003; APPROVE</button>
+      <button class="hitl-reject"  onclick="rejectCOA(${idx})">&#10007; REJECT</button>
+    </div>`
+  ).join('');
+}
+
+function approveCOA(idx) {
+  const coa = _pendingHITL[idx];
+  if (!coa) return;
+  coa.assignments.forEach(a => {
+    const st = inventoryState[a.baseId];
+    if (st && !st.destroyed && a.effKey !== 'HELWS') {
+      const cur = st.effAmmo[a.effKey] ?? 0;
+      st.effAmmo[a.effKey] = Math.max(0, cur - 1);
+    }
+  });
+  renderInventory();
+  const item = document.getElementById('hitl-item-' + idx);
+  if (item) {
+    item.style.cssText = 'border-color:rgba(63,185,80,.5);background:rgba(63,185,80,.08);display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:5px;';
+    item.innerHTML = `<div class="hitl-text" style="color:var(--grn)">&#10003; APPROVED: <b>${coa.name}</b> — ${coa.engagements} launches authorised.</div>`;
+  }
+  _addFeedLine(`[COMMANDER] ${coa.name} APPROVED — ${coa.engagements} engagements ordered`, 'good');
+}
+
+function rejectCOA(idx) {
+  const coa = _pendingHITL[idx];
+  if (!coa) return;
+  const item = document.getElementById('hitl-item-' + idx);
+  if (item) {
+    item.style.cssText = 'border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.05);display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:5px;';
+    item.innerHTML = `<div class="hitl-text" style="color:var(--red)">&#10007; REJECTED: <b>${coa.name}</b> — holding fire</div>`;
+  }
+  _addFeedLine(`[COMMANDER] ${coa.name} REJECTED — holding fire`, 'warn');
+}
+
+// ═══════════════════════════════════════════════════
+// MANUAL OVERRIDE
+// ═══════════════════════════════════════════════════
+function updateManualSelectors(sc) {
+  const tsel = document.getElementById('manual-threat-sel');
+  const bsel = document.getElementById('manual-base-sel');
+  const esel = document.getElementById('manual-eff-sel');
+  if (!tsel || !bsel || !esel) return;
+  const real = sc.threats.filter(t => !t.decoy);
+  tsel.innerHTML = '<option value="">-- select threat --</option>' +
+    real.map(t => `<option value="${t.id}">${t.id} · ${t.type} → ${t.target} (val ${t.value})</option>`).join('');
+  bsel.innerHTML = '<option value="">-- select base --</option>' +
+    activeBases().map(b => {
+      const st = inventoryState[b.id];
+      const tot = _totalSam(b.id);
+      return `<option value="${b.id}">${b.name} [${b.id}] — ${tot} SAM-type rounds</option>`;
+    }).join('');
+  esel.innerHTML = '<option value="">-- select effector --</option>' +
+    Object.keys(EFFECTORS_DEF).map(k => {
+      const def = EFFECTORS_DEF[k]; return `<option value="${k}">${def.name}</option>`;
+    }).join('');
+}
+
+function executeManualFire() {
+  const tid = document.getElementById('manual-threat-sel')?.value;
+  const bid = document.getElementById('manual-base-sel')?.value;
+  const eid = document.getElementById('manual-eff-sel')?.value;
+  const res = document.getElementById('manual-result');
+  if (!tid || !bid || !eid) { if (res) { res.textContent = '⚠ Select threat, base and effector'; res.style.color = 'var(--ylw)'; } return; }
+  const st = inventoryState[bid];
+  if (!st || st.destroyed) { if (res) { res.textContent = '⚠ Base destroyed'; res.style.color = 'var(--red)'; } return; }
+  const base = activeBases().find(b => b.id === bid);
+  if (base && !base.effectors.includes(eid)) { if (res) { res.textContent = `⚠ ${base.name} does not have ${EFFECTORS_DEF[eid]?.name || eid}`; res.style.color = 'var(--ylw)'; } return; }
+  const curAmmo = st.effAmmo[eid] ?? 0;
+  if (eid !== 'HELWS' && curAmmo <= 0) { if (res) { res.textContent = `⚠ 0 rounds remaining for ${EFFECTORS_DEF[eid]?.name || eid}`; res.style.color = 'var(--red)'; } return; }
+  const eff    = EFFECTORS_DEF[eid];
+  const threat = _currentSc?.threats.find(t => t.id === tid);
+  const pkNominal = threat ? (eff?.pk[threat.type] ?? 0) : 0;
+  const pkEff = _currentSq ? Math.round(pkNominal * getSensorPkMult(threat?.type, _currentSq) * 100) / 100 : pkNominal;
+  if (eid !== 'HELWS') st.effAmmo[eid] = Math.max(0, curAmmo - 1);
+  renderInventory();
+  const hit = Math.random() < pkEff;
+  const pk = pkEff;
+  const msg = `${bid}·${eid} → ${tid} — Pkₘₘₘ ${pkNominal.toFixed(2)} × SQ→Pk ${pk.toFixed(2)} — ${hit?'HIT':'MISS'}`;
+  if (res) { res.textContent = (hit ? '✓ ' : '✕ ') + msg; res.style.color = hit ? 'var(--grn)' : 'var(--red)'; }
+  _addFeedLine(`[MANUAL] ${msg}`, hit ? 'good' : 'warn');
+  bumpCtr('fired'); bumpCtr('manual'); if (hit) bumpCtr('intercepts');
+}
+
+// ═══════════════════════════════════════════════════
+// THEATER SWITCH
+// ═══════════════════════════════════════════════════
+function switchTheater(key) {
+  ACTIVE_THEATER = key;
+  ['boreal','sweden'].forEach(t => {
+    const btn = document.getElementById('thr-' + t);
+    if (btn) btn.className = 'thr-btn' + (t === key ? ' active' : '');
+  });
+  const aorLbl = key === 'sweden' ? 'SWEDEN-S' : 'BOREAL-N';
+  const aorEl  = document.getElementById('hdr-aor');
+  if (aorEl) aorEl.textContent = aorLbl;
+  const tacLbl = document.getElementById('tac-label');
+
+  renderInventory();
+
+  if (_currentSc) {
+    _swapState   = null;
+    // Recompute sensor quality for new theater before regenerating COAs
+    const m2      = _extendMetrics(_currentSc, computeMetrics(_currentSc));
+    _currentSq    = computeSensorQuality(_currentSc, m2);
+    _currentCoas  = generateCOAs(_currentSc);
+    if (tacLbl) tacLbl.textContent = `TACTICAL DISPLAY · ${aorLbl} · ${_currentSc.threats.filter(t=>!t.decoy&&!t.ghost).length} TRACKS`;
+    renderTactical(_currentSc, _currentCoas[0]);
+    renderCOAs(_currentCoas);
+    renderSensorBars(_currentSc, m2);
+    if (OPERATOR_MODE === 'hitl')   updateHITLQueue(_currentCoas);
+    if (OPERATOR_MODE === 'manual') updateManualSelectors(_currentSc);
+  }
+  _addFeedLine(`Theater switched to ${key.toUpperCase()} (${aorLbl}) — COA regenerated with ${ACTIVE_DOCTRINE.toUpperCase()} doctrine`, 'hl');
+}
+
+// ═══════════════════════════════════════════════════
+// KINEMATIC PHYSICS BRIDGE
+// ═══════════════════════════════════════════════════
+async function pollKinematics(sc) {
+  const dot  = document.getElementById('kin-dot');
+  const body = document.getElementById('kin-body');
+  if (!body) return;
+  const typeMap = { CRUISE:'cruise-missile', HYPERSONIC:'hypersonic-pgm', LOITER:'drone', BALLISTIC:'ballistic', FIGHTER:'fighter' };
+  const spd = { HYPERSONIC:2200, BALLISTIC:1400, CRUISE:600, LOITER:300, FIGHTER:1000 };
+  const primary = sc.threats.find(t => !t.decoy && !t.ghost) || sc.threats[0];
+  const tgtBase = THEATER_BASES.find(b => b.id === primary?.target);
+  try {
+    const payload = {
+      state: { bases: activeBases().map(b => {
+        const st = inventoryState[b.id] || {};
+        const ea = st.effAmmo || {};
+        return { name:b.name, x:b.x, y:b.y, hp: st.hp ?? 100, inventory:{
+          'thaad':   ea.THAAD  ?? 0,
+          'patriot-pac3': ea.PAC3  ?? 0,
+          'nasams':  ea.NASAMS ?? 0,
+          'helws':   ea.HELWS  ?? 0,
+          'c-ram':   ea.CRAM   ?? 0,
+        }};
+      }) },
+      threats: sc.threats.filter(t=>!t.decoy).slice(0,6).map(t => ({
+        id:t.id, x:tgtBase?.x||0, y:tgtBase?.y||0,
+        speed_kmh: spd[t.type]||600,
+        estimated_type: typeMap[t.type]||'cruise-missile',
+        threat_value: t.value,
+      })),
+      doctrine_primary: ACTIVE_DOCTRINE, use_rl: true,
+      model_id: document.getElementById('model-select')?.value || 'heuristic',
+      sensor_quality: _currentSq || null,
+    };
+    const t0 = Date.now();
+    const res = await fetch('http://localhost:8000/evaluate_advanced', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload), signal: AbortSignal.timeout(5000),
+    });
+    const latency = Date.now() - t0;
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (dot) dot.className = 'kin-dot live';
+    const primarySpd = spd[primary?.type] || 600;
+    const distKm = primary && tgtBase
+      ? Math.round(Math.hypot(primary.spawnX - tgtBase.x, primary.spawnY - tgtBase.y) * 1.666)
+      : '?';
+    const ttiRaw = (typeof distKm === 'number' && primarySpd > 0) ? Math.round(distKm / primarySpd * 3600) : null;
+    let tti = '?';
+    if (ttiRaw !== null) {
+      if (ttiRaw >= 60) {
+        const m = Math.floor(ttiRaw / 60); const s = ttiRaw % 60;
+        tti = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} min`;
+      } else {
+        tti = ttiRaw + 's';
+      }
+    }
+    const rows = [
+      { k:'Engine',       v: data.model_used || document.getElementById('model-select')?.value.toUpperCase() || 'CORTEX-1' },
+      { k:'Latency',      v: latency + 'ms' },
+      { k:'WTA score',    v: Math.round(data.strategic_consequence_score || 0) },
+      { k:'Assignments',  v: (data.assignments?.length ?? 0) },
+      { k:'PrimarySpd',   v: primarySpd + ' km/h' },
+      { k:'Dist2HVA',     v: distKm + ' km' },
+      { k:'T-to-impact',  v: tti + ' (est.)' },
+      { k:'PN constant',  v: 'N₂=4 (std)' },
+      { k:'Radar model',  v: 'AN/TPY-2 (est.)' },
+      { k:'Evasion lvl',  v: sc.jammed ? 'HIGH (NOE)' : 'NOMINAL' },
+      { k:'Miss est.',    v: (1 - (data.strategic_consequence_score||0)/100).toFixed(2) },
+    ];
+    body.innerHTML = rows.map(r =>
+      `<div class="kin-row"><span class="kin-key">${r.k}</span><span class="kin-val">${r.v}</span></div>`
+    ).join('');
+    // Update backend label
+    const lbl = document.getElementById('backend-lbl');
+    if (lbl) lbl.textContent = `backend: live (score ${Math.round(data.strategic_consequence_score||0)})`;
+    document.getElementById('backend-dot')?.classList.remove('offline');
+  } catch(e) {
+    if (dot) dot.className = 'kin-dot';
+    body.innerHTML = '<div class="kin-offline">Python engine offline — start backend for live kinematics (radar + PN + 3D evasion)</div>';
+    document.getElementById('backend-dot')?.classList.add('offline');
+    document.getElementById('backend-lbl').textContent = 'backend: offline (local COA)';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MODEL BADGE + REFRESH
+// ═══════════════════════════════════════════════════
+const MODEL_LABELS = {
+  elite:    'ELITE V3.5 · TRANSFORMER-RESNET',
+  supreme3: 'SUPREME V3.1 · CHRONOS GRU',
+  supreme2: 'SUPREME V2 · LEGACY LSTM',
+  titan:    'TITAN · MULTI-HEAD LSTM',
+  hybrid:   'HYBRID RL V8.4 · PPO',
+  genE10:   'GENERALIST E10 · ENSEMBLE',
+  heuristic:'HEURISTIC · TRIAGE-AWARE WTA',
+  hBase:    'HEURISTIC V2 · BASE GREEDY',
+};
+function updateModelBadge() {
+  const sel   = document.getElementById('model-select');
+  const badge = document.getElementById('model-badge');
+  if (badge && sel) badge.textContent = MODEL_LABELS[sel.value] || 'CORTEX-1';
+}
+// When model changes: update badge AND regenerate COAs with new profile
+function onModelChange() {
+  updateModelBadge();
+  if (!_currentSc) return;
+  _currentCoas = generateCOAs(_currentSc);
+  renderCOAs(_currentCoas);
+  // Regenerate commentary so model line stays in sync
+  const m2 = _extendMetrics(_currentSc, computeMetrics(_currentSc));
+  renderCommentary(_currentSc, m2, _currentCoas);
+  const mp = activeModelProfile();
+  if (OPERATOR_MODE === 'hitl') updateHITLQueue(_currentCoas);
+}
+async function refreshFromEngine() {
+  if (!_currentSc) return;
+  await Promise.all([pollKinematics(_currentSc), upgradeFromBackend(_currentSc, _currentCoas?.[0])]);
+}
+
+// ═══════════════════════════════════════════════════
+// COMMENTARY HELPER
+// ═══════════════════════════════════════════════════
+function _addFeedLine(txt, cls='') {
+  const feed = document.getElementById('ai-commentary');
+  if (!feed) return;
+  const ts = new Date().toISOString().substring(11,19);
+  feed.innerHTML += `<div class="ai-line ${cls}">[${ts}] ${txt}</div>`;
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENARIO DEFINITIONS
+// ═══════════════════════════════════════════════════
+// Scenarios are theater-aware: BOREAL_SCENARIOS and SWEDEN_SCENARIOS
+// loadScenario() picks from the active theater's set
+const BOREAL_SCENARIOS = {
+  clean: {
+    id:'clean', title:'Clean picture — three ballistic threats',
+    threats:[
+      { id:'T01', type:'BALLISTIC', label:'BALLISTIC', target:'ARK', value:80, spawnX:251, spawnY:520 },
+      { id:'T02', type:'BALLISTIC', label:'BALLISTIC', target:'NVB', value:80, spawnX:30,  spawnY:540 },
+      { id:'T03', type:'BALLISTIC', label:'BALLISTIC', target:'HRC', value:80, spawnX:560, spawnY:540 },
+    ],
+    jammed: false, decoys: 0,
+  },
+  swarm: {
+    id:'swarm', title:'Swarm + fast-mover breakthrough (15 tracks)',
+    threats:[
+      { id:'D01', type:'LOITER',    label:'drone', target:'ARK', value:20, spawnX:200, spawnY:520 },
+      { id:'D02', type:'LOITER',    label:'drone', target:'ARK', value:20, spawnX:230, spawnY:540 },
+      { id:'D03', type:'LOITER',    label:'drone', target:'ARK', value:20, spawnX:265, spawnY:530 },
+      { id:'D04', type:'LOITER',    label:'drone', target:'NVB', value:20, spawnX:80,  spawnY:490 },
+      { id:'D05', type:'LOITER',    label:'drone', target:'NVB', value:20, spawnX:105, spawnY:510 },
+      { id:'D06', type:'LOITER',    label:'drone', target:'BWP', value:20, spawnX:650, spawnY:520 },
+      { id:'D07', type:'LOITER',    label:'drone', target:'TOR', value:20, spawnX:680, spawnY:510 },
+      { id:'D08', type:'LOITER',    label:'drone', target:'MER', value:20, spawnX:700, spawnY:540 },
+      { id:'D09', type:'LOITER',    label:'drone', target:'ARK', value:20, spawnX:185, spawnY:500 },
+      { id:'D10', type:'LOITER',    label:'drone', target:'KNS', value:20, spawnX:290, spawnY:545 },
+      { id:'D11', type:'LOITER',    label:'drone', target:'ARK', value:20, spawnX:215, spawnY:495 },
+      { id:'D12', type:'LOITER',    label:'drone', target:'NVB', value:20, spawnX:120, spawnY:520 },
+      { id:'F01', type:'FIGHTER',   label:'fast-mover', target:'ARK', value:60, spawnX:400, spawnY:620 },
+      { id:'F02', type:'HYPERSONIC',label:'hypersonic', target:'ARK', value:90, spawnX:490, spawnY:720 },
+      { id:'G01', type:'CRUISE',    label:'ghost',      target:'KNS', value:40, spawnX:320, spawnY:565, ghost:true },
+    ],
+    jammed: false, decoys: 0,
+  },
+  jammed: {
+    id:'jammed', title:'Jammed sensors — hypersonic + decoy saturation',
+    threats:[
+      { id:'H01', type:'HYPERSONIC', label:'hypersonic', target:'ARK', value:90, spawnX:251, spawnY:720 },
+      { id:'H02', type:'HYPERSONIC', label:'hypersonic', target:'NVB', value:90, spawnX:80,  spawnY:680 },
+      { id:'H03', type:'HYPERSONIC', label:'hypersonic', target:'HRC', value:90, spawnX:540, spawnY:720 },
+      { id:'C01', type:'CRUISE',     label:'cruise',     target:'KNS', value:60, spawnX:350, spawnY:640 },
+      { id:'C02', type:'CRUISE',     label:'cruise',     target:'TOR', value:60, spawnX:195, spawnY:610 },
+      { id:'DC1', type:'LOITER',     label:'decoy',      target:'ARK', value:5,  spawnX:270, spawnY:660, decoy:true },
+      { id:'DC2', type:'LOITER',     label:'decoy',      target:'ARK', value:5,  spawnX:220, spawnY:640, decoy:true },
+      { id:'DC3', type:'LOITER',     label:'decoy',      target:'NVB', value:5,  spawnX:135, spawnY:650, decoy:true },
+    ],
+    jammed: true, decoys: 3,
+  },
+};
+
+// Sweden theater scenarios — threats target Swedish installations
+const SWEDEN_SCENARIOS = {
+  clean: {
+    id:'clean', title:'Baltic intrusion — Stockholm approach (Boreal)',
+    threats:[
+      { id:'T01', type:'BALLISTIC', label:'BALLISTIC', target:'STO', value:90, spawnX:567, spawnY:720 },
+      { id:'T02', type:'CRUISE',    label:'cruise',    target:'F21', value:70, spawnX:854, spawnY:200 },
+      { id:'T03', type:'FIGHTER',   label:'fighter',   target:'GOT', value:60, spawnX:400, spawnY:720 },
+    ],
+    jammed: false, decoys: 0,
+  },
+  swarm: {
+    id:'swarm', title:'Multi-vector attack on Swedish bases (12 tracks)',
+    threats:[
+      { id:'D01', type:'LOITER', label:'drone', target:'STO', value:25, spawnX:567, spawnY:700 },
+      { id:'D02', type:'LOITER', label:'drone', target:'STO', value:25, spawnX:540, spawnY:720 },
+      { id:'D03', type:'LOITER', label:'drone', target:'F16', value:20, spawnX:524, spawnY:680 },
+      { id:'D04', type:'LOITER', label:'drone', target:'MUS', value:20, spawnX:572, spawnY:710 },
+      { id:'D05', type:'LOITER', label:'drone', target:'GOT', value:20, spawnX:591, spawnY:720 },
+      { id:'D06', type:'LOITER', label:'drone', target:'KRL', value:20, spawnX:328, spawnY:720 },
+      { id:'F01', type:'FIGHTER',    label:'fighter',    target:'F21', value:60, spawnX:854, spawnY:300 },
+      { id:'F02', type:'HYPERSONIC', label:'hypersonic', target:'STO', value:90, spawnX:700, spawnY:720 },
+      { id:'C01', type:'CRUISE',     label:'cruise',     target:'GBG', value:60, spawnX:0,   spawnY:700 },
+      { id:'C02', type:'CRUISE',     label:'cruise',     target:'F17', value:60, spawnX:299, spawnY:720 },
+      { id:'C03', type:'CRUISE',     label:'cruise',     target:'F7',  value:50, spawnX:79,  spawnY:700 },
+      { id:'G01', type:'CRUISE',     label:'ghost',      target:'MUS', value:40, spawnX:600, spawnY:720, ghost:true },
+    ],
+    jammed: false, decoys: 0,
+  },
+  jammed: {
+    id:'jammed', title:'EW degradation — hypersonic + decoys on capital',
+    threats:[
+      { id:'H01', type:'HYPERSONIC', label:'hypersonic', target:'STO', value:95, spawnX:567, spawnY:720 },
+      { id:'H02', type:'HYPERSONIC', label:'hypersonic', target:'MUS', value:90, spawnX:600, spawnY:720 },
+      { id:'C01', type:'CRUISE',     label:'cruise',     target:'F16', value:60, spawnX:524, spawnY:720 },
+      { id:'DC1', type:'LOITER',     label:'decoy',      target:'STO', value:5,  spawnX:550, spawnY:720, decoy:true },
+      { id:'DC2', type:'LOITER',     label:'decoy',      target:'STO', value:5,  spawnX:580, spawnY:720, decoy:true },
+    ],
+    jammed: true, decoys: 2,
+  },
+};
+
+// Active scenario set per theater
+function activeScenarios() {
+  return ACTIVE_THEATER === 'sweden' ? SWEDEN_SCENARIOS : BOREAL_SCENARIOS;
+}
+
+// For legacy references to SCENARIOS (e.g. LLM prompt context)
+const SCENARIOS = BOREAL_SCENARIOS;
+
+// ═══════════════════════════════════════════════════
+// SENSOR QUALITY ENGINE
+// ════════════════════════════════════════════════════
+// Sensor quality is produced by the engine from scenario
+// observables: jamming flag, decoy saturation, ghost-track
+// count, threat type mix.  Values 0-100 per modality.
+//
+// Wired into Pk via getSensorPkMult():
+//   Pk_effective = Pk_nominal × SQ_multiplier(threatType, sq)
+//   SQ_mult ∈ [0.30, 1.00]  (floor 30%: even degraded sensors
+//   retain residual cuing capability via data-fusion)
+//
+// Sensor-threat cuing matrix (primary/secondary):
+//   BALLISTIC  → RADAR 60%, ESM 40%
+//   HYPERSONIC → RADAR 70%, IR/EO 30%
+//   CRUISE     → RADAR 50%, IR/EO 30%, LINK-16 20%
+//   LOITER     → IR/EO 60%, RADAR 30%, LINK-16 10%
+//   FIGHTER    → RADAR 50%, LINK-16 40%, IR/EO 10%
+// ═══════════════════════════════════════════════════
+let _currentSq = null; // { radar, ireo, esm, link16, fusion }
+
+function computeSensorQuality(sc, m) {
+  const j = sc.jammed;
+  const decoyRatio = m.decoyCount / Math.max(m.n, 1);
+  const ghostPenalty = m.ghostCount * 4;
+
+  // Base sensor health from TQI
+  const base = Math.round(m.tqi * 100);
+
+  const radar  = Math.max(12, Math.min(99, base + (j ? -42 : 0) - ghostPenalty));
+  const ireo   = Math.max(15, Math.min(99, Math.round(base * 0.92) + (j ? -20 : 2) - Math.round(decoyRatio * 18)));
+  const esm    = Math.max(18, Math.min(99, Math.round(base * 0.95) + (j ? -15 : 0)));
+  const link16 = j ? Math.max(22, Math.round(30 + Math.random() * 14)) : Math.min(99, 97 - ghostPenalty);
+  const fusion = Math.max(10, Math.min(99, Math.round((radar * 0.30 + ireo * 0.25 + esm * 0.20 + link16 * 0.25))));
+
+  return { radar, ireo, esm, link16, fusion };
+}
+
+function getSensorPkMult(threatType, sq) {
+  if (!sq) return 1.0;
+  const { radar, ireo, esm, link16 } = sq;
+  const SQ_FLOOR = 0.30; // minimum fused-sensor effectiveness
+  let weight;
+  switch (threatType) {
+    case 'BALLISTIC':   weight = (radar * 0.60 + esm   * 0.40) / 100; break;
+    case 'HYPERSONIC':  weight = (radar * 0.70 + ireo  * 0.30) / 100; break;
+    case 'CRUISE':      weight = (radar * 0.50 + ireo  * 0.30 + link16 * 0.20) / 100; break;
+    case 'LOITER':
+    case 'DRONE':       weight = (ireo  * 0.60 + radar * 0.30 + link16 * 0.10) / 100; break;
+    case 'FIGHTER':     weight = (radar * 0.50 + link16* 0.40 + ireo * 0.10) / 100; break;
+    default:            weight = sq.fusion / 100; break;
+  }
+  // Scale: [SQ_FLOOR .. 1.0] mapped from weight [0 .. 1]
+  return parseFloat((SQ_FLOOR + (1 - SQ_FLOOR) * weight).toFixed(3));
+}
+
+// ═══════════════════════════════════════════════════
+// METRICS COMPUTATION
+// ═══════════════════════════════════════════════════
+function computeMetrics(sc) {
+  const threats = sc.threats;
+  const n = threats.length;
+  const types = new Set(threats.map(t => t.type)).size;
+  const decoyCount = threats.filter(t => t.decoy).length;
+  const ghostCount = threats.filter(t => t.ghost).length;
+
+  // Complexity = type diversity × log(n) / max
+  const complexity = Math.min(0.99, parseFloat(((types / 5) * Math.log(n + 1) / Math.log(20) + (ghostCount * 0.08)).toFixed(2)));
+
+  // Stakes = high-value proportion + multi-base threat factor
+  const highVal = threats.filter(t => t.value >= 80).length;
+  const multiBase = new Set(threats.map(t => t.target)).size > 2 ? 0.08 : 0;
+  const stakes = Math.min(0.99, parseFloat(((highVal / n) * 0.70 + (n > 10 ? 0.18 : 0.05) + multiBase).toFixed(2)));
+
+  // TQI = track quality index (degrades with decoys + jamming)
+  const jammingPenalty = sc.jammed ? 0.28 : 0;
+  const tqi = Math.max(0.05, parseFloat((1 - (decoyCount / Math.max(n,1)) * 0.50 - jammingPenalty).toFixed(2)));
+
+  // SA-Health = weighted composite; jamming degrades the picture directly
+  const jammingSAPenalty = sc.jammed ? 35 : 0;
+  const sa = Math.max(5, Math.min(99, Math.round(100 - complexity * 28 - stakes * 28 + tqi * 8 - jammingSAPenalty)));
+
+  // Mode
+  const mode = sa >= 80 ? 'autonomous' : sa >= 55 ? 'advise' : 'defer';
+
+  // Total inbound value
+  const totalVal = threats.reduce((s,t) => s + t.value, 0);
+
+  return { n, types, complexity, stakes, tqi, sa, mode, totalVal, decoyCount, ghostCount };
+}
+// Closest active threat to any base in km, hostile count
+function _extendMetrics(sc, m) {
+  const allBases = activeBases();
+  let minDist = Infinity;
+  sc.threats.filter(t => !t.decoy && !t.ghost).forEach(t => {
+    allBases.forEach(b => {
+      const d = Math.hypot(t.spawnX - b.x, t.spawnY - b.y) * 1.666;
+      if (d < minDist) minDist = d;
+    });
+  });
+  m.closestKm   = minDist < Infinity ? Math.round(minDist) : 0;
+  m.hostileCount = sc.threats.filter(t => !t.decoy && !t.ghost).length;
+  return m;
+}
+
+// ═══════════════════════════════════════════════════
+// MODEL PROFILES — each model has distinct scoring behaviour
+// Maps model key → COA scoring weights used in generateCOAs()
+// ═══════════════════════════════════════════════════
+const MODEL_PROFILES = {
+  elite:    { pkWeight:1.20, costWeight:0.010, maxPerBase:8, minPk:0.28, label:'ELITE · Transformer/ResNet' },
+  supreme3: { pkWeight:1.10, costWeight:0.012, maxPerBase:7, minPk:0.32, label:'SUPREME V3.1 · Chronos GRU' },
+  supreme2: { pkWeight:1.00, costWeight:0.015, maxPerBase:6, minPk:0.30, label:'SUPREME V2 · LSTM' },
+  titan:    { pkWeight:0.90, costWeight:0.025, maxPerBase:5, minPk:0.40, label:'TITAN · Conservative LSTM' },
+  hybrid:   { pkWeight:1.05, costWeight:0.008, maxPerBase:8, minPk:0.25, label:'HYBRID RL · Value-Driven PPO' },
+  genE10:   { pkWeight:1.05, costWeight:0.014, maxPerBase:6, minPk:0.32, label:'GENERALIST E10 · Ensemble' },
+  heuristic:{ pkWeight:1.00, costWeight:0.015, maxPerBase:6, minPk:0.30, label:'HEURISTIC · Triage-Aware WTA' },
+  hBase:    { pkWeight:0.95, costWeight:0.020, maxPerBase:4, minPk:0.35, label:'HEURISTIC V2 · Base Greedy' },
+};
+function activeModelProfile() {
+  const sel = document.getElementById('model-select');
+  return MODEL_PROFILES[sel?.value] || MODEL_PROFILES.heuristic;
+}
+
+// ═══════════════════════════════════════════════════
+// COA GENERATION ENGINE (Pk wired to sensor quality)
+// ═══════════════════════════════════════════════════
+function buildCandidates(threats) {
+  const bases    = activeBases();
+  const ALL_BASES = [...THEATER_BASES, ...SWEDEN_BASES];
+  const cands = [];
+  threats.forEach(t => {
+    const targetBase = ALL_BASES.find(b2 => b2.id === t.target);
+    bases.forEach(b => {
+      const refX = targetBase ? targetBase.x : t.spawnX;
+      const refY = targetBase ? targetBase.y : t.spawnY;
+      const dx = (refX - b.x) * UNIT_TO_M;
+      const dy = (refY - b.y) * UNIT_TO_M;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      (b.effectors || []).forEach(effKey => {
+        const eff = EFFECTORS_DEF[effKey];
+        if (!eff) return;
+        if (dist > eff.range) return;
+        // Skip if ammo depleted (HELWS is directed energy — unlimited)
+        const st = inventoryState[b.id];
+        if (st && effKey !== 'HELWS' && (st.effAmmo[effKey] ?? 999) <= 0) return;
+        const pkNominal = eff.pk[t.type] || 0;
+        if (pkNominal < 0.08) return;
+        // Apply sensor-quality multiplier to get effective Pk
+        const sqMult = _currentSq ? getSensorPkMult(t.type, _currentSq) : 1.0;
+        const pk = parseFloat((pkNominal * sqMult).toFixed(3));
+        cands.push({
+          threatId:t.id, threatLabel:t.label||t.type, threatType:t.type,
+          threatVal:t.value, isDecoy:!!t.decoy,
+          baseId:b.id, baseName:b.name, effKey, effName:eff.name,
+          pk, pkNominal, sqMult, cost:eff.cost, dist,
+        });
+      });
+    });
+  });
+  return cands;
+}
+
+function greedyAssign(threats, cands, scoreFn, maxPerBase) {
+  const assigned = new Map();
+  const baseCount = {};
+  const sorted = [...cands].filter(c => !c.isDecoy).sort((a,b) => scoreFn(b) - scoreFn(a));
+  for (const c of sorted) {
+    if (assigned.has(c.threatId)) continue;
+    if ((baseCount[c.baseId] || 0) >= maxPerBase) continue;
+    assigned.set(c.threatId, c);
+    baseCount[c.baseId] = (baseCount[c.baseId] || 0) + 1;
+  }
+  return Array.from(assigned.values());
+}
+
+function computeCOAStats(assignments, threats) {
+  const real = threats.filter(t => !t.decoy);
+  const util = assignments.reduce((s,a) => s + a.pk * a.threatVal, 0);
+  const cov  = real.length > 0 ? Math.round(assignments.length / real.length * 100) : 0;
+  const expectedKills = assignments.reduce((s,a) => s + a.pk, 0);
+  const leaked = Math.max(0, real.length - expectedKills);
+  const followOnRisk = parseFloat(Math.min(0.99, leaked / Math.max(1, real.length)).toFixed(2));
+  return { utility: Math.round(util * 10) / 10, coverage: cov, followOnRisk, engagements: assignments.length };
+}
+
+function generateCOAs(sc) {
+  const threats = sc.threats;
+  const cands = buildCandidates(threats);
+  const dm  = DOCTRINE_META[ACTIVE_DOCTRINE] || DOCTRINE_META.balanced;
+  const mp  = activeModelProfile();
+  const rm  = dm.rangeMult, cm = dm.costMult, hm = dm.hvaMult;
+  // pkW / costW come from the active model profile, scaled by doctrine
+  const pkW   = mp.pkWeight;
+  const costW = mp.costWeight * cm;
+
+  // Apply doctrine + model: HVA targets get multiplied threat value; cost penalty scaled
+  const docScore = (c) => c.pk * pkW * c.threatVal * (c.threatType === 'BALLISTIC' ? hm : 1.0) - c.cost * costW;
+
+  // Filter out low-Pk candidates per model minPk threshold
+  const candsFiltered = cands.filter(c => c.pk >= mp.minPk);
+
+  // COA 1: RECOMMENDED — balanced utility using model profile
+  const a1 = greedyAssign(threats, candsFiltered, c => docScore(c), mp.maxPerBase);
+  const s1 = computeCOAStats(a1, threats);
+
+  // COA 2: RESERVE CONSERVING — penalise expensive effectors strongly (×20× cost weight)
+  const a2 = greedyAssign(threats, candsFiltered, c => c.pk * pkW * c.threatVal - c.cost * costW * 20, Math.max(3, mp.maxPerBase - 2));
+  const s2 = computeCOAStats(a2, threats);
+
+  // COA 3: RISK MINIMISING — maximise Pk floor regardless of cost, up to model maxPerBase+2
+  const a3 = greedyAssign(threats, candsFiltered, c => c.pk * pkW * 1000 - c.cost * 0.001, mp.maxPerBase + 2);
+  const s3 = computeCOAStats(a3, threats);
+
+  const docTag   = ACTIVE_DOCTRINE !== 'balanced' ? ` [${ACTIVE_DOCTRINE.toUpperCase()}]` : '';
+  const modelLbl = mp.label || 'WTA';
+  return [
+    { name:`RECOMMENDED${docTag}`,       style:'coa-rec',  desc:`${modelLbl} — balanced utility${docTag}. Maximises expected damage averted per unit ammunition at current ROE.`,          ...s1, assignments:a1 },
+    { name:`RESERVE CONSERVING${docTag}`,style:'coa-cons', desc:`${modelLbl} — ammo conservation${docTag}. Preserves expensive effectors for follow-on waves; accepts higher current-wave leak.`,    ...s2, assignments:a2 },
+    { name:`RISK MINIMISING${docTag}`,   style:'coa-risk', desc:`${modelLbl} — min-miss${docTag}. Accepts more ammo spent per engagement in exchange for highest Pk floor.`, ...s3, assignments:a3 },
+  ];
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: SA-HEALTH GAUGE
+// ═══════════════════════════════════════════════════
+function renderSAHealth(sa, mode) {
+  const arc = document.getElementById('sa-arc');
+  const num = document.getElementById('sa-num');
+  const C = 2 * Math.PI * 32; // circumference
+  const dash = (sa / 100) * C;
+  arc.setAttribute('stroke-dasharray', `${dash} ${C}`);
+  const col = mode === 'autonomous' ? '#3fb950' : mode === 'advise' ? '#e3b341' : '#f85149';
+  arc.setAttribute('stroke', col);
+  num.textContent = sa;
+  num.style.color = col;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: MODE PILL + METRICS
+// ═══════════════════════════════════════════════════
+function renderMode(mode) {
+  const pill = document.getElementById('mode-pill');
+  const txt  = document.getElementById('mode-text');
+  pill.className = 'mode-pill ' + mode;
+  const labels = { autonomous:'AUTONOMOUS', advise:'ADVISE', defer:'DEFER' };
+  txt.textContent = labels[mode];
+}
+
+function renderMetrics(m) {
+  const trEl = document.getElementById('m-tracks');
+  const hoEl = document.getElementById('m-hostile');
+  const fuEl = document.getElementById('m-fusion');
+  const clEl = document.getElementById('m-closest');
+  if (trEl) { trEl.textContent = m.n; trEl.className = 'm-val'; }
+  if (hoEl) { hoEl.textContent = m.hostileCount || 0; hoEl.className = 'm-val' + (m.hostileCount >= 8 ? ' v-red' : m.hostileCount >= 4 ? ' v-ylw' : ''); }
+  if (fuEl) { fuEl.textContent = Math.round(m.tqi * 100) + '%'; fuEl.className = 'm-val' + (m.tqi < 0.4 ? ' v-red' : m.tqi < 0.7 ? ' v-ylw' : ' v-grn'); }
+  if (clEl) { clEl.textContent = (m.closestKm || 0) + ' km'; clEl.className = 'm-val' + ((m.closestKm||0) < 100 ? ' v-red' : (m.closestKm||0) < 200 ? ' v-ylw' : ''); }
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: SENSOR BARS + TTD + ZULU
+// ═══════════════════════════════════════════════════
+function renderSensorBars(sc, m) {
+  // Use engine-computed sensor quality (already set into _currentSq before COA generation)
+  const sq = _currentSq || computeSensorQuality(sc, m);
+  const sensors = {
+    radar:  sq.radar,
+    ireo:   sq.ireo,
+    esm:    sq.esm,
+    link16: sq.link16,
+    fusion: sq.fusion,
+  };
+  Object.entries(sensors).forEach(([key, rawVal]) => {
+    const val = Math.max(5, Math.min(99, rawVal));
+    const barEl = document.getElementById('sq-' + key);
+    const pctEl = document.getElementById('sq-' + key + '-pct');
+    if (!barEl || !pctEl) return;
+    const col = val > 70 ? '#3fb950' : val > 40 ? '#e3b341' : '#f85149';
+    barEl.style.width = val + '%';
+    barEl.style.background = col;
+    pctEl.textContent = val + '%';
+    pctEl.style.color = col;
+  });
+  // Annotate fusion bar with average Pk modifier and update summary
+  const avgMult = ['BALLISTIC','HYPERSONIC','CRUISE','LOITER','FIGHTER'].reduce((s,t) => s + getSensorPkMult(t, sq), 0) / 5;
+  const fusionEl = document.getElementById('sq-fusion-pct');
+  if (fusionEl) fusionEl.title = `Avg Pk×${avgMult.toFixed(2)}`;
+  const avgLbl = document.getElementById('sq-avg-mult');
+  if (avgLbl) { avgLbl.textContent = `Avg Pk mult: ×${avgMult.toFixed(2)}`; avgLbl.style.color = avgMult > 0.75 ? '#3fb950' : avgMult > 0.55 ? '#e3b341' : '#f85149'; }
+}
+
+function updateTTD(sc, m) {
+  const numEl = document.getElementById('ttd-num');
+  const unitEl = document.querySelector('.ttd-unit');
+  const subEl = document.getElementById('ttd-sub');
+  if (!numEl) return;
+  const speedMap = { HYPERSONIC:2200, BALLISTIC:1400, CRUISE:600, LOITER:300, FIGHTER:1000 };
+  const real = sc.threats.filter(t => !t.decoy && !t.ghost);
+  if (!real.length) { numEl.textContent = '—'; if (unitEl) unitEl.textContent = 's'; return; }
+  let minTTI = Infinity;
+  real.forEach(t => {
+    const dist = m.closestKm || 200;
+    const spd  = speedMap[t.type] || 600;
+    const tti  = (dist / spd) * 3600;
+    if (tti < minTTI) minTTI = tti;
+  });
+  const ttiVal = Math.max(10, Math.round(minTTI));
+  
+  // Format as MM:SS if > 60s
+  if (ttiVal >= 60) {
+    const mins = Math.floor(ttiVal / 60);
+    const secs = ttiVal % 60;
+    numEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    if (unitEl) unitEl.textContent = 'min';
+  } else {
+    numEl.textContent = ttiVal;
+    if (unitEl) unitEl.textContent = 's';
+  }
+  
+  numEl.style.color = ttiVal < 60 ? 'var(--red)' : ttiVal < 120 ? 'var(--ylw)' : 'var(--grn)';
+  if (subEl) subEl.textContent = `T‑to‑intercept · AUTO · ${m.mode.toUpperCase()}`;
+}
+
+function updateZuluClock() {
+  const el = document.getElementById('hdr-zulu');
+  if (!el) return;
+  const now = new Date();
+  const h   = String(now.getUTCHours()).padStart(2, '0');
+  const min = String(now.getUTCMinutes()).padStart(2, '0');
+  const s   = String(now.getUTCSeconds()).padStart(2, '0');
+  el.textContent = `${h}:${min}:${s}Z`;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: REASONS
+// ═══════════════════════════════════════════════════
+function renderReasons(sc, m) {
+  const list = document.getElementById('reasons-list');
+  const reasons = [];
+  const { sa, complexity, stakes, tqi, mode } = m;
+  if (mode === 'autonomous') {
+    reasons.push(`SA ${sa}%, complexity ${complexity.toFixed(2)}, stakes ${stakes.toFixed(2)} — within envelope`);
+  } else {
+    if (sa < 80) reasons.push(`SA ${sa}% below autonomous threshold`);
+    if (stakes > 0.70) reasons.push(`stakes ${stakes.toFixed(2)} above autonomous threshold`);
+    if (tqi < 0.6)     reasons.push(`track quality index ${tqi.toFixed(2)} — sensor picture degraded`);
+  }
+  const highValSum = sc.threats.filter(t=>t.value>=80).reduce((s,t)=>s+t.value,0);
+  if (highValSum > 0) reasons.push(`high inbound value (${highValSum})`);
+
+  // Distance from closest threat spawn to primary HVA (Arktholm)
+  const ark = THEATER_BASES.find(b => b.id === 'ARK');
+  let minDist = Infinity;
+  sc.threats.forEach(t => { const d = Math.hypot(t.spawnX - ark.x, t.spawnY - ark.y); if(d<minDist) minDist=d; });
+  const distKm = Math.round(minDist * 1.666);
+  reasons.push(`threat ${distKm}km from protected asset`);
+
+  if (sc.jammed) reasons.push('active jamming — CORTEX-1 running in degraded mode');
+  if (m.ghostCount > 0) reasons.push(`${m.ghostCount} ghost track(s) with ambiguous classification`);
+
+  list.innerHTML = reasons.map(r => `<li>${r}</li>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: RIGHT PANEL (Threat Summary, Recommendation etc)
+// ═══════════════════════════════════════════════════
+function renderRightPanel(sc, m, coas) {
+  const typeCounts = {};
+  sc.threats.forEach(t => { typeCounts[t.label] = (typeCounts[t.label]||0)+1; });
+  const typeStr = Object.entries(typeCounts).map(([k,v])=>`${v} ${k}`).join(', ');
+  const real = sc.threats.filter(t=>!t.decoy);
+  const matched = coas[0].assignments.length;
+  const unmatched = real.length - matched;
+  const covPct = coas[0].coverage;
+
+  // Header
+  document.getElementById('threat-header').innerHTML =
+    `<span>${sc.threats.length}</span> inbound track(s), ${m.mode === 'defer' ? 'high-stakes — degraded picture.' : m.stakes > 0.7 ? 'high-stakes.' : 'moderate stakes.'}<br>Autonomy: <span>${m.mode}</span>.`;
+
+  // Posture
+  const modeTag = `<span class="tag tag-${m.mode === 'autonomous' ? 'auto' : m.mode === 'advise' ? 'advise' : 'defer'}">${m.mode.toUpperCase()}</span>`;
+  const postureDesc = {
+    autonomous: `${modeTag} — all assignments executed autonomously. No commander confirmation required.`,
+    advise:     `${modeTag} — system proposes; operator confirms before execution.`,
+    defer:      `${modeTag} — system withdraws. Picture too degraded to act autonomously. Awaiting track correlation.`,
+  };
+  document.getElementById('body-posture').innerHTML = postureDesc[m.mode];
+
+  // Threat Summary
+  document.getElementById('body-threat-summary').innerHTML =
+    `${real.length} inbound tracks, total value ${m.totalVal}. ${matched} matched (${covPct}% of value); ${unmatched} unmatched — see per-track reason list.<br><br>` +
+    `<b>Types:</b> ${typeStr}` +
+    (m.decoyCount > 0 ? `<br><b>Decoys detected:</b> ${m.decoyCount}` : '') +
+    (m.ghostCount  > 0 ? `<br><b>Ghost tracks:</b> ${m.ghostCount}` : '');
+
+  // Recommendation
+  const rec = coas[0];
+  document.getElementById('body-recommendation').innerHTML =
+    `Proposing <b>RECOMMENDED COA</b>: ${rec.engagements} engagement(s), ${rec.coverage}% coverage, follow-on risk ${rec.followOnRisk.toFixed(2)}. ` +
+    `Two alternatives available: RESERVE CONSERVING and RISK MINIMISING.<br><br>` +
+    `<ul>${rec.assignments.slice(0,4).map(a=>`<li><b>${a.baseName}</b> · ${a.effName} → ${a.threatId} &nbsp; Pk ${a.pk.toFixed(2)}</li>`).join('')}${rec.assignments.length > 4 ? `<li>…and ${rec.assignments.length - 4} more</li>` : ''}</ul>`;
+
+  // Assurance
+  document.getElementById('body-assurance').innerHTML =
+    `SA-health ${m.sa}% (${m.sa >= 80 ? 'adequate' : m.sa >= 55 ? 'marginal' : 'critical'}). ` +
+    `Track quality index ${m.tqi.toFixed(2)}; complexity ${m.complexity.toFixed(2)}.<br>` +
+    (sc.jammed ? 'Recommend sector weighted toward N, E.' : 'Recommended weighted toward highest-value HVAs.');
+
+  // Follow-On
+  const followOnLikelihood = m.stakes > 0.7 ? 100 : Math.round(m.stakes * 80 + 30);
+  document.getElementById('body-followon').innerHTML =
+    `Follow-on likelihood <b>${followOnLikelihood}%</b>. Expected concentration in sector(s): N, E.<br>` +
+    `Reserve conserving COA preserves ${Math.round(100 - coas[1].coverage)}% effector capacity for next wave.`;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: COA CARDS
+// ═══════════════════════════════════════════════════
+function renderCOAs(coas) {
+  const grid = document.getElementById('coa-grid');
+  const isHITL     = OPERATOR_MODE === 'hitl';
+  const isSwappable = OPERATOR_MODE === 'hitl' || OPERATOR_MODE === 'manual';
+  grid.innerHTML = coas.map((coa, idx) => {
+    const pkClass = pk => pk >= 0.85 ? 'pk-hi' : pk >= 0.65 ? 'pk-md' : 'pk-lo';
+
+    const rows = coa.assignments.slice(0, 7).map((a, aIdx) => {
+      const isFrozen   = _swapState && _swapState.coaIdx === idx && _swapState.assignIdx === aIdx;
+      const isOtherFrz = _swapState && _swapState.coaIdx === idx && !isFrozen;
+      const swapBtn    = (isSwappable && !_swapState)
+        ? `<button class="swap-btn" onclick="openSwap(${idx},${aIdx})" title="Freeze target &amp; swap weapon">&#x21C4; SWAP</button>`
+        : '';
+
+      if (isFrozen) {
+        const baseOpts = activeBases().map(b => {
+          const tot = _totalSam(b.id);
+          return `<option value="${b.id}"${b.id === a.baseId ? ' selected' : ''}>${b.name} [${b.id}] · ${tot} SAM-type</option>`;
+        }).join('');
+        const effOpts = Object.entries(EFFECTORS_DEF).map(([k, e]) =>
+          `<option value="${k}"${k === a.effKey ? ' selected' : ''}>${e.name}</option>`
+        ).join('');
+        return `
+          <div class="coa-row frozen">
+            <span class="coa-row-lock">&#x1F512;</span>
+            <span class="coa-row-lbl" style="flex:1"><b>${a.threatId}</b> &nbsp;·&nbsp; ${a.threatType}</span>
+            <span style="font-size:8px;color:var(--ylw);font-family:'JetBrains Mono',monospace">TARGET FROZEN</span>
+          </div>
+          <div class="swap-inline">
+            <span style="font-size:8px;color:var(--ylw);white-space:nowrap">SWAP WEAPON &#x2193;</span>
+            <select class="swap-sel" id="swap-base-sel">
+              <option value="">-- base --</option>${baseOpts}
+            </select>
+            <select class="swap-sel" id="swap-eff-sel">
+              <option value="">-- weapon --</option>${effOpts}
+            </select>
+            <button class="swap-confirm" onclick="confirmSwap(${idx},${aIdx})" title="Confirm weapon swap">&#10003; CONFIRM</button>
+            <button class="swap-cancel"  onclick="cancelSwap()" title="Cancel swap">&#10007;</button>
+          </div>`;
+      }
+      // Show Pk_nominal → Pk_effective when sensor degradation is active
+      const pkDisplay = (a.pkNominal && a.pkNominal !== a.pk)
+        ? `<span class="coa-row-pk ${pkClass(a.pk)}" title="Nominal Pk ${a.pkNominal.toFixed(2)} × SQ ×${a.sqMult?.toFixed(2)||'1.00'} = ${a.pk.toFixed(2)}">Pk ${a.pkNominal.toFixed(2)}→<b>${a.pk.toFixed(2)}</b></span>`
+        : `<span class="coa-row-pk ${pkClass(a.pk)}">Pk ${a.pk.toFixed(2)}</span>`;
+      return `<div class="coa-row"${isOtherFrz ? ' style="opacity:0.45"' : ''}>
+        <span class="coa-row-lbl"><b>${a.baseName}</b> · ${a.effName} → ${a.threatId}</span>
+        ${pkDisplay}
+        ${swapBtn}
+      </div>`;
+    }).join('');
+
+    const extra = coa.assignments.length > 7 ? `<div class="coa-empty">+ ${coa.assignments.length - 7} more…</div>` : '';
+    const riskCol   = coa.followOnRisk < 0.3 ? '#3fb950' : coa.followOnRisk < 0.6 ? '#e3b341' : '#f85149';
+    const riskLabel = coa.followOnRisk < 0.3 ? 'LOW' : coa.followOnRisk < 0.6 ? 'MED' : 'HIGH';
+    const reservePct = Math.max(20, Math.round(100 - coa.engagements * 4.5));
+    const hitlBtns = isHITL ? `
+      <div style="display:flex;gap:6px;margin-top:7px">
+        <button class="hitl-approve" style="flex:1" onclick="approveCOACOA(${idx})">&#10003; APPROVE</button>
+        <button class="hitl-reject"  style="flex:1" onclick="rejectCOACOA(${idx})">&#10007; REJECT</button>
+      </div>` : '';
+    return `<div class="coa-card ${coa.style}">
+      <div class="coa-title-txt">${coa.name}</div>
+      <div class="coa-desc-txt">${coa.desc}</div>
+      <div class="coa-metrics">
+        <div class="cm-blk"><div class="cm-val">${coa.coverage}%</div><div class="cm-lbl">P.EFFECT</div></div>
+        <div class="cm-blk"><div class="cm-val" style="color:${riskCol}">${riskLabel}</div><div class="cm-lbl">RISK</div></div>
+        <div class="cm-blk"><div class="cm-val">${reservePct}%</div><div class="cm-lbl">RESERVE</div></div>
+        <div class="cm-blk"><div class="cm-val">${coa.engagements}</div><div class="cm-lbl">ENGAGE</div></div>
+      </div>
+      <div class="coa-assign-list">${rows}${extra}</div>
+      ${hitlBtns}
+    </div>`;
+  }).join('');
+}
+
+// Inline HITL approval from COA cards
+function approveCOACOA(idx) {
+  const coa = _currentCoas?.[idx];
+  if (!coa) return;
+  coa.assignments.forEach(a => {
+    const st = inventoryState[a.baseId];
+    if (st && !st.destroyed && a.effKey !== 'HELWS') {
+      const cur = st.effAmmo[a.effKey] ?? 0;
+      st.effAmmo[a.effKey] = Math.max(0, cur - 1);
+    }
+  });
+  renderInventory();
+  const card = document.querySelector(`#coa-grid .coa-card:nth-child(${idx+1})`);
+  if (card) card.style.border = '1px solid var(--grn)';
+  _swapState = null;
+  bumpCtr('fired'); bumpCtr('hitl');
+  // Simulate engagement outcomes using effective Pk from sensor quality
+  let hits = 0;
+  coa.assignments.forEach(a => {
+    if (Math.random() < (a.pk || 0.5)) hits++;
+  });
+  for (let i = 0; i < hits; i++) bumpCtr('intercepts');
+  _addFeedLine(`[COMMANDER] ${coa.name} APPROVED — ${coa.engagements} launches, est. ${hits} intercept(s) (Pk-weighted)`, 'good');
+}
+function rejectCOACOA(idx) {
+  const coa = _currentCoas?.[idx];
+  if (!coa) return;
+  const card = document.querySelector(`#coa-grid .coa-card:nth-child(${idx+1})`);
+  if (card) card.style.opacity = '0.4';
+  _swapState = null;
+  _addFeedLine(`[COMMANDER] ${coa.name} REJECTED — holding fire`, 'warn');
+}
+
+// ═══════════════════════════════════════════════════
+// WEAPON SWAP (HITL / MANUAL) — freeze target & change effector
+// ═══════════════════════════════════════════════════
+function openSwap(coaIdx, assignIdx) {
+  _swapState = { coaIdx, assignIdx };
+  renderCOAs(_currentCoas);
+  const tid = _currentCoas[coaIdx]?.assignments[assignIdx]?.threatId || '?';
+  _addFeedLine(`[SWAP] Target ${tid} FROZEN — select replacement base / weapon and confirm`, 'hl');
+}
+
+function cancelSwap() {
+  _swapState = null;
+  renderCOAs(_currentCoas);
+  _addFeedLine('[SWAP] Weapon swap cancelled — target unfrozen', '');
+}
+
+function confirmSwap(coaIdx, assignIdx) {
+  const baseId = document.getElementById('swap-base-sel')?.value;
+  const effKey = document.getElementById('swap-eff-sel')?.value;
+  if (!baseId || !effKey) {
+    _addFeedLine('[SWAP] ⚠ Select a base and weapon to confirm swap', 'warn');
+    return;
+  }
+  const base   = [...THEATER_BASES, ...SWEDEN_BASES].find(b => b.id === baseId);
+  const eff    = EFFECTORS_DEF[effKey];
+  const coa    = _currentCoas[coaIdx];
+  const assign = coa?.assignments[assignIdx];
+  if (!base || !eff || !assign) return;
+
+  const pkNominal = eff.pk[assign.threatType] || 0;
+  // Apply sensor quality multiplier to swapped weapon's Pk
+  const sqMult    = _currentSq ? getSensorPkMult(assign.threatType, _currentSq) : 1.0;
+  const pk        = parseFloat((pkNominal * sqMult).toFixed(3));
+  const prevLabel = `${assign.baseName} · ${assign.effName}`;
+  assign.baseId   = baseId;
+  assign.baseName = base.name;
+  assign.effKey   = effKey;
+  assign.effName  = eff.name;
+  assign.pk       = pk;
+  assign.pkNominal = pkNominal;
+  assign.sqMult    = sqMult;
+  assign.cost     = eff.cost;
+
+  // Recompute stats for this COA
+  const stats = computeCOAStats(coa.assignments, _currentSc.threats);
+  Object.assign(coa, stats);
+
+  _swapState = null;
+  renderCOAs(_currentCoas);
+  bumpCtr('swap');
+  _addFeedLine(`[SWAP] ${assign.threatId}: ${prevLabel} → ${base.name} · ${eff.name} · Pk ${pk.toFixed(2)} (pending commander approval)`, 'good');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: TACTICAL PICTURE (SVG)
+// ═══════════════════════════════════════════════════
+function renderTactical(sc, coa1) {
+  const NS = 'http://www.w3.org/2000/svg';
+  // Coordinate mapping: Boreal (0-854, 0-742) → SVG viewBox (860, 560)
+  // We show top 560 rows of the theater (north theater), squash y slightly
+  const SX = w => (w / 854) * 840 + 10;
+  const SY = h => (h / 742) * 540 + 10;
+
+  // Clear layers
+  ['tac-assign-lines','tac-bases','tac-threats'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+
+  const linesG  = document.getElementById('tac-assign-lines');
+  const basesG  = document.getElementById('tac-bases');
+  const threatsG= document.getElementById('tac-threats');
+
+  // Assignment lookup: threatId → baseId
+  const assignMap = {};
+  coa1.assignments.forEach(a => { assignMap[a.threatId] = a.baseId; });
+
+  // Draw assignment lines
+  coa1.assignments.forEach(a => {
+    const t = sc.threats.find(x => x.id === a.threatId);
+    const b = [...THEATER_BASES, ...SWEDEN_BASES].find(x => x.id === a.baseId);
+    if (!t || !b) return;
+    const line = document.createElementNS(NS,'line');
+    line.setAttribute('x1', SX(t.spawnX)); line.setAttribute('y1', SY(t.spawnY));
+    line.setAttribute('x2', SX(b.x));      line.setAttribute('y2', SY(b.y));
+    line.setAttribute('stroke','rgba(255,255,255,0.18)');
+    line.setAttribute('stroke-width','1');
+    line.setAttribute('stroke-dasharray','4 3');
+    line.setAttribute('marker-end','url(#arr)');
+    linesG.appendChild(line);
+  });
+
+  // Draw bases — use active theater
+  activeBases().forEach(b => {
+    const bx = SX(b.x), by = SY(b.y);
+    const col = b.type === 'HVA' ? '#3fb950' : '#58a6ff';
+    const r   = b.type === 'HVA' ? 9 : 7;
+    const g = document.createElementNS(NS,'g');
+
+    const ring = document.createElementNS(NS,'circle');
+    ring.setAttribute('cx',bx); ring.setAttribute('cy',by); ring.setAttribute('r',r+4);
+    ring.setAttribute('fill','none'); ring.setAttribute('stroke',col); ring.setAttribute('stroke-width','0.6');
+    ring.setAttribute('opacity','0.3'); g.appendChild(ring);
+
+    const dot = document.createElementNS(NS,'circle');
+    dot.setAttribute('cx',bx); dot.setAttribute('cy',by); dot.setAttribute('r',r);
+    dot.setAttribute('fill',col); dot.setAttribute('opacity','0.9'); g.appendChild(dot);
+
+    const lbl = document.createElementNS(NS,'text');
+    lbl.setAttribute('x',bx+r+3); lbl.setAttribute('y',by+4);
+    lbl.setAttribute('fill',col); lbl.setAttribute('font-size','9');
+    lbl.setAttribute('font-family','Inter,sans-serif'); lbl.setAttribute('font-weight','600');
+    lbl.textContent = b.name; g.appendChild(lbl);
+
+    basesG.appendChild(g);
+  });
+
+  // Threat type colours
+  const tCol = { HYPERSONIC:'#f85149', BALLISTIC:'#e3b341', CRUISE:'#ff7b2a', LOITER:'#8b949e', FIGHTER:'#58a6ff' };
+
+  // Draw threats as upward triangles
+  sc.threats.forEach(t => {
+    const tx = SX(t.spawnX), ty = SY(t.spawnY);
+    const col = t.decoy ? '#484f58' : (t.ghost ? '#8b949e' : (tCol[t.type] || '#c9d1d9'));
+    const size = t.decoy ? 5 : (t.value >= 80 ? 7 : 6);
+    const g = document.createElementNS(NS,'g');
+    const pts = `${tx},${ty-size} ${tx-size*0.75},${ty+size*0.5} ${tx+size*0.75},${ty+size*0.5}`;
+    const tri = document.createElementNS(NS,'polygon');
+    tri.setAttribute('points',pts);
+    tri.setAttribute('fill',col);
+    tri.setAttribute('opacity', t.decoy ? '0.4' : '0.9');
+    g.appendChild(tri);
+
+    // ID label for non-decoy
+    if (!t.decoy) {
+      const lbl = document.createElementNS(NS,'text');
+      lbl.setAttribute('x',tx+size); lbl.setAttribute('y',ty+3);
+      lbl.setAttribute('fill',col); lbl.setAttribute('font-size','7.5');
+      lbl.setAttribute('font-family','JetBrains Mono,monospace');
+      lbl.setAttribute('opacity','0.85');
+      lbl.textContent = t.id; g.appendChild(lbl);
+    }
+
+    // Assigned indicator (small dot if matched)
+    if (assignMap[t.id]) {
+      const match = document.createElementNS(NS,'circle');
+      match.setAttribute('cx',tx); match.setAttribute('cy',ty-size-4);
+      match.setAttribute('r',2); match.setAttribute('fill','#3fb950');
+      g.appendChild(match);
+    }
+
+    threatsG.appendChild(g);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER: AI COMMENTARY (streamed)
+// ═══════════════════════════════════════════════════
+function renderCommentary(sc, m, coas) {
+  const feed = document.getElementById('ai-commentary');
+  feed.innerHTML = '';
+
+  const lines = [];
+  const push = (txt, cls='') => lines.push(`<div class="ai-line ${cls}">${txt}</div>`);
+
+  push(`[${new Date().toISOString().substring(11,19)}] CORTEX-1 ASSESSMENT INITIATED`, 'hl');
+  push(`Scenario: ${sc.title}`);
+  push(`SA-Health: ${m.sa}% → mode: ${m.mode.toUpperCase()}`);
+  push(`Complexity: ${m.complexity.toFixed(2)} | Stakes: ${m.stakes.toFixed(2)} | TQI: ${m.tqi.toFixed(2)}`);
+  const mp = activeModelProfile();
+  push(`Model: ${mp.label} (pkW: ×${mp.pkWeight.toFixed(2)}, minPk: ${mp.minPk.toFixed(2)}, maxPerBase: ${mp.maxPerBase})`);
+  if (_currentSq) {
+    const avgMult = ['BALLISTIC','HYPERSONIC','CRUISE','LOITER','FIGHTER'].reduce((s,t)=>s+getSensorPkMult(t,_currentSq),0)/5;
+    const sqColor = avgMult > 0.75 ? 'good' : avgMult > 0.55 ? 'hl' : 'warn';
+    push(`Sensor Quality → Pk: RADAR ${_currentSq.radar}% · IR/EO ${_currentSq.ireo}% · ESM ${_currentSq.esm}% · LINK-16 ${_currentSq.link16}% · FUSION ${_currentSq.fusion}%`, sqColor);
+    push(`Avg Pk mult ×${avgMult.toFixed(2)} — all nominal Pk values are multiplied by per-threat sensor cuing weight`, sqColor);
+  }
+
+  if (m.mode === 'autonomous') {
+    push(`All ${m.n} tracks within AUTONOMOUS threshold. Proceeding with ${mp.label} assignment (Pk×value optimisation).`, 'good');
+  } else if (m.mode === 'advise') {
+    push(`ADVISE mode engaged — elevated stakes or complexity. Awaiting commander input.`, 'hl');
+  } else {
+    push(`DEFER mode engaged — picture too degraded. Withholding assignment.`, 'warn');
+  }
+
+  push('');
+  push(`RECOMMENDED COA utility: ${coas[0].utility} | coverage: ${coas[0].coverage}%`);
+  push(`RESERVE CONSERVING coverage: ${coas[1].coverage}% (−${coas[0].coverage - coas[1].coverage}% vs. REC)`);
+  push(`RISK MINIMISING engagements: ${coas[2].engagements} | follow-on risk: ${coas[2].followOnRisk.toFixed(2)}`);
+
+  push('');
+  push('Top RECOMMENDED assignments:');
+  coas[0].assignments.slice(0,4).forEach(a => {
+    const quality = a.pk >= 0.85 ? '✓' : a.pk >= 0.65 ? '~' : '!';
+    push(`  ${quality} ${a.baseName} · ${a.effName} → ${a.threatId} | Pk ${a.pk.toFixed(2)}`);
+  });
+
+  if (sc.jammed) {
+    push('');
+    push('⚠ Jamming detected — TQI degraded. CORTEX-1 falling back to triage-aware heuristic.', 'warn');
+  }
+  if (m.ghostCount > 0) {
+    push(`⚠ ${m.ghostCount} ghost track(s) excluded from assignment. Flag for manual classification.`, 'warn');
+  }
+
+  // Animate line by line
+  feed.innerHTML = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < lines.length) {
+      feed.innerHTML += lines[i++];
+      feed.scrollTop = feed.scrollHeight;
+    } else clearInterval(interval);
+  }, 60);
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN LOAD FUNCTION
+// ═══════════════════════════════════════════════════
+function loadScenario(key) {
+  // Update active card
+  document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('active'));
+  const activeCard = document.querySelector(`[data-sc="${key}"]`);
+  if (activeCard) activeCard.classList.add('active');
+
+  const sc    = activeScenarios()[key] || BOREAL_SCENARIOS[key];
+  if (!sc) return;
+  _currentSc  = sc;
+  const m     = _extendMetrics(sc, computeMetrics(sc));
+  // Compute sensor quality BEFORE COA generation so Pk is sensor-adjusted
+  _currentSq  = computeSensorQuality(sc, m);
+  const coas  = generateCOAs(sc);
+  _currentCoas = coas;
+
+  renderSAHealth(m.sa, m.mode);
+  renderMode(m.mode);
+  renderMetrics(m);
+  renderReasons(sc, m);
+  renderCOAs(coas);
+  renderRightPanel(sc, m, coas);
+  renderTactical(sc, coas[0]);
+  renderCommentary(sc, m, coas);
+
+  // Sensor bars + TTD + header state
+  renderSensorBars(sc, m);
+  updateTTD(sc, m);
+  const link16El = document.getElementById('hdr-link16');
+  if (link16El) { link16El.textContent = sc.jammed ? 'DEGRADED' : 'NOMINAL'; link16El.style.color = sc.jammed ? 'var(--red)' : 'var(--grn)'; }
+  const tacLbl = document.getElementById('tac-label');
+  if (tacLbl) tacLbl.textContent = `TACTICAL DISPLAY · ${ACTIVE_THEATER === 'sweden' ? 'SWEDEN-S' : 'BOREAL-N'} · ${sc.threats.filter(t=>!t.decoy&&!t.ghost).length} TRACKS`;
+
+  // Inventory
+  _ensureInventory(THEATER_BASES);
+  _ensureInventory(SWEDEN_BASES);
+  renderInventory();
+
+  // Update model badge
+  updateModelBadge();
+
+  // HITL / Manual state
+  if (OPERATOR_MODE === 'hitl')   updateHITLQueue(coas);
+  if (OPERATOR_MODE === 'manual') updateManualSelectors(sc);
+
+  // Async backend calls
+  upgradeFromBackend(sc, coas[0]);
+  pollKinematics(sc);
+}
+
+// ═══════════════════════════════════════════════════
+// BACKEND INTEGRATION (optional upgrade to COA1)
+// ═══════════════════════════════════════════════════
+async function upgradeFromBackend(sc, coa1) {
+  const dot = document.getElementById('backend-dot');
+  const lbl = document.getElementById('backend-lbl');
+  try {
+    const typeMap = { CRUISE:'cruise-missile', HYPERSONIC:'hypersonic-pgm', LOITER:'drone', BALLISTIC:'ballistic', FIGHTER:'fighter' };
+    const payload = {
+      state: { bases: activeBases().map(b => {
+        const st = inventoryState[b.id] || {};
+        const ea = st.effAmmo || {};
+        return { name:b.name, x:b.x, y:b.y, hp: st.hp ?? 100, inventory:{
+          'thaad':        ea.THAAD  ?? 0,
+          'patriot-pac3': ea.PAC3   ?? 0,
+          'nasams':       ea.NASAMS ?? 0,
+          'helws':        ea.HELWS  ?? 0,
+          'c-ram':        ea.CRAM   ?? 0,
+        }};
+      }) },
+      threats: sc.threats.filter(t=>!t.decoy).map(t => ({
+        id:t.id,
+        x: [...THEATER_BASES,...SWEDEN_BASES].find(b=>b.id===t.target)?.x || 0,
+        y: [...THEATER_BASES,...SWEDEN_BASES].find(b=>b.id===t.target)?.y || 0,
+        speed_kmh: { HYPERSONIC:2200,BALLISTIC:1400,CRUISE:600,LOITER:300,FIGHTER:1000 }[t.type]||600,
+        estimated_type: typeMap[t.type]||'cruise-missile', threat_value:t.value,
+      })),
+      doctrine_primary: ACTIVE_DOCTRINE, use_rl: true,
+      model_id: document.getElementById('model-select')?.value || 'heuristic',
+      sensor_quality: _currentSq || null,
+    };
+    const res = await fetch('http://localhost:8000/evaluate_advanced', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload), signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    dot.className = 'backend-dot';
+    lbl.textContent = `backend: live  (score ${Math.round(data.strategic_consequence_score || 0)})`;
+
+    // Inject AI commentary from backend SITREP
+    const feed = document.getElementById('ai-commentary');
+    const sitrep = (data.human_sitrep || '').split('\n').filter(Boolean).slice(0,5);
+    if (sitrep.length) {
+      feed.innerHTML += `<div class="ai-line hl" style="margin-top:6px">[CORTEX-1 LIVE ASSESSMENT]</div>`;
+      sitrep.forEach(l => { feed.innerHTML += `<div class="ai-line">${l.replace(/^[-—]+/,'').trim().substring(0,80)}</div>`; });
+      feed.scrollTop = feed.scrollHeight;
+    }
+  } catch(e) {
+    dot.className = 'backend-dot offline';
+    lbl.textContent = 'backend: offline (local COA)';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// TACTICAL AI (LLM) — PROXIED VIA BACKEND
+// ═══════════════════════════════════════════════════
+// API Key is now managed securely by the Boreal Strategic Backend environment.
+
+// ── Build rich tactical prompt ─────────────────────
+function buildTacticalPrompt(sc, m, coas) {
+  const typeCounts = {};
+  sc.threats.forEach(t => { typeCounts[t.label||t.type] = (typeCounts[t.label||t.type]||0)+1; });
+  const typeStr = Object.entries(typeCounts).map(([k,v])=>`${v}× ${k}`).join(', ');
+  const real    = sc.threats.filter(t => !t.decoy);
+  const rec     = coas[0];
+
+  const assignmentLines = rec.assignments.slice(0,8).map(a => {
+    const sqNote = (a.pkNominal && a.pkNominal !== a.pk)
+      ? ` [Pk_nom ${a.pkNominal.toFixed(2)} × SQ ×${(a.sqMult||1).toFixed(2)} = ${a.pk.toFixed(2)}]`
+      : ` [Pk ${a.pk.toFixed(2)}]`;
+    return `  - ${a.baseName} [${a.baseId}] fires ${a.effName} at ${a.threatId} (${a.threatType})${sqNote}`;
+  }).join('\n');
+
+  const invSummary = activeBases().map(b => {
+    const st = inventoryState[b.id] || {};
+    const ea = st.effAmmo || {};
+    const effStr = (b.effectors || []).map(k => {
+      const def = EFFECTORS_DEF[k];
+      if (!def) return '';
+      const cur = k === 'HELWS' ? '∞' : (ea[k] ?? def.rounds);
+      return `${def.name}:${cur}`;
+    }).filter(Boolean).join(' ');
+    return `  ${b.id} ${b.name} (${b.type}): HP ${st.hp??100}% | ${effStr} | ${st.destroyed?'DESTROYED':'operational'}`;
+  }).join('\n');
+
+  const mp = activeModelProfile();
+  const sqBlock = _currentSq ? `\n=== SENSOR QUALITY (engine-computed \u2192 wired into Pk) ===\nRADAR: ${_currentSq.radar}%  IR/EO: ${_currentSq.ireo}%  ESM: ${_currentSq.esm}%  LINK-16: ${_currentSq.link16}%  FUSION: ${_currentSq.fusion}%\nJamming: ${sc.jammed ? 'ACTIVE \u2014 sensor degradation engaged' : 'None'}\nAvg Pk multiplier: \u00d7${(['BALLISTIC','HYPERSONIC','CRUISE','LOITER','FIGHTER'].reduce((s,t)=>s+getSensorPkMult(t,_currentSq),0)/5).toFixed(2)} (all threat types)` : '';
+
+  return `You are CORTEX-1, a NATO-standard Command & Control AI tactical advisor embedded in the CORTEX-C2 operator console. Provide a structured, concise military-style assessment in 200\u2013280 words.
+
+=== CURRENT TACTICAL PICTURE ===
+Scenario: ${sc.title}
+Theater: ${ACTIVE_THEATER.toUpperCase()} | Command Mode: ${OPERATOR_MODE.toUpperCase()} | Model: ${mp.label}
+SA-Health: ${m.sa}% \u2192 Autonomy Mode: ${m.mode.toUpperCase()}
+Track Count: ${m.n} total (${real.length} real, ${m.decoyCount} decoy, ${m.ghostCount} ghost)
+Threat Types: ${typeStr}
+Jamming: ${sc.jammed ? 'YES \u2014 active EW degradation' : 'No'}
+Complexity Index: ${m.complexity.toFixed(2)} | Stakes Index: ${m.stakes.toFixed(2)} | TQI: ${m.tqi.toFixed(2)}
+Total Inbound Value: ${m.totalVal}${sqBlock}
+
+=== RECOMMENDED COA (COA-1) ===
+Utility: ${rec.utility} | Coverage: ${rec.coverage}% | Follow-on Risk: ${rec.followOnRisk.toFixed(2)}
+Engagements: ${rec.engagements}
+${assignmentLines}
+
+=== THEATER INVENTORY (${ACTIVE_THEATER.toUpperCase()}) ===
+${invSummary}
+
+=== YOUR ASSESSMENT (military format) ===
+1. SITUATION SUMMARY \u2014 describe the threat picture in 1\u20132 sentences
+2. KEY RISKS \u2014 what are the top 2 risks in this scenario?
+3. COA-1 ASSESSMENT \u2014 evaluate the recommended course of action
+4. ALTERNATIVE CONSIDERATION \u2014 one thing COA-2 or COA-3 does better
+5. COMMANDER'S RECOMMENDATION \u2014 your single recommended action with rationale
+6. FOLLOW-ON THREAT ASSESSMENT \u2014 likely next-wave composition
+
+Keep language precise, military-doctrinal, and actionable. Avoid hedging.`;
+}
+
+// ── LLM key helpers (direct-mode fallback) ──────────
+function getLLMKey() { return localStorage.getItem('cortex_or_key') || ''; }
+function saveLLMKey() {
+  const k = document.getElementById('llm-key-input')?.value?.trim();
+  if (k) {
+    localStorage.setItem('cortex_or_key', k);
+    document.getElementById('llm-key-input').value = '';
+    document.getElementById('llm-key-input').placeholder = '\u25cf key saved';
+    _addFeedLine('[LLM] OpenRouter API key saved \u2014 direct mode active', 'good');
+  }
+}
+function initLLMKeyUI() {
+  const key       = getLLMKey();
+  const keyRow    = document.getElementById('llm-key-row');
+  const statusTxt = document.getElementById('llm-status-txt');
+  if (key) {
+    if (keyRow)    keyRow.style.display = 'none';
+    if (statusTxt) statusTxt.textContent = 'Direct mode ready (key stored)';
+  } else {
+    if (keyRow)    keyRow.style.display = 'flex';
+    if (statusTxt) statusTxt.textContent = 'Enter API key below or start Python backend';
+  }
+}
+
+// ── Streaming call — backend proxy with direct fallback ─
+async function askLLM() {
+  if (!_currentSc) {
+    document.getElementById('llm-body').innerHTML =
+      '<div class="llm-placeholder" style="color:var(--ylw)">\u26a0 Load a scenario first.</div>';
+    return;
+  }
+
+  const model   = document.getElementById('llm-model-sel')?.value || 'anthropic/claude-3.5-sonnet';
+  const prompt  = buildTacticalPrompt(_currentSc, computeMetrics(_currentSc), _currentCoas || generateCOAs(_currentSc));
+  const bodyEl  = document.getElementById('llm-body');
+  const dotEl   = document.getElementById('llm-dot');
+  const btn     = document.getElementById('llm-ask-btn');
+  const statEl  = document.getElementById('llm-tokens');
+
+  btn.disabled    = true;
+  btn.textContent = '\u25cf THINKING\u2026';
+  dotEl.className = 'llm-dot streaming';
+  bodyEl.innerHTML = '<span id="llm-stream-text"></span><span class="llm-cursor"></span>';
+  let fullText = '', tokenCount = 0;
+  const t0 = Date.now();
+
+  const payload = {
+    model, stream: true, max_tokens: 600, temperature: 0.35,
+    messages: [
+      { role: 'system', content: 'You are CORTEX-1, a military C2 tactical AI. Be concise and precise.' },
+      { role: 'user',   content: prompt },
+    ],
+  };
+
+  const doStream = async (response) => {
+    const reader   = response.body.getReader();
+    const decoder  = new TextDecoder('utf-8');
+    const streamEl = document.getElementById('llm-stream-text');
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const lines = decoder.decode(value, { stream: true }).split('\n').filter(l => l.startsWith('data: '));
+      for (const line of lines) {
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') continue;
+        try {
+          const delta = JSON.parse(raw).choices?.[0]?.delta?.content || '';
+          if (delta) {
+            fullText   += delta;
+            tokenCount += delta.split(/\s+/).length;
+            if (streamEl) streamEl.innerHTML = fullText.replace(/\n/g, '<br>').replace(/(\d+\. [A-Z ]+\u2014)/g, '<b style="color:var(--tx1)">$1</b>');
+            bodyEl.scrollTop = bodyEl.scrollHeight;
+            if (statEl) statEl.textContent = `~${tokenCount} tokens \u00b7 ${((Date.now()-t0)/1000).toFixed(1)}s`;
+          }
+        } catch(_) {}
+      }
+    }
+  };
+
+  const finalise = () => {
+    dotEl.className = 'llm-dot done';
+    btn.disabled    = false;
+    btn.textContent = '\u25b6 ANALYSE';
+    bodyEl.innerHTML = fullText.replace(/\n/g, '<br>').replace(/(\d+\. [A-Z &]+\u2014)/g, '<b style="color:var(--tx1)">$1</b>');
+    if (statEl) statEl.textContent = `~${tokenCount} tokens \u00b7 ${((Date.now()-t0)/1000).toFixed(1)}s`;
+    const statDiv = document.getElementById('llm-stat');
+    if (statDiv) statDiv.childNodes[0].textContent = model.split('/').pop() + ' \u00b7 ';
+    _addFeedLine(`[LLM ${model.split('/').pop()}] Assessment complete \u2014 ${tokenCount} tokens in ${((Date.now()-t0)/1000).toFixed(1)}s`, 'hl');
+  };
+
+  const showErr = (msg) => {
+    dotEl.className = 'llm-dot';
+    btn.disabled    = false;
+    btn.textContent = '\u25b6 ANALYSE';
+    bodyEl.innerHTML = `<div class="llm-placeholder" style="color:var(--red)">${msg}</div>`;
+  };
+
+  // ─── 1. Try backend proxy ────────────────────────
+  let backendOk = false;
+  try {
+    const r = await fetch('/llm/proxy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload), signal: AbortSignal.timeout(8000),
+    });
+    if (r.ok) { await doStream(r); finalise(); backendOk = true; return; }
+    if (r.status !== 503 && r.status !== 502 && r.status !== 404) {
+      const t = await r.text();
+      showErr(`\u26a0 Backend error ${r.status}: ${t.substring(0,100)}`);
+      _addFeedLine(`[LLM] Backend error ${r.status}`, 'warn');
+      return;
+    }
+    // 503/502/404 = backend offline, fall through
+  } catch(e) {
+    // network error or timeout = fall through
+  }
+
+  // ─── 2. Direct OpenRouter fallback ──────────────
+  const key = getLLMKey();
+  if (!key) {
+    const kr = document.getElementById('llm-key-row');
+    const st = document.getElementById('llm-status-txt');
+    if (kr) kr.style.display = 'flex';
+    if (st) { st.textContent = 'Backend offline \u2014 enter OpenRouter key below'; st.style.color = 'var(--ylw)'; }
+    showErr('\u26a0 Backend offline \u2014 enter your OpenRouter API key above and click SAVE, then ANALYSE again.');
+    _addFeedLine('[LLM] Backend offline \u2014 API key needed for direct mode', 'warn');
+    return;
+  }
+
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json',
+                 'HTTP-Referer': window.location.href, 'X-Title': 'CORTEX-C2' },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      const msg = r.status === 401 ? '\u26a0 Invalid API key \u2014 check your OpenRouter key.'
+                : r.status === 402 ? '\u26a0 OpenRouter credits exhausted \u2014 top up at openrouter.ai.'
+                : r.status === 429 ? '\u26a0 Rate limited \u2014 wait a moment and retry.'
+                : `\u26a0 OpenRouter HTTP ${r.status}: ${t.substring(0,100)}`;
+      showErr(msg);
+      return;
+    }
+    _addFeedLine('[LLM] Using direct OpenRouter \u2014 backend offline', 'hl');
+    await doStream(r);
+    finalise();
+  } catch(e) {
+    showErr(`\u26a0 Direct LLM error: ${e.message.substring(0,120)}`);
+    _addFeedLine(`[LLM] Direct error: ${e.message.substring(0,80)}`, 'warn');
+  }
+}
+
+// ── Auto-trigger LLM if key present on scenario change ─
+setInterval(updateZuluClock, 1000);
+updateZuluClock();
+initLLMKeyUI();
+loadScenario('clean');
+</script>
+</body>
+</html>

@@ -50,6 +50,37 @@
         #manual-panel select, #manual-panel input[type=range] { width:100%; margin-bottom:5px; }
         #manual-panel select { background:rgba(0,0,0,.6); border:1px solid rgba(255,62,62,.4); color:#ff3e3e; padding:5px; font-size:0.55rem; border-radius:3px; }
         @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ── THEATER INVENTORY GRID ─────────────────────────────── */
+        #theater-inventory-grid { margin-top:6px; max-height:190px; overflow-y:auto; }
+        .tinv-row {
+          display:grid; grid-template-columns:32px 1fr 62px 72px;
+          align-items:center; gap:4px; padding:3px 4px;
+          border-bottom:1px solid rgba(255,255,255,0.05);
+          font-family:'JetBrains Mono',monospace; font-size:0.55rem;
+        }
+        .tinv-row:hover { background:rgba(0,242,255,0.04); }
+        .tinv-destroyed { opacity:0.4; text-decoration:line-through; }
+        .tinv-id   { color:#888; font-size:0.48rem; }
+        .tinv-name { color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .tinv-bars { display:flex; flex-direction:column; gap:2px; }
+        .tinv-bar-wrap { background:rgba(255,255,255,0.06); border-radius:2px; height:3px; width:100%; }
+        .tinv-bar  { height:3px; border-radius:2px; transition:width 0.4s ease; }
+        .tinv-stat { font-size:0.5rem; text-align:right; }
+
+        /* ── NEURAL AUTONOMY BADGE ──────────────────────────────── */
+        #neural-autonomy-badge {
+          display:none; margin-left:6px;
+          background:rgba(255,204,0,0.15); border:1px solid #ffcc00;
+          color:#ffcc00; font-size:0.45rem; padding:3px 8px;
+          border-radius:3px; font-family:'Orbitron',monospace;
+          letter-spacing:1px; animation:pulseYellow 0.8s infinite alternate;
+          vertical-align:middle;
+        }
+        @keyframes pulseYellow {
+          from { box-shadow:0 0 4px rgba(255,204,0,0.3); }
+          to   { box-shadow:0 0 12px rgba(255,204,0,0.7); }
+        }
     </style>
 </head>
 <body>
@@ -71,6 +102,7 @@
                     <div id="city-health" class="health-fill"></div>
                 </div>
                 <div class="status-badge scanning">Operational</div>
+                <a href="cortex_c2.html" target="_blank" style="margin-left:12px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(250,204,21,0.5); border-radius:4px; color:#facc15; background:rgba(250,204,21,0.08); text-decoration:none; white-space:nowrap;">CORTEX-C2 &#x2197;</a>
             </div>
         </header>
 
@@ -172,6 +204,12 @@
                         <div class="node-status"><span id="node-2-name">GOTLAND</span> SAM: <span id="node-2-sam">--</span></div>
                         <div class="node-status">TOTAL NATIONAL: <span id="res-sam">--</span></div>
                     </div>
+                    <!-- FULL THEATER INVENTORY GRID (all bases, live health + SAM bars) -->
+                    <div style="font-size:0.45rem;color:#888;letter-spacing:1px;margin-top:8px;margin-bottom:3px;">
+                      THEATER INVENTORY — ALL NODES &nbsp;
+                      <span style="color:#555;font-size:0.42rem;">&#x25A0; HP &nbsp; &#x25A0; SAM</span>
+                    </div>
+                    <div id="theater-inventory-grid"></div>
                     <div class="action-cluster" style="margin-top:0.5rem;">
                         <button id="btn-rebalance" class="action-btn">Rebalance Grid</button>
                         <button id="btn-scale" class="action-btn">Align to Threat</button>
@@ -228,6 +266,7 @@
                         <option value="random">Random Assignment 🎲</option>
                     </select>
                     <div id="arch-badge" style="background:var(--accent-blue); border:2px solid #fff; color:#000; font-size:0.5rem; padding:4px 10px; border-radius:4px; letter-spacing:1px; font-weight:900; box-shadow: 0 0 15px rgba(0,242,255,0.4);">CLASS-AWARE LOGIC</div>
+                    <span id="neural-autonomy-badge">&#x26A1; NEURAL AUTONOMY</span>
                 </div>
             </div>
             
@@ -308,6 +347,19 @@
       if (msg.includes('NEUTRALIZED')) {
         const m = msg.match(/NEUTRALIZED (S\d+-T\d+|T-[\S]+|DEMO-[\S]+|WAVE-[\S]+)/);
         if (m) recordTargetEvent(m[1], false);
+      }
+      // Base destruction — highlight in target status
+      if (msg.includes('BASE DESTROYED')) {
+        const m = msg.match(/BASE DESTROYED: (.+?) \u2014/);
+        if (m) {
+          const list = document.getElementById('target-status-list');
+          if (list) {
+            const div = document.createElement('div');
+            div.style.cssText = 'color:#ff3e3e;font-weight:bold;background:rgba(255,62,62,0.08);padding:2px 4px;border-radius:2px;margin-top:2px;';
+            div.textContent = '\u26A0 BASE DESTROYED: ' + m[1];
+            list.appendChild(div);
+          }
+        }
       }
     };
     // --- HITL & OPERATIONAL MODES ---
