@@ -1,0 +1,206 @@
+{
+  "A_BALLISTIC": {
+    "title": "SCENARIO A \u00b7 Ballistic Strike \u2014 Arktholm",
+    "num_threats": 3,
+    "mcts_score_50iter": 62.5,
+    "avg_leaked": 0.4,
+    "assignments": 3,
+    "uncovered_count": 0,
+    "mc_200iter": {
+      "survival_rate_pct": 65.0,
+      "intercept_rate_pct": 65.0,
+      "mean_score": 52.6,
+      "min_score": -1050.0,
+      "max_score": 330.0,
+      "plan_size": 3
+    },
+    "coa": [
+      {
+        "threat_id": "BM-02",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "BM-01",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "BM-03",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      }
+    ]
+  },
+  "B_SWARM": {
+    "title": "SCENARIO B \u00b7 Swarm + Fast Mover Breakthrough (15 tracks)",
+    "num_threats": 15,
+    "mcts_score_50iter": -212.32,
+    "avg_leaked": 1.84,
+    "assignments": 22,
+    "uncovered_count": 1,
+    "mc_200iter": {
+      "survival_rate_pct": 52.5,
+      "intercept_rate_pct": 52.5,
+      "mean_score": -111.3,
+      "min_score": -1992.0,
+      "max_score": 287.0,
+      "plan_size": 22
+    },
+    "coa": [
+      {
+        "threat_id": "H-01",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "F-01",
+        "base": "Highridge Command",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "F-02",
+        "base": "Highridge Command",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-05",
+        "base": "Northern Vanguard Base",
+        "effector": "coyote-block2"
+      },
+      {
+        "threat_id": "C-01",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "C-02",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "C-03",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-01",
+        "base": "Northern Vanguard Base",
+        "effector": "nasams"
+      },
+      {
+        "threat_id": "D-02",
+        "base": "Northern Vanguard Base",
+        "effector": "nasams"
+      },
+      {
+        "threat_id": "D-03",
+        "base": "Northern Vanguard Base",
+        "effector": "nasams"
+      },
+      {
+        "threat_id": "D-05",
+        "base": "Northern Vanguard Base",
+        "effector": "nasams"
+      },
+      {
+        "threat_id": "D-07",
+        "base": "Nordvik",
+        "effector": "nasams"
+      },
+      {
+        "threat_id": "D-08",
+        "base": "Nordvik",
+        "effector": "nasams"
+      },
+      {
+        "threat_id": "D-01",
+        "base": "Northern Vanguard Base",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-02",
+        "base": "Northern Vanguard Base",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-03",
+        "base": "Northern Vanguard Base",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-04",
+        "base": "Northern Vanguard Base",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-08",
+        "base": "Northern Vanguard Base",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-06",
+        "base": "Nordvik",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-07",
+        "base": "Nordvik",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-06",
+        "base": "Northern Vanguard Base",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "D-04",
+        "base": "Nordvik",
+        "effector": "patriot-pac3"
+      }
+    ]
+  },
+  "C_SATURATION": {
+    "title": "SCENARIO C \u00b7 Saturation Strike + Decoy Swarm (10 tracks)",
+    "num_threats": 10,
+    "mcts_score_50iter": -214.5,
+    "avg_leaked": 0.9,
+    "assignments": 5,
+    "uncovered_count": 0,
+    "mc_200iter": {
+      "survival_rate_pct": 41.5,
+      "intercept_rate_pct": 38.5,
+      "mean_score": -229.7,
+      "min_score": -2510.0,
+      "max_score": 505.0,
+      "plan_size": 10
+    },
+    "coa": [
+      {
+        "threat_id": "H-03",
+        "base": "Highridge Command",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "H-01",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "H-02",
+        "base": "Arktholm (Capital X)",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "C-01",
+        "base": "Highridge Command",
+        "effector": "patriot-pac3"
+      },
+      {
+        "threat_id": "C-02",
+        "base": "Highridge Command",
+        "effector": "patriot-pac3"
+      }
+    ]
+  }
+}
