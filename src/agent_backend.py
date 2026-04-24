@@ -206,6 +206,11 @@ async def startup_event():
             RECENTLY_ACTIVE = False # Reset flag
     asyncio.create_task(idle_pulse())
 
+@app.get("/health")
+async def health_check():
+    """Backend health check endpoint used by index.html and frontend badges."""
+    return {"status": "ok", "mode": SAAB_MODE, "theater": ACTIVE_THEATER["name"]}
+
 @app.get("/theater")
 async def get_theater():
     """Return active theater metadata: mode, name, capital, CSV path."""
@@ -321,6 +326,24 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
 
     raw_decision["human_sitrep"] = formatted_report
     EVALUATION_CACHE[payload_hash] = raw_decision
+
+    # Broadcast engine results to WebSocket trace so all dashboards see them
+    try:
+        model_mode = "NEURAL-RL" if request.use_rl else "HEURISTIC"
+        n_t = len(active_threats)
+        n_a = len(raw_decision["tactical_assignments"])
+        sc  = raw_decision["strategic_consequence_score"]
+        GLOBAL_LOG_QUEUE.put(f"[STRAT] CORTEX-1 {model_mode} EVAL — {n_t} threats | {n_a} assignments | score {sc:.1f}")
+        for a in raw_decision["tactical_assignments"][:6]:
+            GLOBAL_LOG_QUEUE.put(f"[NEURAL] {a['threat_id']} -> {a.get('effector','?').upper()} @ {a.get('base','?')}")
+        for line in formatted_report.split('\n'):
+            stripped = line.strip()
+            if stripped and not stripped.startswith('---') and len(stripped) > 5:
+                GLOBAL_LOG_QUEUE.put(f"[STRAT] {stripped[:100]}")
+                break  # just the first content line
+    except Exception:
+        pass
+
     return raw_decision
 
 @app.post("/llm/proxy")

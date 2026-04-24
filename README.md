@@ -79,6 +79,23 @@ Boreal Chessmaster is built on the principle of **Transparent AI**. The Stridsle
 - `frontend/`: The 5Hz Ultra-Reflex Tactical Dashboard.
 - `docs/`: Strategic manuals, Architecture guides, and Pitch scripts.
 
+
+## 🎬 Demo Videos (Playwright Automation)
+
+Full end-to-end demo videos are available, showcasing real user journeys in the tactical dashboard. These were generated using Playwright automation, both with mocked and live neural backend:
+
+- **Demo video folders:**
+	- Mocked backend: `scratch/demo-videos/`
+	- Live backend: `scratch/live-videos/`
+- **Format:** `.webm` (full-screen, ~1 min each)
+- **How to view:** Open the folder and play any `.webm` file in a modern browser or video player.
+- **How they were generated:**
+	- Automated Playwright scripts simulate real user actions (clicks, navigation, scenario selection, etc.)
+	- Both mocked and live backend flows are covered
+	- See [docs/PLAYWRIGHT_DEMO_RESULTS.md](docs/PLAYWRIGHT_DEMO_RESULTS.md) for full details, results, and technical summary
+
+---
+
 ## 📚 Engineering Documentation
 
 | Document | Description |

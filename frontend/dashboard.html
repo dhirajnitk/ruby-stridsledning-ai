@@ -88,7 +88,7 @@
         <!-- TOP HEADER -->
         <header style="display:flex; justify-content:space-between; align-items:center; padding:0 2rem; background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(0,242,255,0.2);">
             <div class="logo" style="display:flex; align-items:center; gap:3rem;">
-                <h1>BOREAL STRATEGIC COMMAND</h1>
+                <h1 id="main-title">BOREAL STRATEGIC COMMAND</h1>
                 <div id="live-feed-header" style="width:280px; height:60px; border:1px solid var(--accent-blue); border-radius:4px; overflow:hidden; position:relative;">
                     <video autoplay muted loop style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
                         <source src="/video/AI_Prevents_Missile_Strike.mp4" type="video/mp4">
@@ -102,7 +102,11 @@
                     <div id="city-health" class="health-fill"></div>
                 </div>
                 <div class="status-badge scanning">Operational</div>
-                <a href="cortex_c2.html" target="_blank" style="margin-left:12px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(250,204,21,0.5); border-radius:4px; color:#facc15; background:rgba(250,204,21,0.08); text-decoration:none; white-space:nowrap;">CORTEX-C2 &#x2197;</a>
+                <div id="engine-status-badge" title="CORTEX-1 engine connection status" style="font-size:0.42rem;padding:3px 9px;border-radius:3px;font-family:'Orbitron',monospace;letter-spacing:1px;border:1px solid rgba(255,255,255,0.2);color:#888;background:rgba(0,0,0,0.3);cursor:default;white-space:nowrap;">○ ENGINE CHECKING…</div>
+                <a id="nav-live-view" href="live_view.html" style="margin-left:8px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(0,242,255,0.4); border-radius:4px; color:#00f2ff; background:rgba(0,242,255,0.06); text-decoration:none; white-space:nowrap;">LIVE VIEW &#x2197;</a>
+                <a href="tactical_legacy.html" id="nav-tactical-hdr" style="margin-left:4px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(255,255,255,0.18); border-radius:4px; color:#aaa; background:rgba(255,255,255,0.04); text-decoration:none; white-space:nowrap;">TACTICAL &#x2197;</a>
+                <a href="cortex_c2.html" target="_blank" style="margin-left:4px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(250,204,21,0.5); border-radius:4px; color:#facc15; background:rgba(250,204,21,0.08); text-decoration:none; white-space:nowrap;">CORTEX-C2 &#x2197;</a>
+                <a href="index.html" style="margin-left:8px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(255,255,255,0.12); border-radius:4px; color:#666; background:rgba(0,0,0,0.3); text-decoration:none; white-space:nowrap;">&#x2302; PORTAL</a>
             </div>
         </header>
 
@@ -284,18 +288,46 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="viz_engine.js"></script>
     <script>
-    // BUG-FIX UI-4: Update theater label from backend /theater endpoint
+    // ── Dashboard init: theater mode, backend status badge ──────────────────────
     (function() {
       const theaterLabels = { boreal: 'Boreal Passage', sweden: 'Sweden AOR' };
       const _dashMode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
       const labelEl = document.getElementById('theater-label');
       if (labelEl) labelEl.textContent = theaterLabels[_dashMode] || 'Boreal Passage';
-      const titleEl = document.querySelector('h1');
-      if (titleEl && _dashMode === 'sweden') titleEl.textContent = 'SWEDEN STRATEGIC COMMAND';
-      // Fetch /theater from backend to confirm
-      fetch('http://localhost:8000/theater').then(r => r.json()).then(d => {
+
+      // Update title for Sweden mode
+      if (_dashMode === 'sweden') {
+        document.title = 'SWEDEN STRATEGIC COMMAND | V8.3';
+        const h1 = document.getElementById('main-title');
+        if (h1) h1.textContent = 'SWEDEN STRATEGIC COMMAND';
+      }
+
+      // Expose engine status updater (used by MC audit and viz_engine.js hooks)
+      window._setEngineStatus = function(online, reason) {
+        const b = document.getElementById('engine-status-badge');
+        if (!b) return;
+        if (online) {
+          b.textContent = '● ENGINE ONLINE';
+          b.style.color = '#00ff88'; b.style.borderColor = 'rgba(0,255,136,0.4)';
+          b.style.background = 'rgba(0,255,136,0.06)';
+        } else {
+          const hint = reason ? ` — ${reason}` : '';
+          b.textContent = `○ ENGINE OFFLINE${hint}`;
+          b.style.color = '#ff3e3e'; b.style.borderColor = 'rgba(255,62,62,0.4)';
+          b.style.background = 'rgba(255,62,62,0.06)';
+        }
+      };
+
+      // Fetch /theater from backend to confirm (updates status badge)
+      fetch('http://localhost:8000/theater').then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(d => {
         if (labelEl) labelEl.textContent = d.theater_name || theaterLabels[_dashMode];
-      }).catch(() => {});
+        if (window._setEngineStatus) window._setEngineStatus(true, '');
+      }).catch(e => {
+        if (window._setEngineStatus) window._setEngineStatus(false, 'start python src/agent_backend.py');
+      });
     })();
     // Load benchmark scenarios for replay
     fetch('/data/ground_truth_scenarios.json')
@@ -346,14 +378,12 @@
       
       try {
         const typeMap = { CRUISE:'cruise-missile', HYPERSONIC:'hypersonic-pgm', LOITER:'drone', BALLISTIC:'ballistic' };
+        // FIX UI-DASH-1: const declarations must be OUTSIDE the object literal (was syntax error)
+        const _mcKmFactor = (MODE === 'boreal') ? (200/120) : 1.0;
+        const _mcSwedenInv = { 'patriot-pac3':100, 'iris-t-sls':200, 'saab-nimbrix':1000, 'meteor':40, 'nasams':20 };
+        const _mcBorealInv = { 'patriot-pac3':60, 'nasams':100, 'coyote-block2':200, 'merops-interceptor':200 };
+        const _mcInv = MODE === 'sweden' ? _mcSwedenInv : _mcBorealInv;
         const payload = {
-          // BUG-FIX UI-DASH-1: Convert SVG units → km for Boreal (Boreal uses 1 unit = 1.667 km).
-          // Sweden bases are already in km offsets from Stockholm.
-          // Also send full theater inventory instead of only patriot+nasams.
-          const _mcKmFactor = (MODE === 'boreal') ? (200/120) : 1.0;
-          const _mcSwedenInv = { 'patriot-pac3':100, 'iris-t-sls':200, 'saab-nimbrix':1000, 'meteor':40, 'nasams':20 };
-          const _mcBorealInv = { 'patriot-pac3':60, 'nasams':100, 'coyote-block2':200, 'merops-interceptor':200 };
-          const _mcInv = MODE === 'sweden' ? _mcSwedenInv : _mcBorealInv;
           state: { bases: Object.values(window.BASES).map(b => ({
             name: b.name,
             x: b.x * _mcKmFactor,
@@ -376,7 +406,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+        if (!res.ok) throw new Error(`Engine HTTP ${res.status} ${res.statusText}`);
         const data = await res.json();
+        if (window._setEngineStatus) window._setEngineStatus(true, '');
         
         if (data.mc_metrics) {
           const mc = data.mc_metrics;
@@ -388,7 +420,10 @@
           if (document.getElementById('acc-badge')) document.getElementById('acc-badge').innerText = mc.survival_rate_pct + '% SURVIVAL';
         }
       } catch (e) {
-        addCoT('Strategic Audit Failed: ' + e.message, 'warn');
+        const reason = e.name === 'TimeoutError' ? 'REQUEST TIMEOUT' : (e.message || 'NETWORK UNREACHABLE');
+        addCoT(`ENGINE LINK FAILURE — ${reason}`, 'error');
+        addCoT('Hint: start backend → python src/agent_backend.py', 'info');
+        if (window._setEngineStatus) window._setEngineStatus(false, reason);
       } finally {
         btn.disabled = false;
         btn.textContent = '🧬 RUN LIVE STRATEGIC AUDIT (MC)';
@@ -578,6 +613,24 @@
         window.open(`kinetic_3d.html?theater=${mode}`, '_blank');
       });
     }
+
+    // Live Audit button (BUG-NAV-1 fix)
+    const btnLiveAudit = document.getElementById('btn-live-audit');
+    if (btnLiveAudit) {
+      btnLiveAudit.addEventListener('click', () => {
+        const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
+        window.open(`live_view.html?mode=${mode}`, '_blank');
+      });
+    }
+
+    // Theater-aware header nav links
+    (function syncNavLinks() {
+      const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
+      const lv = document.getElementById('nav-live-view');
+      const tac = document.getElementById('nav-tactical-hdr');
+      if (lv)  lv.href  = `live_view.html?mode=${mode}`;
+      if (tac) tac.href = `tactical_legacy.html?mode=${mode}`;
+    })();
 
     // --- MODEL CORE SELECTION ---
     const modelCore = document.getElementById('sel-model-core');

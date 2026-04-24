@@ -87,12 +87,23 @@
             <div class="doctrine-console">
                 <select id="primary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option><option value="economy">ECONOMY</option><option value="ambush">AMBUSH</option><option value="saturation">SATURATION</option></select>
                 <span style="color: #45475a;">|</span>
-                <select id="secondary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="none">NONE</option><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option></select>
+                <select id="secondary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="none">NONE</option><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option><option value="economy">ECONOMY</option><option value="ambush">AMBUSH</option><option value="saturation">SATURATION</option></select>
             </div>
             <div style="display: flex; align-items: center; gap: 5px; font-size: 10px;">
                 <input type="range" id="blend-ratio" min="0" max="100" value="70">
-                <span id="blend-val">70% P</span>
+                <span id="blend-val" title="Primary doctrine weight vs secondary">P:<span id="blend-pct">70</span>%</span>
             </div>
+            <select id="model-select" title="Neural model" style="background:#1e1e2e; color:#cba6f7; border:1px solid #45475a; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; outline:none;">
+                <option value="heuristic">HEURISTIC (TRIAGE)</option>
+                <option value="elite">ELITE V3.5</option>
+                <option value="supreme3">SUPREME V3.1</option>
+                <option value="supreme2">SUPREME V2</option>
+                <option value="titan">TITAN TRANSFORMER</option>
+                <option value="hybrid">HYBRID RL V8.4</option>
+                <option value="genE10">GENERALIST E10</option>
+                <option value="hBase">HEURISTIC V2</option>
+                <option value="random">RANDOM</option>
+            </select>
             <label class="toggle-box" title="Toggle RL Neural Logic"><input type="checkbox" id="use-rl" checked> NEURAL</label>
             <label class="toggle-box" title="Use PPO Direct Action Matrix"><input type="checkbox" id="use-ppo"> PPO</label>
             <label class="toggle-box" title="Auto-pause on low confidence"><input type="checkbox" id="dynamic-hitl"> DYNAMIC</label>
@@ -104,8 +115,26 @@
             <button id="btn-blind" class="danger">Ambush</button>
             <button id="btn-ai" class="ai-btn">Execute AI</button>
             <button id="btn-fire" style="background: #f38ba8; color: #11111b; display: none;">FIRE</button>
+            <span style="border-left:1px solid #45475a; height:18px; margin:0 4px;"></span>
+            <button id="btn-nav-dash"  style="background:#11111b; color:#89b4fa; border:1px solid #45475a; font-size:9px;" title="Strategic Dashboard">DASHBOARD</button>
+            <button id="btn-nav-c2"    style="background:#11111b; color:#facc15; border:1px solid #45475a; font-size:9px;" title="CORTEX-C2 Console" onclick="window.open('cortex_c2.html','_blank')">CORTEX-C2</button>
+            <button id="btn-nav-live"  style="background:#11111b; color:#00f2ff; border:1px solid #45475a; font-size:9px;" title="Live Kinetic View">LIVE VIEW</button>
+            <button id="btn-nav-3dk"   style="background:#11111b; color:#3fb950; border:1px solid #45475a; font-size:9px;" title="3D Kinetic Sim">KINETIC 3D</button>
+            <button id="btn-nav-portal" style="background:#11111b; color:#888;   border:1px solid #45475a; font-size:9px;" title="Portal Home" onclick="window.location.href='index.html'">⌂ PORTAL</button>
         </div>
     </div>
+    <script>
+    // Theater-aware nav links (must run after DOM)
+    (function() {
+      const _m = new URLSearchParams(window.location.search).get('mode') || 'boreal';
+      const d = document.getElementById('btn-nav-dash');
+      const lv = document.getElementById('btn-nav-live');
+      const k3 = document.getElementById('btn-nav-3dk');
+      if (d)  d.onclick  = () => { window.location.href = 'dashboard.html?mode=' + _m; };
+      if (lv) lv.onclick = () => { window.open('live_view.html?mode=' + _m, '_blank'); };
+      if (k3) k3.onclick = () => { window.open('kinetic_3d.html?theater=' + _m, '_blank'); };
+    })();
+    </script>
     <div class="main-layout">
         <div class="map-section">
             <div class="panel-header" style="padding: 5px 10px;">TACTICAL THEATER <span>BOREAL PASSAGE</span></div>
@@ -203,29 +232,37 @@
             const host = window.location.hostname || "127.0.0.1";
             ws = new WebSocket(`ws://${host}:8000/ws/logs`);
             ws.onopen = () => {
-                wsOutput.innerHTML = `<span style="color: #a6e3a1;">[SYSTEM] Strategic Link Established. Monitoring Boreal Sector...</span>\n`;
+                wsOutput.innerHTML = `<span style="color: #a6e3a1;">[SYSTEM] Neural uplink established — CORTEX-1 online. Monitoring ${_legacyMode === 'sweden' ? 'Sweden AOR' : 'Boreal'} sector...</span>\n`;
                 console.log("WebSocket Connected");
             };
             ws.onerror = (err) => {
-                wsOutput.innerHTML += `<span style="color: #f38ba8;">[ERROR] WebSocket Connection Failed. Check if backend is running on port 8000.</span>\n`;
+                wsOutput.innerHTML += `<span style="color: #f38ba8;">[ERROR] Neural uplink failed — check backend on port 8000.</span>\n`;
             };
             ws.onmessage = (e) => {
                 const msg = e.data;
+                // Filter backend heartbeat — not useful in trace
+                if (msg === "[HEARTBEAT]") return;
                 const span = document.createElement("span");
-                
-                // --- STRATEGIC COLOR CODING ---
-                if (msg.includes("[STRAT]")) span.style.color = "#f9e2af"; // Gold
-                else if (msg.includes("[NEURAL]")) span.style.color = "#89dceb"; // Cyan
-                else if (msg.includes("[HITL]")) span.style.color = "#f38ba8"; // Rose (Alert)
-                else if (msg.includes("[COMMAND]")) span.style.color = "#a6e3a1"; // Green
+                if (msg.includes("[STRAT]")) span.style.color = "#f9e2af";
+                else if (msg.includes("[NEURAL]")) span.style.color = "#89dceb";
+                else if (msg.includes("[HITL]")) span.style.color = "#f38ba8";
+                else if (msg.includes("[COMMAND]")) span.style.color = "#a6e3a1";
                 else if (msg.includes("KILL") || msg.includes("DESTROYED")) span.style.color = "#f38ba8";
                 else span.style.color = "#cdd6f4";
-
                 span.textContent = msg + "\n";
                 wsOutput.appendChild(span);
                 wsOutput.scrollTop = wsOutput.scrollHeight;
             };
-            ws.onclose = () => setTimeout(connectWebSocket, 2000);
+            ws.onclose = (e) => {
+                const span = document.createElement("span");
+                span.style.color = "#f38ba8";
+                span.textContent = e.wasClean
+                    ? `[SYSTEM] Neural uplink closed — reconnecting...\n`
+                    : `[ERROR] Neural uplink dropped (code ${e.code}) — retrying in 2s...\n`;
+                wsOutput.appendChild(span);
+                wsOutput.scrollTop = wsOutput.scrollHeight;
+                setTimeout(connectWebSocket, 2000);
+            };
         }
         connectWebSocket();
         async function requestAIOrders(isAuto = false) {
@@ -246,6 +283,11 @@
                     })
                 });
                 const data = await response.json(); latestAssignments = data.tactical_assignments || [];
+                // Show model + blend in policy-status
+                const modelSel = document.getElementById('model-select');
+                const modelLabel = modelSel ? modelSel.options[modelSel.selectedIndex].text : 'HEURISTIC';
+                const blendPct = document.getElementById('blend-ratio').value;
+                document.getElementById('policy-status').textContent = `${modelLabel.split(' ')[0]} | P:${blendPct}%`;
                 if (data.active_doctrine) {
                     const ad = data.active_doctrine; document.getElementById('active-posture-label').textContent = `${ad.primary.toUpperCase()}`;
                     document.getElementById('blend-ratio-pill').textContent = `BLEND: ${ad.blend_ratio}`;
@@ -290,6 +332,23 @@
                     if(scoreChart.data.labels.length > 20) { scoreChart.data.labels.shift(); scoreChart.data.datasets[0].data.shift(); }
                     scoreChart.update('none');
                 }
+                // Write SITREP and assignments to engine trace panel
+                if (data.human_sitrep) {
+                    data.human_sitrep.split('\n').forEach(line => {
+                        const s = line.trim(); if (!s) return;
+                        const sp = document.createElement("span");
+                        sp.style.color = s.startsWith('---') ? "#45475a" : "#f9e2af";
+                        sp.textContent = s + "\n"; wsOutput.appendChild(sp);
+                    });
+                }
+                if (Array.isArray(latestAssignments) && latestAssignments.length > 0) {
+                    latestAssignments.forEach(a => {
+                        const sp = document.createElement("span"); sp.style.color = "#89dceb";
+                        sp.textContent = `[NEURAL] ${a.threat_id || a.threat} -> ${(a.effector || a.weapon || '?').toUpperCase()} @ ${a.base_name || a.base || '?'}\n`;
+                        wsOutput.appendChild(sp);
+                    });
+                }
+                wsOutput.scrollTop = wsOutput.scrollHeight;
             } catch(e) {
                 console.error("AI Request Failed:", e);
                 const errSpan = document.createElement("span");
@@ -457,7 +516,9 @@
             for(let i=0; i<10; i++) activeThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: baseX+(i*20), y_km: baseY+Math.random()*600, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150, heading});
         };
         document.getElementById('btn-ai').onclick = () => requestAIOrders(false);
-        document.getElementById('blend-ratio').oninput = (e) => document.getElementById('blend-val').textContent = e.target.value + "% P";
+        document.getElementById('blend-ratio').oninput = (e) => {
+            document.getElementById('blend-pct').textContent = e.target.value;
+        };
         const ctxChart = document.getElementById('scoreChart').getContext('2d');
         scoreChart = new Chart(ctxChart, { type: 'line', data: { labels: [], datasets: [{ label: 'S', data: [], borderColor: '#fab387', tension: 0.3, fill: false, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1000, grid: { display: false } }, x: { display: false } }, plugins: { legend: { display: false } } } });
         setInterval(() => { if(document.getElementById('auto-poll').checked) requestAIOrders(true); }, 3000);

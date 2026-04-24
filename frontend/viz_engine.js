@@ -684,8 +684,18 @@ async function callEngine(threatList) {
       }),
       signal: AbortSignal.timeout(5000)
     });
-    return r.ok ? await r.json() : null;
-  } catch(e) { return null; }
+    return r.ok ? await r.json() : (() => {
+      addCoT(`ENGINE HTTP ERROR — ${r.status} ${r.statusText}`, 'error');
+      if (window._setEngineStatus) window._setEngineStatus(false, 'HTTP ' + r.status);
+      return null;
+    })();
+  } catch(e) {
+    const reason = e.name === 'TimeoutError' ? 'REQUEST TIMEOUT (5s)' :
+                   (e.name === 'TypeError' ? 'NETWORK ERROR — ENGINE OFFLINE' : (e.message || 'UNKNOWN'));
+    addCoT(`ENGINE LINK FAILURE — ${reason}`, 'error');
+    if (window._setEngineStatus) window._setEngineStatus(false, reason);
+    return null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1254,12 +1264,24 @@ function boot() {
   // ── Neural Engine WebSocket uplink — streams CORTEX-1 telemetry to CoT log
   try {
     const _engWs = new WebSocket(`ws://${window.location.hostname}:8000/ws/logs`);
-    _engWs.onopen    = () => addCoT('CORTEX-1 NEURAL UPLINK ESTABLISHED — ENGINE ONLINE', 'success');
+    _engWs.onopen = () => {
+      addCoT('CORTEX-1 NEURAL UPLINK ESTABLISHED — ENGINE ONLINE', 'success');
+      if (window._setEngineStatus) window._setEngineStatus(true, '');
+    };
     _engWs.onmessage = e => {
       if (e.data === '[HEARTBEAT]') return;
       addCoT(e.data.replace(/^\[(STRAT|LOG|SYS)\] ?/, '').substring(0, 100), 'info');
     };
-    _engWs.onerror = () => addCoT('NEURAL ENGINE UPLINK OFFLINE — STANDALONE MODE ACTIVE', 'alert');
+    _engWs.onerror = () => {
+      addCoT('NEURAL ENGINE UPLINK OFFLINE — STANDALONE MODE ACTIVE', 'alert');
+      if (window._setEngineStatus) window._setEngineStatus(false, 'UPLINK ERROR');
+    };
+    _engWs.onclose = (e) => {
+      if (!e.wasClean) {
+        addCoT(`NEURAL UPLINK DROPPED (code ${e.code}) — STANDALONE MODE ACTIVE`, 'alert');
+        if (window._setEngineStatus) window._setEngineStatus(false, 'DISCONNECTED');
+      }
+    };
   } catch(_) {}
 
   // DYNAMIC BENCHMARK FETCH (Theater-Specific)

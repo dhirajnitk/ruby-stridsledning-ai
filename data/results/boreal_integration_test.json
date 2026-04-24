@@ -2,14 +2,14 @@
   "A_BALLISTIC": {
     "title": "SCENARIO A \u00b7 Ballistic Strike \u2014 Arktholm",
     "num_threats": 3,
-    "mcts_score_50iter": 62.5,
+    "mcts_score_50iter": 60.8,
     "avg_leaked": 0.4,
     "assignments": 3,
     "uncovered_count": 0,
     "mc_200iter": {
-      "survival_rate_pct": 65.0,
-      "intercept_rate_pct": 65.0,
-      "mean_score": 52.6,
+      "survival_rate_pct": 68.0,
+      "intercept_rate_pct": 68.0,
+      "mean_score": 77.6,
       "min_score": -1050.0,
       "max_score": 330.0,
       "plan_size": 3
@@ -35,15 +35,15 @@
   "B_SWARM": {
     "title": "SCENARIO B \u00b7 Swarm + Fast Mover Breakthrough (15 tracks)",
     "num_threats": 15,
-    "mcts_score_50iter": -212.32,
-    "avg_leaked": 1.84,
+    "mcts_score_50iter": -128.44,
+    "avg_leaked": 1.66,
     "assignments": 22,
     "uncovered_count": 1,
     "mc_200iter": {
-      "survival_rate_pct": 52.5,
-      "intercept_rate_pct": 52.5,
-      "mean_score": -111.3,
-      "min_score": -1992.0,
+      "survival_rate_pct": 55.0,
+      "intercept_rate_pct": 55.0,
+      "mean_score": -101.7,
+      "min_score": -1518.5,
       "max_score": 287.0,
       "plan_size": 22
     },
@@ -163,15 +163,15 @@
   "C_SATURATION": {
     "title": "SCENARIO C \u00b7 Saturation Strike + Decoy Swarm (10 tracks)",
     "num_threats": 10,
-    "mcts_score_50iter": -214.5,
-    "avg_leaked": 0.9,
+    "mcts_score_50iter": -136.6,
+    "avg_leaked": 0.76,
     "assignments": 5,
     "uncovered_count": 0,
     "mc_200iter": {
-      "survival_rate_pct": 41.5,
-      "intercept_rate_pct": 38.5,
-      "mean_score": -229.7,
-      "min_score": -2510.0,
+      "survival_rate_pct": 41.0,
+      "intercept_rate_pct": 36.5,
+      "mean_score": -204.0,
+      "min_score": -2112.0,
       "max_score": 505.0,
       "plan_size": 10
     },

@@ -71,7 +71,10 @@ button.green:hover{background:rgba(0,255,136,0.1)}
     <button class="green" id="btn-fire">▶ FIRE DEMO</button>
     <button class="red" id="btn-wave">⚡ SATURATION WAVE</button>
     <button id="btn-reset">↺ RESET</button>
-    <button onclick="window.history.back()">◄ BACK</button>
+    <button onclick="window.location.href='index.html'">⌂ PORTAL</button>
+    <button onclick="(function(){const m=new URLSearchParams(location.search).get('theater')||'boreal';window.location.href='dashboard.html?mode='+m;})()">◄ DASHBOARD</button>
+    <button onclick="(function(){const m=new URLSearchParams(location.search).get('theater')||'boreal';window.open('live_view.html?mode='+m,'_blank');})()">LIVE VIEW</button>
+    <button onclick="(function(){const m=new URLSearchParams(location.search).get('theater')||'boreal';window.location.href='tactical_legacy.html?mode='+m;})()">TACTICAL</button>
   </div>
   <div id="stats-hud">
     <div class="sh">THREATS</div><div class="sv" id="s-threats" style="color:#ffcc00">0</div>

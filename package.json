@@ -1,0 +1,13 @@
+{
+  "name": "saab-ui-tests",
+  "version": "1.0.0",
+  "description": "Playwright UI tests for SAAB Stridsledning AI dashboards",
+  "scripts": {
+    "test": "npx playwright test --config=scratch/playwright.config.js",
+    "test:headed": "npx playwright test --config=scratch/playwright.config.js --headed",
+    "report": "npx playwright show-report playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
