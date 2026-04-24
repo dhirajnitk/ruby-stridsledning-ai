@@ -5,6 +5,7 @@ const MODE = urlParams.get('mode') || 'boreal';
 // --- THEATRE COORDINATES (adaptive per mode) ---
 // Sweden: origin=Stockholm, units=km offset from Stockholm
 // Boreal: origin=Arktholm, units=arbitrary grid units
+let SVG_OX, SVG_OY, SVG_SCALE;
 if (MODE === 'sweden') {
   // Sweden: pulled down further for button clearance (OY 480 -> 530)
   SVG_OX = 545; SVG_OY = 530; SVG_SCALE = 0.48;
@@ -16,7 +17,9 @@ const KM_TO_UNIT = 120 / 200; // 0.6 units per km
 const UNIT_TO_KM = 200 / 120; // 1.666 km per unit
 
 function toSvgX(v) { return SVG_OX + v * SVG_SCALE; }
-function toSvgY(v) { return SVG_OY + v * SVG_SCALE; } // SVG Y is down
+// BUG-FIX UI-2: Sweden CSV uses north-positive y (latitude increases upward).
+// SVG y increases downward, so Sweden requires negation to render north at top.
+function toSvgY(v) { return MODE === 'sweden' ? SVG_OY - v * SVG_SCALE : SVG_OY + v * SVG_SCALE; }
 function to3X(v)   { return v * 1666; } // 1 unit = 1666m
 function to3Z(v)   { return v * 1666; }
 
@@ -56,8 +59,12 @@ const THEATER_DATA = (MODE === 'sweden') ? [
   { type:"HVA",  id:"MER", name:"MERIDIA CAPITAL",     x:735,  y:725, sam:40, effectors:['THAAD','PAC3','NASAMS'] },
   { type:"HVA",  id:"CAL", name:"CALLHAVEN",           x:58,   y:690, sam:28, effectors:['PAC3','NASAMS']          },
   { type:"HVA",  id:"SOL", name:"SOLANO",              x:346,  y:742, sam:28, effectors:['PAC3','NASAMS']          },
-  // TERRAIN NODES (Simplified for 2D)
-  { type:"ZONE", id:"BST", name:"BOREAL STRAIT",       x:500,  y:400,  subtype:"water"              },
+  // TERRAIN POLYGONS (Sync from Boreal_passage_coordinates.csv)
+  { type:"TERRAIN", id:"TN1", name:"NORTH MAINLAND", side:"north", poly:[[0,0],[1000,0],[1000,170],[920,188],[860,174],[800,170],[742,205],[678,190],[616,178],[556,212],[488,194],[428,188],[366,220],[302,192],[236,200],[178,230],[118,204],[54,212],[0,228]] },
+  { type:"TERRAIN", id:"TN2", name:"SOUTH MAINLAND", side:"south", poly:[[0,780],[1000,780],[1000,640],[948,616],[882,628],[818,642],[756,608],[688,622],[624,640],[560,606],[492,626],[428,646],[362,612],[294,622],[232,648],[168,618],[98,630],[30,648],[0,638]] },
+  { type:"TERRAIN", id:"TN3", name:"STRAIT ISLAND W", side:"north", poly:[[355,268],[378,256],[410,258],[424,278],[436,296],[426,322],[406,328],[386,334],[362,318],[354,298]] },
+  { type:"TERRAIN", id:"TN4", name:"STRAIT ISLAND E", side:"north", poly:[[678,214],[692,204],[710,208],[716,224],[722,238],[712,254],[696,256],[680,258],[668,244],[668,228]] },
+  { type:"ZONE",    id:"BST", name:"BOREAL STRAIT",  x:500,  y:400,  subtype:"water"              },
 ];
 
 // --- EFFECTOR DEFINITIONS (Audited per NATO/Sweden Doctrine) ---
@@ -323,6 +330,19 @@ function renderMap() {
     path.setAttribute('stroke-width', '1.5');
     path.setAttribute('stroke-dasharray', '8 4');
     mapGeometry.appendChild(path);
+
+    // Render Terrain Polygons
+    THEATER_DATA.forEach(n => {
+      if (n.type === 'TERRAIN' && n.poly) {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        const pts = n.poly.map(pt => `${toSvgX(pt[0])},${toSvgY(pt[1])}`).join(' ');
+        p.setAttribute('points', pts);
+        p.setAttribute('fill', n.side === 'north' ? 'rgba(0, 242, 255, 0.08)' : 'rgba(255, 62, 62, 0.08)');
+        p.setAttribute('stroke', n.side === 'north' ? 'rgba(0, 242, 255, 0.2)' : 'rgba(255, 62, 62, 0.2)');
+        p.setAttribute('stroke-width', '1');
+        mapGeometry.appendChild(p);
+      }
+    });
 
     const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     const ark = THEATER_DATA.find(n => n.id === 'ARK');
@@ -630,12 +650,19 @@ class Threat {
 async function callEngine(threatList) {
   const typeMap = { CRUISE:'cruise-missile', HYPERSONIC:'hypersonic-pgm', LOITER:'drone', BALLISTIC:'ballistic' };
   const valMap  = { HYPERSONIC:90, BALLISTIC:80, CRUISE:60, LOITER:40 };
-  // Send SVG unit coordinates directly — engine uses theater-unit ranges matching this scale
+  // BUG-FIX UI-1: Boreal THEATER_DATA uses SVG units (1 unit = 1.667 km).
+  // Backend engine expects km for all range-gate comparisons.
+  // Sweden THEATER_DATA is already in km (offsets from Stockholm), no conversion needed.
+  const kmFactor = (MODE === 'boreal') ? UNIT_TO_KM : 1.0;
+  // BUG-FIX UI-3: Send full theater-correct inventory instead of only patriot+nasams.
+  const swedenInv = { 'patriot-pac3':100, 'iris-t-sls':200, 'saab-nimbrix':1000, 'meteor':40, 'nasams':20 };
+  const borealInv = { 'patriot-pac3':60, 'nasams':100, 'coyote-block2':200, 'merops-interceptor':200 };
+  const theaterInv = MODE === 'sweden' ? swedenInv : borealInv;
   const stateBasesPayload = Object.values(BASES).map(b => ({
     name: b.name,
-    x: b.x,
-    y: b.y,
-    inventory: { 'patriot-pac3': b.sam || 0, 'nasams': Math.floor((b.sam||0)*0.5) }
+    x: b.x * kmFactor,
+    y: b.y * kmFactor,
+    inventory: theaterInv
   }));
   try {
     const r = await fetch('http://localhost:8000/evaluate_advanced', {
@@ -645,8 +672,8 @@ async function callEngine(threatList) {
         state: { bases: stateBasesPayload },
         threats: threatList.map(t => ({
           id: t.id,
-          x: t.targetNode.x,
-          y: t.targetNode.y,
+          x: t.targetNode.x * kmFactor,
+          y: t.targetNode.y * kmFactor,
           speed_kmh: t.wdef.speed,
           estimated_type: typeMap[t.wdef.type] || 'cruise-missile',
           threat_value: valMap[t.wdef.type] || 50

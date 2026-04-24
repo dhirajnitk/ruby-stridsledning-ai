@@ -59,17 +59,17 @@
             <!-- PRIMARY C2 CONSOLE -->
             <div class="sect-head">C2 Operator Console</div>
             <div class="portal-row cols-2">
-                <a href="cortex_c2.html" class="opt c2">
+                <a href="cortex_c2.html" class="opt c2" data-theater-href="cortex_c2.html">
                     <div class="opt-icon">🎯</div>
                     <h2>CORTEX-C2 Console</h2>
                     <p>Full operator console: HITL/AUTONOMOUS/MANUAL command modes, 3-COA planner, weapon swap, circular radar scope, sensor bars, LLM tactical analysis. Dual-theater (Boreal + Sweden).</p>
                     <span class="badge badge-new">NEW</span>
                     <span class="badge badge-live">LIVE</span>
                 </a>
-                <a href="dashboard.html" class="opt primary">
+                <a href="dashboard.html" class="opt primary" data-theater-href="dashboard.html">
                     <div class="opt-icon">📡</div>
                     <h2>Strategic Dashboard</h2>
-                    <p>Real-time SVG Baltic Theater map. Monte Carlo benchmark, engagement monitor, tactical + strategic accuracy live counters, doctrine selector, and viz_engine physics simulation.</p>
+                    <p>Real-time SVG theater map. Monte Carlo benchmark, engagement monitor, tactical + strategic accuracy live counters, doctrine selector, and viz_engine physics simulation.</p>
                     <span class="badge badge-live">SIM ENGINE</span>
                 </a>
             </div>
@@ -105,30 +105,57 @@
                     <h2>Dataset Viewer</h2>
                     <p>Browse training scenarios, ground-truth assignments and model benchmark results.</p>
                 </a>
-                <a href="live_view.html" class="opt legacy">
+                <a href="live_view.html" class="opt legacy" data-theater-href="live_view.html">
                     <div class="opt-icon">📺</div>
-                    <h2>Live View</h2>
-                    <p>Streaming live scenario feed from the Python backend when online.</p>
+                    <h2>Live Kinetic View</h2>
+                    <p>3D kinetic intercept engine. Click base to demo an intercept. Theater-aware.</p>
                     <span class="badge badge-live">BACKEND</span>
                 </a>
-                <a href="tactical_legacy.html" class="opt legacy">
+                <a href="tactical_legacy.html" class="opt legacy" data-theater-href="tactical_legacy.html">
                     <div class="opt-icon">🗺️</div>
                     <h2>Tactical Legacy</h2>
-                    <p>V3 legacy tactical display — earlier iteration of the SVG map layer.</p>
+                    <p>V3 legacy tactical display — earlier iteration of the SVG map layer. Dual-theater (Boreal + Sweden).</p>
                 </a>
             </div>
 
             <!-- SYS INFO -->
             <div class="sys-bar">
+                <!-- Theater toggle -->
+                <div style="display:flex;align-items:center;gap:6px;">
+                  THEATER
+                  <button id="toggle-boreal" onclick="setTheater('boreal')" style="font-size:.4rem;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid rgba(0,242,255,0.6);background:rgba(0,242,255,0.15);color:#00f2ff;font-family:'Orbitron',sans-serif;letter-spacing:1px;">BOREAL</button>
+                  <button id="toggle-sweden" onclick="setTheater('sweden')" style="font-size:.4rem;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);color:#aaa;font-family:'Orbitron',sans-serif;letter-spacing:1px;">SWEDEN</button>
+                </div>
                 <div>SYSTEM <span>CORTEX-1 v8.3</span></div>
                 <div>MODELS <span>9 NEURAL ARCHITECTURES</span></div>
-                <div>THEATER <span>BOREAL + SWEDEN</span></div>
                 <div>BACKEND <span id="portal-backend">CHECKING…</span></div>
-                <div>BUILD <span>S28 · 2026-04-23</span></div>
+                <div>BUILD <span>S28 · 2026-04-24</span></div>
             </div>
         </div>
     </div>
     <script>
+    // ── Theater selector: updates all data-theater-href links with ?mode= param ──
+    let _activeTheater = 'boreal';
+    function setTheater(mode) {
+      _activeTheater = mode;
+      // Update all theater-aware links
+      document.querySelectorAll('[data-theater-href]').forEach(a => {
+        a.href = a.dataset.theaterHref + '?mode=' + mode;
+      });
+      // Style toggles
+      const bBtn = document.getElementById('toggle-boreal');
+      const sBtn = document.getElementById('toggle-sweden');
+      if (mode === 'boreal') {
+        bBtn.style.cssText = 'font-size:.4rem;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid rgba(0,242,255,0.6);background:rgba(0,242,255,0.15);color:#00f2ff;font-family:"Orbitron",sans-serif;letter-spacing:1px;';
+        sBtn.style.cssText = 'font-size:.4rem;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);color:#aaa;font-family:"Orbitron",sans-serif;letter-spacing:1px;';
+      } else {
+        sBtn.style.cssText = 'font-size:.4rem;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid rgba(0,242,255,0.6);background:rgba(0,242,255,0.15);color:#00f2ff;font-family:"Orbitron",sans-serif;letter-spacing:1px;';
+        bBtn.style.cssText = 'font-size:.4rem;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);color:#aaa;font-family:"Orbitron",sans-serif;letter-spacing:1px;';
+      }
+    }
+    // Init with default theater
+    setTheater('boreal');
+
     // Check backend health
     fetch('http://localhost:8000/health', { signal: AbortSignal.timeout(2500) })
       .then(r => { document.getElementById('portal-backend').textContent = r.ok ? 'ONLINE' : 'OFFLINE'; document.getElementById('portal-backend').style.color = r.ok ? '#3fb950' : '#f85149'; })

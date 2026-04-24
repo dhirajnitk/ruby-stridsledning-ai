@@ -78,6 +78,7 @@ button.green:hover{background:rgba(0,255,136,0.1)}
     <div class="sh">SAMs</div><div class="sv" id="s-fired" style="color:#00f2ff">0</div>
     <div class="sh">KILLS</div><div class="sv" id="s-kills" style="color:#00ff88">0</div>
     <div class="sh">IMPACTS</div><div class="sv" id="s-impacts" style="color:#ff3e3e">0</div>
+    <div class="sh">SURVIVAL</div><div class="sv" id="s-surv" style="color:var(--ylw)">--%</div>
   </div>
 </div>
 
@@ -538,6 +539,15 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
         const base=(data.tactical_assignments?.[0]?.base||'N/A');
         log(`CORTEX-1: ${sitrep||'ASSESSMENT RECEIVED'}`,'i');
         log(`ENGINE → ${eff} from ${base} | STRATEGIC SCORE: ${score}`,'i');
+        
+        if (data.mc_metrics) {
+          const sEl = document.getElementById('s-surv');
+          if (sEl) {
+            sEl.textContent = data.mc_metrics.survival_rate_pct + '%';
+            sEl.style.color = data.mc_metrics.survival_rate_pct > 80 ? '#00ff88' : (data.mc_metrics.survival_rate_pct > 50 ? '#ffcc00' : '#ff3e3e');
+          }
+          log(`STRAT AUDIT: SURVIVAL PROBABILITY ${data.mc_metrics.survival_rate_pct}%`, 'good');
+        }
       }
     }catch(e){}
   })();

@@ -540,6 +540,8 @@ body{
       <div class="sc-desc">Inbound hypersonic and multiple decoys, low sensor agreement, blind spot over the primary track. Demonstrates DEFER mode: system withdraws rather than act on degraded picture.</div>
     </div>
 
+    <button id="btn-run-audit" onclick="runStrategicAudit()" style="margin-top:8px; width:100%; font-size:10px; font-weight:700; padding:8px; background:rgba(88,166,255,0.1); border:1px solid var(--blu); color:var(--blu); border-radius:4px; cursor:pointer; letter-spacing:1px">▶ RUN STRATEGIC AUDIT (MC)</button>
+
     <div class="sect-lbl" style="margin-top:8px">Theater Inventory</div>
     <div class="inv-blk">
       <div class="inv-title-row">
@@ -1230,6 +1232,10 @@ async function pollKinematics(sc) {
     const lbl = document.getElementById('backend-lbl');
     if (lbl) lbl.textContent = `backend: live (score ${Math.round(data.strategic_consequence_score||0)})`;
     document.getElementById('backend-dot')?.classList.remove('offline');
+
+    if (data.mc_metrics) {
+      _addFeedLine(`[STRAT-MC] Strategic Audit Complete: Surv% ${data.mc_metrics.survival_rate_pct} | Int% ${data.mc_metrics.intercept_rate_pct}`, 'good');
+    }
   } catch(e) {
     if (dot) dot.className = 'kin-dot';
     body.innerHTML = '<div class="kin-offline">Python engine offline — start backend for live kinematics (radar + PN + 3D evasion)</div>';
@@ -1272,6 +1278,77 @@ async function refreshFromEngine() {
   if (!_currentSc) return;
   await Promise.all([pollKinematics(_currentSc), upgradeFromBackend(_currentSc, _currentCoas?.[0])]);
 }
+
+async function runStrategicAudit() {
+  const btn = document.getElementById('btn-run-audit');
+  if (!btn || !_currentSc) return;
+  btn.disabled = true;
+  btn.textContent = '⟳ SIMULATING MC (200 ITER)...';
+  
+  _addFeedLine(`Starting Strategic Monte Carlo Audit for scenario: ${_currentSc.id.toUpperCase()}`, 'hl');
+  
+  try {
+    const typeMap = { CRUISE:'cruise-missile', HYPERSONIC:'hypersonic-pgm', LOITER:'drone', BALLISTIC:'ballistic', FIGHTER:'fighter' };
+    const spd = { HYPERSONIC:2200, BALLISTIC:1400, CRUISE:600, LOITER:300, FIGHTER:1000 };
+    const primary = _currentSc.threats.find(t => !t.decoy && !t.ghost) || _currentSc.threats[0];
+    const tgtBase = activeBases().find(b => b.id === primary?.target);
+
+    const payload = {
+      state: { bases: activeBases().map(b => {
+        const st = inventoryState[b.id] || {};
+        const ea = st.effAmmo || {};
+        return { name:b.name, x:b.x, y:b.y, hp: st.hp ?? 100, inventory:{
+          'thaad':   ea.THAAD  ?? 0,
+          'patriot-pac3': ea.PAC3  ?? 0,
+          'nasams':  ea.NASAMS ?? 0,
+          'helws':   ea.HELWS  ?? 0,
+          'c-ram':   ea.CRAM   ?? 0,
+        }};
+      }) },
+      threats: _currentSc.threats.filter(t=>!t.decoy).map(t => ({
+        id:t.id, x:tgtBase?.x||0, y:tgtBase?.y||0,
+        speed_kmh: spd[t.type]||600,
+        estimated_type: typeMap[t.type]||'cruise-missile',
+        threat_value: t.value,
+      })),
+      doctrine_primary: ACTIVE_DOCTRINE, use_rl: true,
+      run_mc: true,
+      model_id: document.getElementById('model-select')?.value || 'heuristic',
+    };
+
+    const res = await fetch('http://localhost:8000/evaluate_advanced', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    
+    if (data.mc_metrics) {
+      _lastMCResults = data.mc_metrics;
+      const mc = data.mc_metrics;
+      const body = document.getElementById('kin-body');
+      if (body) {
+        const rows = [
+          { k:'Surv Prob', v: mc.survival_rate_pct + '%' },
+          { k:'Intercept%', v: mc.intercept_rate_pct + '%' },
+          { k:'Mean Score', v: mc.mean_score },
+          { k:'Avg Leaked', v: mc.mean_leaked },
+          { k:'Plan Size', v: mc.plan_size },
+        ];
+        const html = rows.map(r => `<div class="kin-row"><span class="kin-key">${r.k}</span><span class="kin-val" style="color:var(--grn)">${r.v}</span></div>`).join('');
+        body.innerHTML = `<div style="padding-bottom:5px; border-bottom:1px solid var(--bd); margin-bottom:5px; color:var(--ylw); font-size:9px; font-weight:700">STRATEGIC AUDIT RESULTS</div>` + html;
+      }
+      _addFeedLine(`[MC-COMPLETE] Survival Prob: ${mc.survival_rate_pct}% | Mean Leaked: ${mc.mean_leaked}`, 'good');
+    }
+  } catch(e) {
+    _addFeedLine(`Strategic Audit Failed: ${e.message}`, 'warn');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ RUN STRATEGIC AUDIT (MC)';
+  }
+}
+
+// --- Global State for Strategic Metrics ---
+let _lastMCResults = null;
 
 // ═══════════════════════════════════════════════════
 // COMMENTARY HELPER
@@ -2281,7 +2358,7 @@ Track Count: ${m.n} total (${real.length} real, ${m.decoyCount} decoy, ${m.ghost
 Threat Types: ${typeStr}
 Jamming: ${sc.jammed ? 'YES \u2014 active EW degradation' : 'No'}
 Complexity Index: ${m.complexity.toFixed(2)} | Stakes Index: ${m.stakes.toFixed(2)} | TQI: ${m.tqi.toFixed(2)}
-Total Inbound Value: ${m.totalVal}${sqBlock}
+Total Inbound Value: ${m.totalVal}${sqBlock}${_lastMCResults ? `\nMC Strategic Survival Prob: ${_lastMCResults.survival_rate_pct}% | MC Intercept%: ${_lastMCResults.intercept_rate_pct}% | Mean Leaked: ${_lastMCResults.mean_leaked}` : ''}
 
 === RECOMMENDED COA (COA-1) ===
 Utility: ${rec.utility} | Coverage: ${rec.coverage}% | Follow-on Risk: ${rec.followOnRisk.toFixed(2)}

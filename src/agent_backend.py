@@ -25,10 +25,24 @@ from core.models import Effector, Base, Threat, GameState, EFFECTORS, load_battl
 from core.engine import evaluate_threats_advanced
 
 # 2. CONSTANTS & CONFIG
-CSV_FILE_PATH = "data/input/Boreal_passage_coordinates.csv"
+# BUG-FIX B-BE-1: CSV path was hardcoded to Boreal even in Sweden mode.
+# Now dynamically selected based on SAAB_MODE environment variable.
+SAAB_MODE = os.environ.get("SAAB_MODE", "boreal")
+CSV_FILE_PATHS = {
+    "boreal": "data/input/Boreal_passage_coordinates.csv",
+    "sweden": "data/Swedish_Military_Installations.csv",
+}
+CSV_FILE_PATH = CSV_FILE_PATHS.get(SAAB_MODE, CSV_FILE_PATHS["boreal"])
+
+THEATER_META = {
+    "boreal": {"name": "BOREAL PASSAGE", "capital": "ARKTHOLM", "ai_name": "BOREAL ORACLE"},
+    "sweden": {"name": "SWEDEN AOR",     "capital": "STOCKHOLM",  "ai_name": "CORTEX-C2"},
+}
+ACTIVE_THEATER = THEATER_META.get(SAAB_MODE, THEATER_META["boreal"])
+
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 if not OPENROUTER_API_KEY:
-    print("[SYSTEM] OPENROUTER_API_KEY not set — LLM reporting disabled, using local heuristic.")
+    print(f"[SYSTEM] OPENROUTER_API_KEY not set — LLM reporting disabled, using local heuristic. MODE={SAAB_MODE}")
 
 # 3. APP INITIALIZATION
 app = FastAPI(title="Boreal Chessmaster Tactical API")
@@ -91,6 +105,7 @@ class TacticalRequest(BaseModel):
     doctrine_blend: float = 0.5
     use_rl: bool = True
     use_ppo: bool = False
+    run_mc: bool = False
 
 class ProxyLLMRequest(BaseModel):
     model: str
@@ -111,12 +126,16 @@ async def format_report_with_llm(raw_decision_data):
     is_neural = raw_decision_data.get("rl_prediction") is not None
     breach_risk = max(0, 100 - (raw_decision_data.get("rl_prediction", 0) or 0) / 8)
     
+    theater_name   = ACTIVE_THEATER["name"]
+    theater_capital = ACTIVE_THEATER["capital"]
+    ai_name        = ACTIVE_THEATER["ai_name"]
     prompt = f"""
-    You are the Boreal Strategic AI (CORTEX-1), a military intelligence advisor to the Commander (Stridsledare).
+    You are the {ai_name} Strategic AI (CORTEX-1), a military intelligence advisor to the Commander (Stridsledare).
     STATUS: CHRONOSTASIS ACTIVE (Tactical Time Freeze).
     
     TACTICAL INTELLIGENCE:
-    - Target: BOREAL PASSAGE
+    - Theater: {theater_name}
+    - Capital defended: {theater_capital}
     - Active Vectors: {t_count}
     - Strategic Health: {score:.1f}
     - Neural Breach Risk: {breach_risk:.1f}%
@@ -124,7 +143,7 @@ async def format_report_with_llm(raw_decision_data):
     - Proposed Intercepts: {json.dumps(raw_decision_data.get("tactical_assignments", []), indent=2)}
     
     YOUR MISSION:
-    1. Write a 2-sentence SITREP using military brevity. Identify the highest-threat vector (e.g. 'FAST-MOVER approaching VALBREK').
+    1. Write a 2-sentence SITREP using military brevity. Identify the highest-threat vector.
     2. Provide a 1-sentence ADVISORY. Use NATO codes like 'WEAPONS FREE' or 'HOLD FIRE'.
     Keep it cold, professional, and precise. Use CAPITAL LETTERS for base names and threat types.
     """
@@ -147,7 +166,8 @@ async def format_report_with_llm(raw_decision_data):
             print(f"[WARNING] OpenRouter failure: {e}")
 
     # Fallback to Local Heuristic Advisor
-    report = f"--- BOREAL STRATEGIC SITREP ---\n"
+    theater_name = ACTIVE_THEATER["name"]
+    report = f"--- {theater_name} STRATEGIC SITREP ---\n"
     report += f"POSTURE: {doctrine.upper()} mode engaged.\n"
     report += f"THREATS: {t_count} vectors acquired and triaged.\n"
     
@@ -181,10 +201,37 @@ async def startup_event():
             await asyncio.sleep(8)
             if GLOBAL_LOG_QUEUE.empty() and not RECENTLY_ACTIVE:
                 mode = "NEURAL" if LAST_USE_RL else "HEURISTIC"
-                msg = f"[STRAT] Monitoring Boreal sector... {mode} BRAIN: STANDBY"
+                msg = f"[STRAT] Monitoring {ACTIVE_THEATER['name']} sector... {mode} BRAIN: STANDBY"
                 GLOBAL_LOG_QUEUE.put(msg)
             RECENTLY_ACTIVE = False # Reset flag
     asyncio.create_task(idle_pulse())
+
+@app.get("/theater")
+async def get_theater():
+    """Return active theater metadata: mode, name, capital, CSV path."""
+    return {
+        "mode": SAAB_MODE,
+        "theater_name": ACTIVE_THEATER["name"],
+        "capital": ACTIVE_THEATER["capital"],
+        "csv_path": CSV_FILE_PATH,
+    }
+
+@app.get("/state")
+async def get_state():
+    """Return current battlefield bases loaded from CSV for the active theater.
+    BUG-FIX B-BE-2: Provides /state endpoint so the frontend can verify
+    which bases are loaded and at what km coordinates.
+    """
+    state = load_battlefield_state(CSV_FILE_PATH)
+    return {
+        "mode": SAAB_MODE,
+        "theater": ACTIVE_THEATER["name"],
+        "base_count": len(state.bases),
+        "bases": [
+            {"name": b.name, "x_km": b.x, "y_km": b.y, "inventory": b.inventory}
+            for b in state.bases
+        ],
+    }
 
 @app.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
@@ -243,7 +290,8 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
         active_threats,
         50,    # mcts_iterations
         2.0,   # salvo_ratio
-        None,  # doctrine_weights (handled internally by DoctrineManager)
+        None,  # doctrine_weights
+        run_mc=request.run_mc,
         weather=request.weather,
         doctrine_primary=request.doctrine_primary,
     )
@@ -253,6 +301,7 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
         "strategic_consequence_score": float(score),
         "rl_prediction": float(rl_val) if rl_val else None,
         "leaked": float(details.get("leaked", 0)),
+        "mc_metrics": details.get("mc_metrics"),
         "active_doctrine": {
             "primary": request.doctrine_primary,
             "secondary": doc_sec or "none",

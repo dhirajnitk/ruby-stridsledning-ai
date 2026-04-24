@@ -115,10 +115,15 @@ def load_battlefield_state(filepath) -> GameState:
     bases = []
     try:
         if os.path.exists(filepath):
-            with open(filepath, mode='r') as f:
+            # BUG-FIX B-CSV-1: Use utf-8-sig to handle BOM and Swedish special characters (å, ä, ö)
+            with open(filepath, mode='r', encoding='utf-8-sig') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    if row['subtype'] in ['air_base', 'capital', 'major_city']:
+                    # BUG-FIX B-CSV-2: Sweden has naval_base subtype (Muskö, Karlskrona) that
+                    # were excluded because only air_base/capital/major_city were accepted.
+                    # Include naval_base for all modes.
+                    valid_subtypes = ['air_base', 'capital', 'major_city', 'naval_base']
+                    if row['subtype'] in valid_subtypes:
                         name = row['feature_name']
                         if mode == "sweden":
                             # Sweden "Salvo-Ready Fortress" Config

@@ -72,6 +72,7 @@
         .panel-header { font-size: 11px; font-weight: bold; margin-bottom: 8px; color: #89b4fa; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 1px;}
         #canvas-container { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #11111b; border-radius: 6px; position: relative;}
         #radarCanvas { background: url('the-boreal-passage-map.svg'); background-size: cover; border-radius: 6px; cursor: crosshair; }
+        /* BUG-FIX UI-5: mode-specific map background set dynamically below via JS */
         .trace-log { flex: 1; background: #11111b; border-radius: 6px; padding: 8px; font-family: 'Cascadia Code', monospace; font-size: 10px; overflow-y: auto; white-space: pre-wrap; color: #a6adc8; border: 1px solid #313244;}
         .status-light { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
         .light-on { background: #a6e3a1; box-shadow: 0 0 5px #a6e3a1; }
@@ -81,7 +82,7 @@
 </head>
 <body>
     <div class="top-nav">
-        <div style="font-size: 16px; font-weight: bold; color: #fab387;">BOREAL CHESSMASTER <span style="font-size: 9px; color: #89b4fa; margin-left:5px;">v4.0</span></div>
+        <div style="font-size: 16px; font-weight: bold; color: #fab387;"><span id="theater-title">BOREAL CHESSMASTER</span> <span style="font-size: 9px; color: #89b4fa; margin-left:5px;">v4.0</span></div>
         <div class="controls">
             <div class="doctrine-console">
                 <select id="primary-doctrine" style="background:none; color:#cdd6f4; border:none; font-size:10px; outline:none;"><option value="balanced">BALANCED</option><option value="aggressive">AGGRESSIVE</option><option value="fortress">FORTRESS</option><option value="economy">ECONOMY</option><option value="ambush">AMBUSH</option><option value="saturation">SATURATION</option></select>
@@ -134,19 +135,53 @@
         </div>
     </div>
     <script>
+        // BUG-FIX UI-5: Set correct SVG map background and title based on ?mode= URL param
+        (function() {
+          const _mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
+          const mapFiles = { boreal: 'the-boreal-passage-map.svg', sweden: 'sweden-military-map.svg' };
+          const mapFile = mapFiles[_mode] || mapFiles.boreal;
+          const canvas = document.getElementById('radarCanvas');
+          if (canvas) canvas.style.background = `url('${mapFile}') center/cover no-repeat`;
+          const titleEl = document.getElementById('theater-title');
+          if (titleEl) titleEl.textContent = _mode === 'sweden' ? 'SWEDEN AOR' : 'BOREAL CHESSMASTER';
+          // Adjust canvas height for Sweden's taller viewBox
+          if (_mode === 'sweden' && canvas) canvas.height = 900;
+        })();
+
         const canvas = document.getElementById('radarCanvas'); const ctx = canvas.getContext('2d');
         const container = document.getElementById('canvas-container'); const wsOutput = document.getElementById('ws-output');
-        let activeThreats = []; let explosions = []; let latestAssignments = []; let scoreChart; const SCALE = 0.6; 
-        const bases = [
-            // --- NORTHERN TERRITORIES (Restored to working reference coordinates) ---
+        const _legacyMode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
+        let activeThreats = []; let explosions = []; let latestAssignments = []; let scoreChart;
+        // BUG-FIX UI-5b: Scale factor matches the CSV coordinate range.
+        // Boreal: theater 1666km wide → canvas 1000px → scale 0.6
+        // Sweden: x_km range ~-365 to +185 → scaled to fit 1000px canvas
+        const SCALE = _legacyMode === 'sweden' ? 0.48 : 0.6;
+        const ORIGIN_X = _legacyMode === 'sweden' ? 545 : 0;
+        const ORIGIN_Y = _legacyMode === 'sweden' ? 628 : 0;
+
+        // Sweden bases from Swedish_Military_Installations.csv (x_km, y_km = offset from Stockholm)
+        const swedenBases = [
+            { name: "Stockholm (Capital)",    x_km:   0,   y_km:    0, color: "#ffcc00", type: "capital", inventory: { sam: 60 } },
+            { name: "Uppsala Air Base (F 16)",x_km: -27,   y_km:   63, color: "#3fc1ff", type: "base",    inventory: { sam: 24 } },
+            { name: "Vidsel Air Base",         x_km:  95,   y_km:  728, color: "#3fc1ff", type: "base",    inventory: { sam: 48 } },
+            { name: "Luleå Air Base (F 21)",   x_km: 185,   y_km:  691, color: "#3fc1ff", type: "base",    inventory: { sam: 12 } },
+            { name: "Muskö Naval Base",        x_km:   4,   y_km:  -46, color: "#3399ff", type: "naval",   inventory: { sam: 30 } },
+            { name: "Såtenäs Air Base (F 7)",  x_km:-313,   y_km:  -99, color: "#3fc1ff", type: "base",    inventory: { sam: 24 } },
+            { name: "Malmen Air Base",         x_km:-150,   y_km: -104, color: "#3fc1ff", type: "base",    inventory: { sam: 16 } },
+            { name: "Ronneby Air Base (F 17)", x_km:-172,   y_km: -340, color: "#3fc1ff", type: "base",    inventory: { sam: 32 } },
+            { name: "Karlskrona Naval Base",   x_km:-153,   y_km: -352, color: "#3399ff", type: "naval",   inventory: { sam: 20 } },
+            { name: "Gotland (Visby Base)",    x_km:  16,   y_km: -186, color: "#00cccc", type: "city",    inventory: { sam: 40 } },
+            { name: "Gothenburg",              x_km:-364,   y_km: -180, color: "#00cccc", type: "city",    inventory: { sam: 30 } },
+        ];
+        const borealBases = [
+            // --- NORTHERN TERRITORIES ---
             { name: "Arktholm (Capital X)", x_km: 418.3, y_km: 95.0, color: "#ffcc00", type: "capital", inventory: { sam: 20 } },
             { name: "Northern Vanguard Base", x_km: 198.3, y_km: 335.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
             { name: "Highridge Command", x_km: 838.3, y_km: 75.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
             { name: "Boreal Watch Post", x_km: 1158.3, y_km: 385.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
             { name: "Nordvik", x_km: 140, y_km: 323.3, color: "#ffffff", type: "city", inventory: {} },
             { name: "Valbrek", x_km: 1423.3, y_km: 213.3, color: "#ffffff", type: "city", inventory: {} },
-            
-            // --- SOUTHERN UNION (Synced with reference logic) ---
+            // --- SOUTHERN UNION ---
             { name: "Meridia (Capital Y)", x_km: 1225, y_km: 1208.3, color: "#ffcc00", type: "capital", inventory: {} },
             { name: "Spear Point Base", x_km: 918.3, y_km: 835.0, color: "#f38ba8", type: "base", inventory: {} },
             { name: "Southern Redoubt", x_km: 321.7, y_km: 1238.3, color: "#f38ba8", type: "base", inventory: {} },
@@ -154,6 +189,11 @@
             { name: "Callhaven", x_km: 96.7, y_km: 1150.0, color: "#ffffff", type: "city", inventory: {} },
             { name: "Solano", x_km: 576.7, y_km: 1236.7, color: "#ffffff", type: "city", inventory: {} }
         ];
+        // BUG-FIX UI-5c: Select correct base set and coordinate mapping per theater mode
+        const bases = _legacyMode === 'sweden' ? swedenBases : borealBases;
+        function toCanvasX(x_km) { return ORIGIN_X + x_km * SCALE; }
+        // BUG-FIX UI-2: Sweden y_km is north-positive; canvas y increases downward → negate for Sweden
+        function toCanvasY(y_km) { return _legacyMode === 'sweden' ? ORIGIN_Y - y_km * SCALE : y_km * SCALE; }
         // Terrain is now handled by the SVG layer
         const terrain = [];
         function fitCanvas() { const s = Math.min(container.clientWidth / 1000, container.clientHeight / 780, 1.0); canvas.style.transform = `scale(${s})`; canvas.style.transformOrigin = 'center center'; }
@@ -287,13 +327,15 @@
             });
 
             bases.forEach(b => { 
-                const pxX = b.x_km * SCALE; const pxY = b.y_km * SCALE; ctx.fillStyle = b.color; ctx.beginPath();
+                // BUG-FIX UI-TACT-1: use toCanvasX/toCanvasY (includes origin offset and Y-flip for Sweden)
+                const pxX = toCanvasX(b.x_km); const pxY = toCanvasY(b.y_km); ctx.fillStyle = b.color; ctx.beginPath();
                 // Increased base sizes: 12x12 for capitals/cities, radius 8 for bases
                 if(b.type.includes("city") || b.type.includes("capital")) { ctx.rect(pxX-6, pxY-6, 12, 12); } else { ctx.arc(pxX, pxY, 8, 0, 7); }
                 ctx.fill(); ctx.fillStyle="#ffffff"; ctx.font = "bold 10px Segoe UI"; ctx.fillText(b.name, pxX-20, pxY-12); 
             });
             activeThreats.forEach(t => { 
-                const pxX = t.x_km * SCALE; const pxY = t.y_km * SCALE;
+                // BUG-FIX UI-TACT-1: use toCanvasX/toCanvasY for threat positions
+                const pxX = toCanvasX(t.x_km); const pxY = toCanvasY(t.y_km);
                 // Aircraft as larger tactical triangles (radius 6)
                 ctx.fillStyle = "#f38ba8"; ctx.beginPath();
                 ctx.moveTo(pxX, pxY - 7); ctx.lineTo(pxX + 6, pxY + 5); ctx.lineTo(pxX - 6, pxY + 5);
@@ -303,10 +345,12 @@
             if (Array.isArray(latestAssignments)) {
                 latestAssignments.forEach(ass => {
                     const b = bases.find(base => base.name === ass.base_name); const t = activeThreats.find(th => th.id === ass.threat_id);
-                    if (b && t) { ctx.strokeStyle = "#a6e3a1"; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(b.x_km * SCALE, b.y_km * SCALE); ctx.lineTo(t.x_km * SCALE, t.y_km * SCALE); ctx.stroke(); ctx.setLineDash([]); }
+                    // BUG-FIX UI-TACT-1: use toCanvasX/toCanvasY for assignment lines
+                    if (b && t) { ctx.strokeStyle = "#a6e3a1"; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(toCanvasX(b.x_km), toCanvasY(b.y_km)); ctx.lineTo(toCanvasX(t.x_km), toCanvasY(t.y_km)); ctx.stroke(); ctx.setLineDash([]); }
                 });
             }
-            explosions.forEach((exp, i) => { ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`; ctx.beginPath(); ctx.arc(exp.x_km * SCALE, exp.y_km * SCALE, (30-exp.life)*2, 0, 7); ctx.fill(); exp.life--; if(exp.life <= 0) explosions.splice(i, 1); });
+            // BUG-FIX UI-TACT-1: use toCanvasX/toCanvasY for explosion positions
+            explosions.forEach((exp, i) => { ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`; ctx.beginPath(); ctx.arc(toCanvasX(exp.x_km), toCanvasY(exp.y_km), (30-exp.life)*2, 0, 7); ctx.fill(); exp.life--; if(exp.life <= 0) explosions.splice(i, 1); });
             
             // --- AUTOMATIC VS MANUAL EXECUTION ---
             const isOverride = document.getElementById('manual-override').checked;
@@ -359,7 +403,10 @@
             
             activeThreats.forEach(t => {
                 const speedPerFrame = (t.speed_kmh / 3600) * (120 / 60); // 120x Strategic Acceleration for demo
-                if (!t.heading || t.heading === "Capital X") {
+                // BUG-FIX UI-TACT-3: Theater-aware default heading
+                const defaultHeading = _legacyMode === 'sweden' ? 'Stockholm (Capital)' : 'Capital X';
+                if (!t.heading || t.heading === defaultHeading) {
+                    // Move west (decreasing x_km) for both theaters
                     t.x_km -= speedPerFrame; 
                 } else {
                     const target = bases.find(b => b.name === t.heading);
@@ -395,8 +442,20 @@
             logSpan.textContent = `[COMMAND] Manual firing authorization executed.\n`;
             wsOutput.appendChild(logSpan);
         }
-        document.getElementById('btn-threat').onclick = () => activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x_km: 1600, y_km: 100+Math.random()*600, speed_kmh: 2000, estimated_type: "bomber", threat_value: 80});
-        document.getElementById('btn-blind').onclick = () => { for(let i=0; i<10; i++) activeThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: 1600+(i*40), y_km: 50+Math.random()*700, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150}); };
+        // BUG-FIX UI-TACT-2: Theater-aware threat spawn. Sweden: east coast ~+300km; Boreal: x~1600km
+        document.getElementById('btn-threat').onclick = () => {
+            const spawnX = _legacyMode === 'sweden' ? 300 + Math.random()*100 : 1600;
+            const spawnY = _legacyMode === 'sweden' ? -300 + Math.random()*600 : 100+Math.random()*600;
+            const heading = _legacyMode === 'sweden' ? 'Stockholm (Capital)' : 'Capital X';
+            activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x_km: spawnX, y_km: spawnY, speed_kmh: 2000, estimated_type: "bomber", threat_value: 80, heading});
+        };
+        // BUG-FIX UI-TACT-2: Theater-aware ambush wave spawn
+        document.getElementById('btn-blind').onclick = () => {
+            const baseX = _legacyMode === 'sweden' ? 300 : 1600;
+            const baseY = _legacyMode === 'sweden' ? -300 : 50;
+            const heading = _legacyMode === 'sweden' ? 'Stockholm (Capital)' : 'Capital X';
+            for(let i=0; i<10; i++) activeThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: baseX+(i*20), y_km: baseY+Math.random()*600, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150, heading});
+        };
         document.getElementById('btn-ai').onclick = () => requestAIOrders(false);
         document.getElementById('blend-ratio').oninput = (e) => document.getElementById('blend-val').textContent = e.target.value + "% P";
         const ctxChart = document.getElementById('scoreChart').getContext('2d');

@@ -173,7 +173,29 @@ DOCTRINE_KEYS = [
     "thaad", "patriot-pac3", "nasams", "cram", "helws", "aegis"
 ]
 
-def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2, doctrine_weights=None, **kwargs):
+def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear"):
+    """Run N strategic rollouts, return survival_rate (score>0) and mean score."""
+    weights, flags = DoctrineManager.get_blended_profile()
+    plan = TacticalEngine.get_optimal_assignments(state, threats, weights=weights, flags=flags, salvo_ratio=salvo_ratio)
+
+    scores = []
+    leaked_list = []
+    for _ in range(n_sims):
+        s, d = StrategicMCTS._single_rollout(state, plan, threats, weather=weather)
+        scores.append(s)
+        leaked_list.append(d.get("leaked", 0))
+
+    survival = sum(1 for s in scores if s > 0) / n_sims * 100
+    intercept_est = sum(1 for s in scores if s > 150) / n_sims * 100
+    return {
+        "survival_rate_pct": round(survival, 1),
+        "intercept_rate_pct": round(intercept_est, 1),
+        "mean_score": round(sum(scores) / n_sims, 1),
+        "mean_leaked": round(sum(leaked_list) / n_sims, 2),
+        "plan_size": len(plan),
+    }
+
+def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2, doctrine_weights=None, run_mc=False, **kwargs):
     weights, flags = DoctrineManager.get_blended_profile()
     
     # Map Neural Weights to specific Effector Priorities
@@ -197,5 +219,9 @@ def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2,
     filtered = [t for t in threats if t.estimated_type != "decoy" or min(math.hypot(b.x-t.x, b.y-t.y) for b in state.bases) < 15]
     plan = TacticalEngine.get_optimal_assignments(state, filtered, weights=weights, flags=flags, salvo_ratio=final_salvo)
     score, details, rl_val = StrategicMCTS.run_mcts_rollout(state, plan, filtered, iterations=mcts_iterations, weights=weights, flags=flags)
+    
+    if run_mc:
+        details["mc_metrics"] = survival_mc(state, filtered, n_sims=100, salvo_ratio=final_salvo, weather=kwargs.get("weather", "clear"))
+    
     details["tactical_assignments"] = plan
     return score, details, rl_val

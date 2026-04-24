@@ -15,6 +15,7 @@ The CORTEX-C2 LLM integration brings a generative AI layer on top of the determi
 - **Risk articulation** that the WTA utility score cannot express
 - **Commander's recommendation** in plain language
 - **Follow-on threat anticipation** beyond the current picture
+- **Strategic Audit Analysis** — interpreting Monte Carlo 200-iteration survival and intercept probabilities
 - A second opinion to cross-check the algorithmic output
 
 The integration uses **OpenRouter** as the API gateway, which provides a single unified endpoint (`https://openrouter.ai/api/v1/chat/completions`) compatible with the OpenAI chat completions specification, routing to any of 100+ frontier models.
@@ -24,7 +25,9 @@ Operator loads scenario
         ↓
 CORTEX-1 COA Engine (deterministic WTA + MCTS)
         ↓
-buildTacticalPrompt() — assembles scenario + metrics + COA + inventory
+Strategic Audit (200-iteration Monte Carlo rollout) — Survival % / Intercept %
+        ↓
+buildTacticalPrompt() — assembles scenario + MC metrics + COA + inventory
         ↓
 Internal Proxy (/llm/proxy) → uses server-side OPENROUTER_API_KEY
         ↓
@@ -106,6 +109,7 @@ Threat Types: <Nx TYPE, ...>
 Jamming: <YES / No>
 Complexity Index: <0.0–1.0>  | Stakes Index: <0.0–1.0>  | TQI: <0.0–1.0>
 Total Inbound Value: <N>
+MC Survival Prob: <N>% | MC Intercept Prob: <N>% | Mean Leaked: <N>
 
 === RECOMMENDED COA (COA-1) ===
 Utility: <N>  | Coverage: <N>%  | Follow-on Risk: <0.0–1.0>

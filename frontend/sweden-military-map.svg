@@ -1,0 +1,295 @@
+<svg id="map" width="100%" viewBox="0 0 1000 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid-sw" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+    </pattern>
+    <filter id="glow-blue">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-green">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background: Baltic Sea / surrounding waters -->
+  <rect width="1000" height="900" fill="#0a1826"/>
+  <rect width="1000" height="900" fill="url(#grid-sw)"/>
+
+  <!-- ===================== SWEDEN MAINLAND =====================
+       Coordinates: SVG_x = (lon - 10.0) * 66.67
+                    SVG_y = (70.5 - lat) * 56.25
+       Origin anchor: Stockholm lon=18.07°E, lat=59.33°N → SVG (538, 628)
+  -->
+  <polygon
+    fill="#1e2d1e"
+    stroke="#2a3a2a"
+    stroke-width="1.5"
+    stroke-linejoin="round"
+    points="
+      668,79
+      702,112
+      736,141
+      769,169
+      803,197
+      836,225
+      870,253
+      870,281
+      836,309
+      836,337
+      870,365
+      903,393
+      936,421
+      936,449
+      903,477
+      869,506
+      836,534
+      803,562
+      769,590
+      736,618
+      702,646
+      669,674
+      635,702
+      601,730
+      567,758
+      534,786
+      500,814
+      467,842
+      433,870
+      400,842
+      367,814
+      367,786
+      333,758
+      300,730
+      300,702
+      267,674
+      267,646
+      233,618
+      200,590
+      167,562
+      133,534
+      100,506
+      67,477
+      67,449
+      67,421
+      67,393
+      67,365
+      67,337
+      67,309
+      67,281
+      100,253
+      100,225
+      100,197
+      133,169
+      133,141
+      167,112
+      200,84
+      233,56
+      267,56
+      300,84
+      333,112
+      367,112
+      400,84
+      433,56
+      467,56
+      500,28
+      534,28
+      567,56
+      601,56
+      635,79
+      668,79
+    "
+  />
+
+  <!-- Sweden land fill — better shape traced from WGS84 boundary -->
+  <!-- Using a more accurate path for Sweden's distinctive shape -->
+  <path
+    fill="#22332a"
+    stroke="#2e3e2e"
+    stroke-width="1.2"
+    d="
+      M 668,79
+      C 695,80 718,90 736,105
+      C 755,120 778,140 803,155
+      C 828,170 855,175 878,185
+      C 903,197 930,205 940,220
+      C 950,235 948,255 944,270
+      C 940,285 930,295 921,310
+      C 912,325 908,340 912,360
+      C 916,380 930,395 940,415
+      C 950,435 950,455 944,470
+      C 936,488 920,500 905,515
+      C 888,530 870,540 850,548
+      C 828,558 805,562 780,570
+      C 755,578 728,582 700,590
+      C 672,598 645,608 618,618
+      C 591,628 564,640 537,650
+      C 510,660 482,665 455,668
+      C 428,671 400,670 375,660
+      C 350,650 328,635 305,625
+      C 282,615 258,610 232,608
+      C 206,606 178,610 152,608
+      C 126,606 100,600 80,588
+      C 60,576 48,558 42,540
+      C 36,522 40,502 48,485
+      C 56,468 68,455 75,438
+      C 82,421 82,402 75,385
+      C 68,368 55,354 48,338
+      C 41,322 40,305 48,290
+      C 56,275 70,263 82,250
+      C 94,237 102,222 105,206
+      C 108,190 105,172 102,155
+      C 99,138 95,120 98,103
+      C 101,86 112,72 125,60
+      C 138,48 155,40 172,35
+      C 189,30 208,30 228,32
+      C 248,34 268,40 290,42
+      C 312,44 336,42 358,44
+      C 380,46 400,52 420,52
+      C 440,52 460,48 480,46
+      C 500,44 522,46 544,52
+      C 566,58 584,68 605,72
+      C 626,76 648,78 668,79
+      Z
+    "
+  />
+
+  <!-- Gotland Island (Baltic Sea island, Sweden's largest) -->
+  <ellipse cx="615" cy="695" rx="22" ry="38"
+    fill="#22332a" stroke="#2e3e2e" stroke-width="1"
+    data-name="Gotland Island" data-info="Gotland — strategic Baltic island"/>
+  <!-- Öland Island (smaller, near Gotland) -->
+  <ellipse cx="540" cy="740" rx="7" ry="22"
+    fill="#22332a" stroke="#2e3e2e" stroke-width="0.8"/>
+
+  <!-- ===================== MILITARY INSTALLATIONS =====================
+       Coordinate basis: Swedish_Military_Installations.csv x_km/y_km
+       Plotting formula: SVG_x = 538 + x_km * 0.48
+                         SVG_y = 628 - y_km * 0.48     (north-positive → negate for SVG)
+       11 locations total.
+  -->
+
+  <!-- ── NORTH AIR BASES (red circles) ── -->
+  <!-- F21: Luleå Air Base — x=185, y=691 → SVG(627, 296) -->
+  <circle cx="627" cy="296" r="8" fill="#cc3333" stroke="#000" stroke-width="1.2"
+    data-id="F21" data-name="Luleå Air Base (F 21)" data-subtype="air_base" data-side="north"/>
+  <text x="638" y="300" fill="#ff6666" font-size="9" font-family="monospace" font-weight="bold">F21</text>
+  <text x="638" y="310" fill="rgba(255,150,150,0.6)" font-size="7" font-family="monospace">LULEÅ</text>
+
+  <!-- VID: Vidsel Air Base — x=95, y=728 → SVG(584, 278) -->
+  <circle cx="584" cy="278" r="8" fill="#cc3333" stroke="#000" stroke-width="1.2"
+    data-id="VID" data-name="Vidsel Air Base" data-subtype="air_base" data-side="north"/>
+  <text x="595" y="282" fill="#ff6666" font-size="9" font-family="monospace" font-weight="bold">VID</text>
+  <text x="595" y="292" fill="rgba(255,150,150,0.6)" font-size="7" font-family="monospace">VIDSEL</text>
+
+  <!-- F16: Uppsala Air Base — x=-27, y=63 → SVG(525, 598) -->
+  <circle cx="525" cy="598" r="8" fill="#cc3333" stroke="#000" stroke-width="1.2"
+    data-id="F16" data-name="Uppsala Air Base (F 16)" data-subtype="air_base" data-side="north"/>
+  <text x="536" y="602" fill="#ff6666" font-size="9" font-family="monospace" font-weight="bold">F16</text>
+  <text x="536" y="612" fill="rgba(255,150,150,0.6)" font-size="7" font-family="monospace">UPPSALA</text>
+
+  <!-- ── SOUTH AIR BASES (red circles) ── -->
+  <!-- F7: Såtenäs — x=-313, y=-99 → SVG(388, 676) -->
+  <circle cx="388" cy="676" r="8" fill="#cc3333" stroke="#000" stroke-width="1.2"
+    data-id="F7" data-name="Såtenäs Air Base (F 7)" data-subtype="air_base" data-side="south"/>
+  <text x="399" y="680" fill="#ff6666" font-size="9" font-family="monospace" font-weight="bold">F7</text>
+  <text x="399" y="690" fill="rgba(255,150,150,0.6)" font-size="7" font-family="monospace">SÅTENÄS</text>
+
+  <!-- MAL: Malmen Air Base — x=-150, y=-104 → SVG(466, 678) -->
+  <circle cx="466" cy="678" r="8" fill="#cc3333" stroke="#000" stroke-width="1.2"
+    data-id="MAL" data-name="Malmen Air Base" data-subtype="air_base" data-side="south"/>
+  <text x="477" y="682" fill="#ff6666" font-size="9" font-family="monospace" font-weight="bold">MAL</text>
+  <text x="477" y="692" fill="rgba(255,150,150,0.6)" font-size="7" font-family="monospace">MALMEN</text>
+
+  <!-- F17: Ronneby Air Base — x=-172, y=-340 → SVG(455, 791) -->
+  <circle cx="455" cy="791" r="8" fill="#cc3333" stroke="#000" stroke-width="1.2"
+    data-id="F17" data-name="Ronneby Air Base (F 17)" data-subtype="air_base" data-side="south"/>
+  <text x="466" y="795" fill="#ff6666" font-size="9" font-family="monospace" font-weight="bold">F17</text>
+  <text x="466" y="805" fill="rgba(255,150,150,0.6)" font-size="7" font-family="monospace">RONNEBY</text>
+
+  <!-- ── CAPITAL (gold star) ── -->
+  <!-- STO: Stockholm — x=0, y=0 → SVG(538, 628) -->
+  <polygon points="538,616 542,626 552,626 544,633 547,643 538,637 529,643 532,633 524,626 534,626"
+    fill="#ffcc00" stroke="#000" stroke-width="1.2"
+    data-id="STO" data-name="Stockholm (Capital)" data-subtype="capital" data-side="north"
+    filter="url(#glow-green)"/>
+  <text x="549" y="632" fill="#ffee66" font-size="9" font-family="monospace" font-weight="bold">STO</text>
+  <text x="549" y="643" fill="rgba(255,220,100,0.7)" font-size="7" font-family="monospace">STOCKHOLM ★</text>
+
+  <!-- ── NAVAL BASES (dark blue squares) ── -->
+  <!-- MUS: Muskö Naval Base — x=4, y=-46 → SVG(540, 650) -->
+  <rect x="532" y="643" width="14" height="14" rx="2"
+    fill="#003366" stroke="#3399ff" stroke-width="1.5"
+    data-id="MUS" data-name="Muskö Naval Base" data-subtype="naval_base" data-side="north"/>
+  <text x="548" y="654" fill="#66aaff" font-size="9" font-family="monospace" font-weight="bold">MUS</text>
+  <text x="548" y="664" fill="rgba(100,160,255,0.6)" font-size="7" font-family="monospace">MUSKÖ</text>
+
+  <!-- KRL: Karlskrona Naval — x=-153, y=-352 → SVG(465, 797) -->
+  <rect x="457" y="790" width="14" height="14" rx="2"
+    fill="#003366" stroke="#3399ff" stroke-width="1.5"
+    data-id="KRL" data-name="Karlskrona Naval Base" data-subtype="naval_base" data-side="south"/>
+  <text x="473" y="801" fill="#66aaff" font-size="9" font-family="monospace" font-weight="bold">KRL</text>
+  <text x="473" y="811" fill="rgba(100,160,255,0.6)" font-size="7" font-family="monospace">KARLSKRONA</text>
+
+  <!-- ── STRATEGIC CITIES (teal diamonds) ── -->
+  <!-- GOT: Gotland — x=16, y=-186 → SVG(546, 717) -->
+  <polygon points="615,705 625,717 615,729 605,717"
+    fill="#006666" stroke="#00cccc" stroke-width="1.5"
+    data-id="GOT" data-name="Gotland (Visby Base)" data-subtype="major_city" data-side="south"
+    filter="url(#glow-blue)"/>
+  <text x="626" y="721" fill="#00dddd" font-size="9" font-family="monospace" font-weight="bold">GOT</text>
+  <text x="626" y="731" fill="rgba(0,200,200,0.6)" font-size="7" font-family="monospace">GOTLAND</text>
+
+  <!-- GBG: Gothenburg — x=-364, y=-180 → SVG(363, 715) -->
+  <polygon points="363,703 373,715 363,727 353,715"
+    fill="#006666" stroke="#00cccc" stroke-width="1.5"
+    data-id="GBG" data-name="Gothenburg" data-subtype="major_city" data-side="south"
+    filter="url(#glow-blue)"/>
+  <text x="374" y="719" fill="#00dddd" font-size="9" font-family="monospace" font-weight="bold">GBG</text>
+  <text x="374" y="729" fill="rgba(0,200,200,0.6)" font-size="7" font-family="monospace">GOTHENBURG</text>
+
+  <!-- ===================== DECORATIVE ELEMENTS ===================== -->
+  <!-- Norway border hint (west) -->
+  <path d="M 67,281 C 45,310 30,350 25,400 C 20,450 25,500 30,540"
+    fill="none" stroke="rgba(100,120,100,0.2)" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- Finland border hint (east) -->
+  <path d="M 803,155 C 850,180 880,220 910,260 C 940,300 955,350 950,400"
+    fill="none" stroke="rgba(100,120,100,0.2)" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- Scale bar -->
+  <line x1="780" y1="852" x2="940" y2="852" stroke="white" stroke-width="2"/>
+  <line x1="780" y1="847" x2="780" y2="857" stroke="white" stroke-width="2"/>
+  <line x1="940" y1="847" x2="940" y2="857" stroke="white" stroke-width="2"/>
+  <text x="860" y="870" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="middle" font-family="monospace">200 km</text>
+
+  <!-- Legend -->
+  <g transform="translate(20,20)">
+    <rect x="0" y="0" width="160" height="115" rx="4" fill="rgba(5,12,20,0.75)" stroke="rgba(0,242,255,0.2)" stroke-width="1"/>
+    <text x="8" y="16" fill="rgba(0,242,255,0.7)" font-size="8" font-family="monospace" font-weight="bold" letter-spacing="1">ASSET CLASSIFICATION</text>
+    <rect x="8" y="22" width="120" height="1" fill="rgba(0,242,255,0.15)"/>
+    <!-- Air Base -->
+    <circle cx="16" cy="36" r="5" fill="#cc3333" stroke="#000" stroke-width="1"/>
+    <text x="26" y="40" fill="rgba(255,150,150,0.8)" font-size="8" font-family="monospace">Air Base</text>
+    <!-- Capital -->
+    <polygon points="16,52 19,58 25,58 20,62 22,68 16,64 10,68 12,62 7,58 13,58" fill="#ffcc00" stroke="#000" stroke-width="0.8"/>
+    <text x="26" y="63" fill="rgba(255,220,100,0.8)" font-size="8" font-family="monospace">Capital</text>
+    <!-- Naval -->
+    <rect x="10" y="72" width="12" height="12" rx="1" fill="#003366" stroke="#3399ff" stroke-width="1.5"/>
+    <text x="26" y="82" fill="rgba(100,160,255,0.8)" font-size="8" font-family="monospace">Naval Base</text>
+    <!-- Strategic City -->
+    <polygon points="16,96 22,104 16,112 10,104" fill="#006666" stroke="#00cccc" stroke-width="1.2"/>
+    <text x="26" y="107" fill="rgba(0,200,200,0.8)" font-size="8" font-family="monospace">Strategic City</text>
+  </g>
+
+  <!-- Theater Title -->
+  <text x="500" y="888" fill="rgba(180,220,180,0.25)" font-size="11" font-weight="bold"
+    text-anchor="middle" letter-spacing="4" font-family="monospace">SWEDEN — MILITARY INSTALLATIONS AOR</text>
+
+  <!-- Coordinate reference -->
+  <text x="6" y="14" fill="rgba(255,255,255,0.1)" font-size="8" font-family="monospace">lon 10°E</text>
+  <text x="6" y="886" fill="rgba(255,255,255,0.1)" font-size="8" font-family="monospace">lat 55°N</text>
+  <text x="930" y="14" fill="rgba(255,255,255,0.1)" font-size="8" font-family="monospace">25°E</text>
+  <text x="930" y="886" fill="rgba(255,255,255,0.1)" font-size="8" font-family="monospace">70°N</text>
+</svg>
