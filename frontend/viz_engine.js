@@ -113,14 +113,23 @@ const WEAPONS = {
   HYPERSONIC: { speed:2200, color3:'#ffcc00', hex3:0xffcc00, r2d:4,  label:'HYPERSONIC GLIDE', type:'HYPERSONIC' },
   LOITER:     { speed:300,  color3:'#ff00ff', hex3:0xff00ff, r2d:4,  label:'LOITERING MUNITION',type:'LOITER'    },
   BALLISTIC:  { speed:1400, color3:'#ff5500', hex3:0xff5500, r2d:6,  label:'BALLISTIC MISSILE', type:'BALLISTIC'  },
+  // ── Advanced trajectory types ─────────────────────────────────────────────
+  MARV:       { speed:1200, color3:'#ff8800', hex3:0xff8800, r2d:5,  label:'MARV (Maneuvering RV)', type:'BALLISTIC',
+                isMarv:true,  marvTriggerKm:100, marvJinkFrac:0.4 },
+  MIRV:       { speed:1100, color3:'#ff3300', hex3:0xff3300, r2d:7,  label:'MIRV BUS',          type:'BALLISTIC',
+                isMirv:true,  mirvCount:3, mirvReleaseFrac:0.45 },
+  FIGHTER_DOG:{ speed:1800, color3:'#00ccff', hex3:0x00ccff, r2d:5,  label:'FIGHTER (Dogfight)', type:'FIGHTER',
+                isDogfight:true, dogWinProb:0.30, canRtb:true },
 };
 
 const WAVE_SEQ = [
-  { name:'OPENING PROBE',        weapons:['CRUISE'],                    count:4 },
-  { name:'MIXED SATURATION',     weapons:['CRUISE','LOITER'],           count:8 },
-  { name:'HYPERSONIC STRIKE',    weapons:['HYPERSONIC'],                count:4 },
-  { name:'COORDINATED ASSAULT',  weapons:['BALLISTIC','CRUISE'],        count:10},
-  { name:'MAX SATURATION',       weapons:['HYPERSONIC','LOITER','CRUISE'],count:15},
+  { name:'OPENING PROBE',        weapons:['CRUISE'],                              count:4 },
+  { name:'MIXED SATURATION',     weapons:['CRUISE','LOITER'],                     count:8 },
+  { name:'HYPERSONIC STRIKE',    weapons:['HYPERSONIC'],                          count:4 },
+  { name:'MARV/MIRV ASSAULT',    weapons:['MARV','MIRV'],                         count:4 },
+  { name:'FIGHTER WAVE',         weapons:['FIGHTER_DOG','CRUISE'],                count:6 },
+  { name:'COORDINATED ASSAULT',  weapons:['BALLISTIC','CRUISE'],                  count:10},
+  { name:'MAX SATURATION',       weapons:['HYPERSONIC','LOITER','CRUISE','MARV'],  count:15},
 ];
 
 let ammo = {};
@@ -605,6 +614,15 @@ class Threat {
     const tx = to3X(targetNode.x), tz = to3Z(targetNode.y);
     this.pos = new THREE.Vector3(600000 + idx*20000, 5000, tz + (Math.random()-0.5)*200000);
     this.vel = new THREE.Vector3(tx, 5000, tz).sub(this.pos).normalize().multiplyScalar(this.wdef.speed);
+
+    // ── Advanced trajectory state ─────────────────────────────────────
+    this.marvActive   = false;
+    this.mirvReleased = false;
+    this.dogOutcome   = null;   // null | 'KILL' | 'RTB' | 'ENEMY_WIN'
+    this.rtbActive    = false;
+    this._spawnPos    = this.pos.clone(); // for RTB direction
+    this._frame       = 0;
+    this._totalFrames = 300;
     
     this.interceptors = []; // SALVO-READY
     
@@ -620,6 +638,94 @@ class Threat {
     }
   }
   update() {
+    if (this._disposed) return;
+    this._frame++;
+    const tgtPos = new THREE.Vector3(to3X(this.targetNode.x), 5000, to3Z(this.targetNode.y));
+
+    // ── MARV: terminal jink once inside trigger range ─────────────────
+    if (this.wdef.isMarv) {
+      const distToTgt = this.pos.distanceTo(tgtPos);
+      const trigM = (this.wdef.marvTriggerKm || 100) * 1000;
+      if (distToTgt <= trigM && !this.marvActive) {
+        this.marvActive = true;
+        addCoT(`⚡ MARV TERMINAL JINK — ${this.id} (${(distToTgt/1000).toFixed(0)}km out)`, 'alert');
+      }
+      if (this.marvActive) {
+        const jink = (this.wdef.marvJinkFrac || 0.4) * 12000;
+        this.pos.x += (Math.random()-0.5) * jink;
+        this.pos.z += (Math.random()-0.5) * jink;
+      }
+    }
+
+    // ── MIRV: bus separation at release fraction ──────────────────────
+    if (this.wdef.isMirv && !this.mirvReleased) {
+      const totalDist = this._spawnPos.distanceTo(tgtPos);
+      const travelDist = this.pos.distanceTo(this._spawnPos);
+      const frac = totalDist > 0 ? travelDist / totalDist : 0;
+      if (frac >= (this.wdef.mirvReleaseFrac || 0.45)) {
+        this.mirvReleased = true;
+        const count = this.wdef.mirvCount || 3;
+        addCoT(`💥 MIRV BUS SEPARATION — ${count} WARHEADS | ${this.id}`, 'alert');
+        const baseIds = Object.keys(BASES).slice(0, count);
+        baseIds.forEach((bid, ci) => {
+          const childNode = BASES[bid] || this.targetNode;
+          const child = new Threat(`${this.id}-MRV${ci}`, 'BALLISTIC', childNode, ci + 100);
+          child.pos.copy(this.pos); // spawn from bus position
+          child.vel = new THREE.Vector3(to3X(childNode.x), 5000, to3Z(childNode.y)).sub(child.pos).normalize().multiplyScalar(1600);
+          threats.push(child);
+          stats.totalThreats++;
+          addCoT(`  MRV-${ci} → ${childNode.name}`, 'info');
+        });
+      }
+    }
+
+    // ── DOGFIGHT: resolve once at 30% of travel ───────────────────────
+    if (this.wdef.isDogfight && !this.dogOutcome) {
+      const totalDist = this._spawnPos.distanceTo(tgtPos);
+      const travelDist = this.pos.distanceTo(this._spawnPos);
+      if (totalDist > 0 && travelDist / totalDist >= 0.30) {
+        const r = Math.random();
+        const wp = this.wdef.dogWinProb || 0.30;
+        if (r < wp) {
+          this.dogOutcome = 'ENEMY_WIN';
+          addCoT(`✈ DOGFIGHT [${this.id}] — ENEMY WINS · OUR INTERCEPTOR LOST`, 'alert');
+          // threat continues inbound
+        } else if (this.wdef.canRtb && r < wp + 0.35) {
+          this.dogOutcome = 'RTB';
+          this.rtbActive = true;
+          // RTB: reverse velocity direction
+          const awayDir = this.pos.clone().sub(tgtPos).normalize();
+          this.vel = awayDir.multiplyScalar(this.wdef.speed * 1.2);
+          addCoT(`✈ DOGFIGHT [${this.id}] — ENEMY BREAKS OFF · RTB`, 'info');
+        } else {
+          this.dogOutcome = 'KILL';
+          addCoT(`✈ DOGFIGHT [${this.id}] — FIGHTER KILLED IN MERGE`, 'success');
+          if (!this._disposed) {
+            createBlast(this.pos, 0x00ccff);
+            blastSvg(this.pos.x/1666, this.pos.z/1666, '#00ccff');
+            stats.intercepted++;
+            updateAccuracyDisplay();
+            this.dispose();
+          }
+          return;
+        }
+      }
+    }
+
+    // ── RTB: retreating — check if it has left the theatre ───────────
+    if (this.rtbActive) {
+      this.pos.add(this.vel);
+      this.circle2D?.setAttribute('cx', toSvgX(this.pos.x/1666));
+      this.circle2D?.setAttribute('cy', toSvgY(this.pos.z/1666));
+      if (this.mesh) this.mesh.position.copy(this.pos);
+      const distFromSpawn = this.pos.distanceTo(this._spawnPos);
+      if (distFromSpawn > this._spawnPos.distanceTo(new THREE.Vector3(to3X(this.targetNode.x),5000,to3Z(this.targetNode.y))) * 1.2) {
+        addCoT(`✈ RTB COMPLETE — ${this.id} CLEARED THEATRE`, 'info');
+        this.dispose();
+      }
+      return; // skip normal engagement
+    }
+
     this.pos.add(this.vel);
     this.circle2D?.setAttribute('cx', toSvgX(this.pos.x/1666));
     this.circle2D?.setAttribute('cy', toSvgY(this.pos.z/1666));
@@ -1165,7 +1271,7 @@ function triggerDemo(id) {
   pendingApprovals.clear(); rejectedThreats.clear();
   stats = { fired:0, intercepted:0, missed:0, impacts:0, totalThreats:1 };
   // Use weapon selector if present (live_view.html), else random
-  const WKEYS = ['CRUISE','HYPERSONIC','LOITER','BALLISTIC'];
+  const WKEYS = ['CRUISE','HYPERSONIC','LOITER','BALLISTIC','MARV','MIRV','FIGHTER_DOG'];
   const wEl = document.getElementById('lv-sel-weapon');
   const wkey = (wEl && wEl.value) ? wEl.value : WKEYS[Math.floor(Math.random() * WKEYS.length)];
   const t = new Threat(`DEMO-${id}`, wkey, n, 0);
@@ -1203,9 +1309,9 @@ function launchStandaloneWave() {
   stats = { fired:0, intercepted:0, missed:0, impacts:0, totalThreats:0 };
   pendingApprovals.clear(); rejectedThreats.clear();
   initAmmo(); updateInventoryDisplay();
-  const WKEYS = ['CRUISE','HYPERSONIC','LOITER','BALLISTIC','CRUISE'];
+  const WKEYS = ['CRUISE','HYPERSONIC','LOITER','BALLISTIC','MARV','MIRV','FIGHTER_DOG','CRUISE'];
   const tgtPool = THEATER_DATA.filter(n => n.type === 'HVA' || n.type === 'BASE');
-  addCoT('STANDALONE SATURATION WAVE — 5 THREATS INBOUND', 'alert');
+  addCoT('STANDALONE SATURATION WAVE — 8 THREATS (MARV/MIRV/DOGFIGHT INCLUDED)', 'alert');
   addCoT(`ACTIVE MODEL: ${ACTIVE_MODEL.name} | Pk: ${(ACTIVE_MODEL.pk*100).toFixed(1)}%`, 'info');
   // Set wave index past WAVE_SEQ boundary so updateSimulation() stops cleanly
   // instead of transitioning to ground-truth launchWave() after this wave ends
@@ -1218,7 +1324,6 @@ function launchStandaloneWave() {
     addCoT(`THREAT ${i+1}: ${WEAPONS[wkey].label} → ${tgt.name}`, 'alert');
     return t;
   });
-  if (camera && orbitControls) {
     const cx = MODE === 'sweden' ? 0 : to3X(456);
     const cz = MODE === 'sweden' ? 0 : to3Z(391);
     camera.position.set(cx, 900000, cz + 700000);

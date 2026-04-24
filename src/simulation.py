@@ -16,40 +16,181 @@ BASE_B_X = 838.3
 BASE_B_Y = 75.0
 
 class SimThreat:
-    """Represents a dynamic threat moving across the map."""
-    def __init__(self, t_id: str, x: float, y: float, speed_kmh: float, estimated_type: str, threat_value: float, target_x: float = CAPITAL_X, target_y: float = CAPITAL_Y):
+    """Represents a dynamic threat moving across the map with high-fidelity trajectory."""
+
+    def __init__(self, t_id: str, x: float, y: float, speed_kmh: float,
+                 estimated_type: str, threat_value: float,
+                 target_x: float = CAPITAL_X, target_y: float = CAPITAL_Y,
+                 # ── Advanced behaviour flags ──────────────────────────────────
+                 is_marv: bool = False,
+                 marv_trigger_range_km: float = 80.0,
+                 marv_jink_mag_kmh: float = 400.0,
+                 is_mirv: bool = False,
+                 mirv_count: int = 3,
+                 mirv_release_range_km: float = 150.0,
+                 can_dogfight: bool = False,
+                 dogfight_win_prob: float = 0.5,
+                 can_rtb: bool = False,
+                 rtb_speed_kmh: float = 1200.0):
+
         self.id = t_id
         self.x = x
         self.y = y
         self.speed_kmh = speed_kmh
         self.estimated_type = estimated_type
         self.threat_value = threat_value
+        self.target_x = target_x
+        self.target_y = target_y
         self.heading = f"Targeting x:{target_x}, y:{target_y}"
-        
-        # Physics: Calculate velocity vector towards the capital
-        # 1 tick = 10 simulated seconds.
-        dist_per_tick = (self.speed_kmh / 3600.0) * 10.0
-        
-        dx = target_x - self.x
-        dy = target_y - self.y
+
+        # Advanced trajectory state
+        self.is_marv = is_marv
+        self.marv_trigger_range_km = marv_trigger_range_km
+        self.marv_jink_mag_kmh = marv_jink_mag_kmh   # lateral speed added during MARV jink
+        self.marv_active = False
+
+        self.is_mirv = is_mirv
+        self.mirv_count = mirv_count
+        self.mirv_release_range_km = mirv_release_range_km
+        self.mirv_released = False
+
+        self.can_dogfight = can_dogfight
+        self.dogfight_win_prob = dogfight_win_prob
+        self.can_rtb = can_rtb
+        self.rtb_speed_kmh = rtb_speed_kmh
+        self.is_retreating = False   # True after break-off
+        self.is_destroyed = False    # True after dogfight loss or intercept
+
+        # RTB return-to-source: project 500km behind the starting position
+        # (opposite direction from the target) so retreating aircraft
+        # actually fly away from the battle area.
+        approach_dx = target_x - x
+        approach_dy = target_y - y
+        approach_dist = math.hypot(approach_dx, approach_dy)
+        if approach_dist > 0:
+            self.origin_x = x - (approach_dx / approach_dist) * 500.0
+            self.origin_y = y - (approach_dy / approach_dist) * 500.0
+        else:
+            self.origin_x = x + 500.0
+            self.origin_y = y
+
+        # Physics: velocity vector (km per 10-second tick)
+        self._recompute_velocity(speed_kmh, target_x, target_y)
+
+    # ── Internal helpers ─────────────────────────────────────────────────────
+
+    def _recompute_velocity(self, speed_kmh, tx, ty):
+        dist_per_tick = (speed_kmh / 3600.0) * 10.0
+        dx, dy = tx - self.x, ty - self.y
         dist = math.hypot(dx, dy)
-        
         if dist > 0:
             self.vx = (dx / dist) * dist_per_tick
             self.vy = (dy / dist) * dist_per_tick
         else:
             self.vx, self.vy = 0.0, 0.0
 
+    def _dist_to_target(self):
+        return math.hypot(self.x - self.target_x, self.y - self.target_y)
+
+    # ── MIRV spawning ────────────────────────────────────────────────────────
+
+    def try_release_mirv(self):
+        """
+        If conditions are met, return a list of child SimThreat warheads.
+        The caller (SimulationLoop.tick) should add them to self.threats.
+        Returns [] if not MIRV, already released, or out of range.
+        """
+        if not self.is_mirv or self.mirv_released:
+            return []
+        if self._dist_to_target() > self.mirv_release_range_km:
+            return []
+
+        self.mirv_released = True
+        child_val = self.threat_value / max(1, self.mirv_count)
+        children = []
+        spread_targets = [
+            (CAPITAL_X, CAPITAL_Y),
+            (BASE_A_X, BASE_A_Y),
+            (BASE_B_X, BASE_B_Y),
+        ]
+        for i in range(self.mirv_count):
+            tx, ty = spread_targets[i % len(spread_targets)]
+            # Warheads spread slightly from the bus release point
+            child = SimThreat(
+                t_id=f"{self.id}-MRV{i}",
+                x=self.x + random.uniform(-20, 20),
+                y=self.y + random.uniform(-20, 20),
+                speed_kmh=self.speed_kmh * 1.3,   # re-entry vehicles faster
+                estimated_type="ballistic",
+                threat_value=child_val,
+                target_x=tx, target_y=ty,
+            )
+            children.append(child)
+        print(f"[MIRV] {self.id} released {self.mirv_count} warheads at "
+              f"({self.x:.0f}, {self.y:.0f}), dist={self._dist_to_target():.0f}km to target")
+        return children
+
+    # ── Dogfight resolution ──────────────────────────────────────────────────
+
+    def resolve_dogfight(self):
+        """
+        Call when our interceptor engages this aircraft in WVR combat.
+        Returns outcome string: 'KILL' | 'RTB' | 'ENEMY_WIN'
+        Side effects: sets is_retreating / is_destroyed.
+        """
+        if not self.can_dogfight:
+            return "KILL"   # non-manoeuvring aircraft — straightforward kill
+
+        r = random.random()
+        if r < self.dogfight_win_prob:
+            # Enemy wins merge — our interceptor lost, threat continues
+            print(f"[DOGFIGHT] {self.id} WINS merge! Our interceptor lost.")
+            return "ENEMY_WIN"
+        elif self.can_rtb and r < (self.dogfight_win_prob + (1 - self.dogfight_win_prob) * 0.4):
+            # Enemy breaks off and retreats to source
+            self.is_retreating = True
+            self.heading = f"RTB to origin ({self.origin_x:.0f},{self.origin_y:.0f})"
+            self._recompute_velocity(self.rtb_speed_kmh, self.origin_x, self.origin_y)
+            print(f"[DOGFIGHT] {self.id} BREAKS OFF — RTB at {self.rtb_speed_kmh}kmh")
+            return "RTB"
+        else:
+            self.is_destroyed = True
+            print(f"[DOGFIGHT] {self.id} KILLED in merge")
+            return "KILL"
+
+    # ── Per-tick movement ────────────────────────────────────────────────────
+
     def move(self):
-        """Updates the position for one tick (10 seconds)."""
-        # Add a slight random drift (up to 10% of forward movement) to simulate evasion/turbulence
+        """Advance one tick (10 simulated seconds), applying trajectory behaviour."""
+        if self.is_destroyed:
+            return
+
+        # ── MARV terminal manoeuvre ──────────────────────────────────────────
+        if self.is_marv and not self.marv_active:
+            if self._dist_to_target() <= self.marv_trigger_range_km:
+                self.marv_active = True
+                print(f"[MARV] {self.id} activating terminal manoeuvre at "
+                      f"dist={self._dist_to_target():.0f}km")
+
+        if self.marv_active:
+            # Jink: add a random lateral velocity component each tick
+            jink_per_tick = (self.marv_jink_mag_kmh / 3600.0) * 10.0
+            self.x += self.vx + random.uniform(-jink_per_tick, jink_per_tick)
+            self.y += self.vy + random.uniform(-jink_per_tick, jink_per_tick)
+            return
+
+        # ── RTB: retreating aircraft — re-aim towards origin ────────────────
+        if self.is_retreating:
+            self._recompute_velocity(self.rtb_speed_kmh, self.origin_x, self.origin_y)
+            self.x += self.vx
+            self.y += self.vy
+            return
+
+        # ── Normal inbound flight with slight evasive drift ──────────────────
         drift_mag = (self.speed_kmh / 3600.0) * 10.0 * 0.1
-        drift_x = random.uniform(-drift_mag, drift_mag)
-        drift_y = random.uniform(-drift_mag, drift_mag)
-        
-        self.x += self.vx + drift_x
-        self.y += self.vy + drift_y
-        
+        self.x += self.vx + random.uniform(-drift_mag, drift_mag)
+        self.y += self.vy + random.uniform(-drift_mag, drift_mag)
+
     def to_dict(self):
         """Serializes the threat to match the FastAPI IncomingThreat model."""
         return {
@@ -59,7 +200,14 @@ class SimThreat:
             "speed_kmh": self.speed_kmh,
             "heading": self.heading,
             "estimated_type": self.estimated_type,
-            "threat_value": self.threat_value
+            "threat_value": self.threat_value,
+            # Extended fields surfaced for frontend/API consumers
+            "is_marv": self.is_marv,
+            "marv_active": self.marv_active,
+            "is_mirv": self.is_mirv,
+            "mirv_released": self.mirv_released,
+            "is_retreating": self.is_retreating,
+            "is_destroyed": self.is_destroyed,
         }
 
 class SimulationLoop:
@@ -130,11 +278,29 @@ class SimulationLoop:
                 target_x=t_data["target_x"],
                 target_y=t_data["target_y"]
             ))
-            
+
+        # ── MIRV: check each threat for bus separation ───────────────────────
+        new_children = []
+        for t in self.threats:
+            children = t.try_release_mirv()
+            new_children.extend(children)
+        self.threats.extend(new_children)
+
         active_threats = []
         for t in self.threats:
+            # Skip threats already destroyed in dogfight
+            if getattr(t, "is_destroyed", False):
+                continue
+
             t.move()
-            
+
+            # Retreating aircraft that have returned to source area — remove
+            if getattr(t, "is_retreating", False):
+                dist_home = math.hypot(t.x - t.origin_x, t.y - t.origin_y)
+                if dist_home <= 20.0:
+                    print(f"[RTB] {t.id} reached origin — removed from board")
+                    continue
+
             # Check for impact with bases (within a 10km radius)
             if math.hypot(t.x - CAPITAL_X, t.y - CAPITAL_Y) <= 10.0:
                 self.total_damage += t.threat_value

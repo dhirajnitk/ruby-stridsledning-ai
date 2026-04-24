@@ -2,92 +2,180 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BOREAL LIVE KINETIC AUDIT | V5.0</title>
+  <title>BOREAL LIVE KINETIC AUDIT | V6.0</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background:#010a12; display:flex; height:100vh; overflow:hidden;
            font-family:'Orbitron',monospace; color:#00f2ff; }
 
-    /* ── LEFT PANEL ─────────────────────────── */
+    /* ══ LEFT PANEL ═════════════════════════════════════════ */
     #base-panel {
-      width:230px; min-width:230px; display:flex; flex-direction:column;
+      width:220px; min-width:220px; display:flex; flex-direction:column;
       border-right:1px solid rgba(0,242,255,0.2);
       background:rgba(0,242,255,0.02);
     }
     #base-panel-header {
-      padding:14px 14px 10px; border-bottom:1px solid rgba(0,242,255,0.12);
+      padding:10px 12px 8px; border-bottom:1px solid rgba(0,242,255,0.12);
     }
-    #base-panel-header h3 { font-size:0.62rem; letter-spacing:2px; margin-bottom:4px; }
-    #base-panel-header p  { font-size:0.45rem; color:rgba(0,242,255,0.5); letter-spacing:1px; }
+    #base-panel-header h3 { font-size:0.58rem; letter-spacing:2px; margin-bottom:2px; }
+    #base-panel-header p  { font-size:0.43rem; color:rgba(0,242,255,0.5); letter-spacing:1px; }
 
-    #base-list { flex:1; overflow-y:auto; padding:8px; }
+    /* Scoreboard */
+    #scoreboard {
+      display:grid; grid-template-columns:1fr 1fr 1fr;
+      border-bottom:1px solid rgba(0,242,255,0.12);
+      background:rgba(0,0,0,0.3);
+    }
+    .sb-cell { text-align:center; padding:7px 4px; border-right:1px solid rgba(0,242,255,0.1); }
+    .sb-cell:last-child { border-right:none; }
+    .sb-val { font-size:1.1rem; font-weight:bold; line-height:1; }
+    .sb-lbl { font-size:0.36rem; color:rgba(0,242,255,0.45); letter-spacing:1px; margin-top:2px; }
+    .sb-cell.kills  .sb-val { color:#00ff88; }
+    .sb-cell.leaks  .sb-val { color:#ff3e3e; }
+    .sb-cell.threats .sb-val { color:#ffcc00; }
+
+    #base-list { flex:1; overflow-y:auto; padding:6px; }
     .base-card {
-      padding:9px 11px; margin-bottom:5px; cursor:pointer; border-radius:3px;
+      padding:8px 10px; margin-bottom:4px; cursor:pointer; border-radius:3px;
       border:1px solid rgba(0,242,255,0.2); background:rgba(0,242,255,0.03);
       transition:all 0.18s;
     }
-    .base-card:hover { background:rgba(0,242,255,0.1); border-color:rgba(0,242,255,0.5);
-                       box-shadow:0 0 10px rgba(0,242,255,0.15); }
+    .base-card:hover { background:rgba(0,242,255,0.1); border-color:rgba(0,242,255,0.5); }
     .base-card.active { background:rgba(0,242,255,0.14); border-color:#00f2ff; }
     .base-card.hva    { border-color:rgba(0,255,136,0.25); background:rgba(0,255,136,0.03); }
     .base-card.hva:hover { background:rgba(0,255,136,0.1); border-color:rgba(0,255,136,0.6); }
     .base-card.active.hva { border-color:#00ff88; }
-    .bc-id   { font-size:0.65rem; font-weight:bold; margin-bottom:2px; }
-    .bc-name { font-size:0.46rem; color:rgba(0,242,255,0.55); letter-spacing:1px; }
-    .bc-meta { font-size:0.42rem; color:rgba(0,242,255,0.38); margin-top:3px; }
+    .bc-id   { font-size:0.62rem; font-weight:bold; margin-bottom:2px; }
+    .bc-name { font-size:0.43rem; color:rgba(0,242,255,0.55); letter-spacing:1px; }
+    .bc-meta { font-size:0.38rem; color:rgba(0,242,255,0.35); margin-top:3px; }
     .base-card.hva .bc-id, .base-card.hva .bc-name { color:#00ff88; }
     .base-card.hva .bc-meta { color:rgba(0,255,136,0.4); }
 
-    #demo-controls { padding:9px; border-top:1px solid rgba(0,242,255,0.12); }
+    #demo-controls { padding:8px; border-top:1px solid rgba(0,242,255,0.12); }
     .dbtn {
-      width:100%; padding:8px; margin-bottom:5px; cursor:pointer; border-radius:3px;
-      font-family:'Orbitron',monospace; font-size:0.48rem; letter-spacing:1.5px;
+      width:100%; padding:7px; margin-bottom:4px; cursor:pointer; border-radius:3px;
+      font-family:'Orbitron',monospace; font-size:0.45rem; letter-spacing:1.3px;
       background:rgba(0,242,255,0.08); border:1px solid rgba(0,242,255,0.35);
       color:#00f2ff; transition:all 0.18s;
     }
     .dbtn:hover { background:rgba(0,242,255,0.18); box-shadow:0 0 8px rgba(0,242,255,0.2); }
-    .dbtn.red { background:rgba(255,62,62,0.1); border-color:rgba(255,62,62,0.45); color:#ff3e3e; }
+    .dbtn.red   { background:rgba(255,62,62,0.1); border-color:rgba(255,62,62,0.45); color:#ff3e3e; }
     .dbtn.red:hover { background:rgba(255,62,62,0.22); }
+    .dbtn.amber { background:rgba(255,204,0,0.08); border-color:rgba(255,204,0,0.4); color:#ffcc00; }
+    .dbtn.amber:hover { background:rgba(255,204,0,0.2); }
+    .dbtn.active-auto { background:rgba(0,255,136,0.15); border-color:#00ff88; color:#00ff88; }
+    #lv-base-info { font-size:0.4rem; color:rgba(0,242,255,0.6); padding:4px 2px 3px;
+                    letter-spacing:1px; min-height:28px; line-height:1.7; }
 
-    /* ── MAIN VIEW ──────────────────────────── */
-    #main-view { flex:1; display:flex; flex-direction:column; }
+    /* ══ MAIN VIEW ════════════════════════════════════════════ */
+    #main-view { flex:1; display:flex; flex-direction:column; min-width:0; }
 
     #view-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:9px 18px; border-bottom:1px solid rgba(0,242,255,0.15);
+      display:flex; align-items:center; gap:14px; flex-wrap:nowrap;
+      padding:8px 16px; border-bottom:1px solid rgba(0,242,255,0.15);
       background:rgba(0,0,0,0.45); flex-shrink:0;
     }
-    #view-header .vtitle { font-size:0.58rem; letter-spacing:2.5px; }
+    #view-header .vtitle { font-size:0.54rem; letter-spacing:2.5px; white-space:nowrap; }
     #sel-label {
-      font-size:0.52rem; color:#00ff88; padding:3px 9px;
+      font-size:0.49rem; color:#00ff88; padding:2px 8px;
       border:1px solid rgba(0,255,136,0.4); border-radius:3px;
-      background:rgba(0,255,136,0.06);
+      background:rgba(0,255,136,0.06); white-space:nowrap;
     }
-    #view-header .hint { font-size:0.44rem; color:rgba(0,242,255,0.45); }
+    #auto-indicator {
+      font-size:0.42rem; color:#ffcc00; letter-spacing:1px;
+      padding:2px 8px; border:1px solid rgba(255,204,0,0.35); border-radius:3px;
+      background:rgba(255,204,0,0.06); display:none;
+    }
+    #auto-indicator.on { display:block; animation:pulse-amber 1.2s infinite; }
+    @keyframes pulse-amber { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    #view-header .hint { font-size:0.41rem; color:rgba(0,242,255,0.4); margin-left:auto; white-space:nowrap; }
 
+    /* Event Banner */
+    #event-banner {
+      display:none; align-items:center; justify-content:center;
+      padding:7px 20px; flex-shrink:0;
+      font-size:0.65rem; letter-spacing:3px; font-weight:bold;
+    }
+    #event-banner.show { display:flex; }
+    #event-banner.ev-marv   { background:rgba(255,136,0,0.18); color:#ff8800; border-bottom:1px solid #ff8800; }
+    #event-banner.ev-mirv   { background:rgba(255,51,0,0.18);  color:#ff3300; border-bottom:1px solid #ff3300; }
+    #event-banner.ev-kill   { background:rgba(0,255,136,0.12); color:#00ff88; border-bottom:1px solid #00ff88; }
+    #event-banner.ev-rtb    { background:rgba(255,204,0,0.12); color:#ffcc00; border-bottom:1px solid #ffcc00; }
+    #event-banner.ev-enemy  { background:rgba(255,62,62,0.18); color:#ff3e3e; border-bottom:1px solid #ff3e3e; }
+    #event-banner.ev-leak   { background:rgba(255,62,62,0.22); color:#ff3e3e; border-bottom:2px solid #ff3e3e; animation:blink-red 0.4s 4; }
+    #event-banner.ev-intercept { background:rgba(0,255,136,0.1); color:#00ff88; border-bottom:1px solid #00ff88; }
+    @keyframes blink-red { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    /* Center row: canvas + telemetry */
+    #center-row { flex:1; display:flex; min-height:0; }
     #canvas-container { flex:1; overflow:hidden; cursor:crosshair; }
     #canvas-container canvas { width:100%!important; height:100%!important; }
 
-    /* ── COT FEED ───────────────────────────── */
+    /* Threat Telemetry Panel */
+    #threat-telem {
+      width:200px; min-width:200px; display:flex; flex-direction:column;
+      border-left:1px solid rgba(0,242,255,0.15);
+      background:rgba(0,0,0,0.45); overflow:hidden;
+    }
+    #telem-header {
+      padding:7px 10px; border-bottom:1px solid rgba(0,242,255,0.12);
+      font-size:0.46rem; letter-spacing:2px; color:rgba(0,242,255,0.7);
+      flex-shrink:0; display:flex; justify-content:space-between; align-items:center;
+    }
+    #telem-count { font-size:0.4rem; color:rgba(0,242,255,0.4); }
+    #telem-list  { flex:1; overflow-y:auto; padding:5px; }
+    .tc {
+      padding:7px 8px; margin-bottom:4px; border-radius:3px;
+      border-left:3px solid #ff3e3e; background:rgba(255,62,62,0.05);
+      font-size:0.39rem; letter-spacing:0.8px; line-height:1.6;
+    }
+    .tc.marv  { border-color:#ff8800; background:rgba(255,136,0,0.06); }
+    .tc.mirv  { border-color:#ff3300; background:rgba(255,51,0,0.06); }
+    .tc.dog   { border-color:#00ccff; background:rgba(0,204,255,0.05); }
+    .tc.hyp   { border-color:#ffcc00; background:rgba(255,204,0,0.05); }
+    .tc.bal   { border-color:#ff5500; background:rgba(255,85,0,0.05); }
+    .tc.loi   { border-color:#ff00ff; background:rgba(255,0,255,0.05); }
+    .tc.dead  { opacity:0.35; border-color:rgba(0,242,255,0.2); }
+    .tc-id    { font-weight:bold; color:#00f2ff; font-size:0.42rem; }
+    .tc-type  { color:rgba(0,242,255,0.55); }
+    .tc-status { margin-top:3px; }
+    .tc-status.jink    { color:#ff8800; }
+    .tc-status.sep     { color:#ff3300; }
+    .tc-status.dog-win { color:#00ff88; }
+    .tc-status.dog-rtb { color:#ffcc00; }
+    .tc-status.dog-lose{ color:#ff3e3e; }
+    .tc-bar-wrap { height:3px; background:rgba(0,242,255,0.1); border-radius:2px; margin-top:4px; overflow:hidden; }
+    .tc-bar      { height:100%; background:linear-gradient(90deg,#00f2ff,#00ff88); border-radius:2px; transition:width 0.3s; }
+    #telem-empty { padding:20px 10px; text-align:center; font-size:0.4rem;
+                   color:rgba(0,242,255,0.25); letter-spacing:1px; }
+
+    /* Bottom strip */
+    #bottom-strip { flex-shrink:0; display:flex; flex-direction:column; }
+    #wep-legend {
+      padding:5px 14px; border-top:1px solid rgba(0,242,255,0.1);
+      display:flex; flex-wrap:wrap; gap:12px; background:rgba(0,0,0,0.3);
+    }
+    .wl-item { display:flex; align-items:center; gap:5px; font-size:0.4rem;
+               color:rgba(0,242,255,0.5); }
+    .wl-dot  { width:7px; height:7px; border-radius:50%; }
+
     #cot-panel {
-      height:130px; flex-shrink:0; overflow-y:auto;
-      border-top:1px solid rgba(0,242,255,0.15); background:rgba(0,0,0,0.5);
+      height:200px; overflow-y:auto;
+      border-top:1px solid rgba(0,242,255,0.15); background:rgba(0,0,0,0.55);
       padding:7px 14px;
     }
-    #cot-feed p { font-size:0.47rem; letter-spacing:1px; margin-bottom:2px; line-height:1.5; }
+    #cot-feed p {
+      font-size:0.46rem; letter-spacing:1px; margin-bottom:3px; line-height:1.55;
+      border-bottom:1px solid rgba(0,242,255,0.04); padding-bottom:2px;
+    }
+    #cot-feed p .ts { color:rgba(0,242,255,0.3); margin-right:6px; font-size:0.38rem; }
     #cot-feed p.alert   { color:#ff3e3e; }
     #cot-feed p.success { color:#00ff88; }
     #cot-feed p.info    { color:rgba(0,242,255,0.55); }
-
-    /* Weapon legend */
-    #wep-legend {
-      padding:7px 14px; border-top:1px solid rgba(0,242,255,0.1);
-      display:flex; gap:16px; flex-shrink:0; background:rgba(0,0,0,0.3);
-    }
-    .wl-item { display:flex; align-items:center; gap:5px; font-size:0.42rem;
-               color:rgba(0,242,255,0.5); }
-    .wl-dot  { width:8px; height:8px; border-radius:50%; }
+    #cot-feed p.marv-ev { color:#ff8800; font-weight:bold; }
+    #cot-feed p.mirv-ev { color:#ff3300; font-weight:bold; }
+    #cot-feed p.dog-ev  { color:#00ccff; font-weight:bold; }
   </style>
   <style>
     #lv-freeze{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;flex-direction:column}
@@ -105,6 +193,20 @@
     <h3>FORTRESS HUB REGISTRY</h3>
     <p>CLICK BASE → DEMO INTERCEPT</p>
   </div>
+
+  <!-- Kill / Leak / Total Scoreboard -->
+  <div id="scoreboard">
+    <div class="sb-cell kills">
+      <div class="sb-val" id="sb-kills">0</div><div class="sb-lbl">KILLS</div>
+    </div>
+    <div class="sb-cell leaks">
+      <div class="sb-val" id="sb-leaks">0</div><div class="sb-lbl">LEAKS</div>
+    </div>
+    <div class="sb-cell threats">
+      <div class="sb-val" id="sb-total">0</div><div class="sb-lbl">TOTAL</div>
+    </div>
+  </div>
+
   <div id="base-list"></div>
   <div id="demo-controls">
     <select id="lv-sel-weapon" class="dbtn" style="margin-bottom:5px;cursor:pointer;">
@@ -113,54 +215,221 @@
       <option value="HYPERSONIC">🟡 HYPERSONIC GLIDE</option>
       <option value="LOITER">🟣 LOITERING MUNITION</option>
       <option value="BALLISTIC">🟠 BALLISTIC</option>
+      <option value="MARV">⚡ MARV (Maneuvering RV)</option>
+      <option value="MIRV">💥 MIRV (3-Warhead Bus)</option>
+      <option value="FIGHTER_DOG">✈ FIGHTER w/ Dogfight</option>
     </select>
-    <div id="lv-base-info" style="font-size:0.42rem;color:rgba(0,242,255,0.6);padding:5px 2px 3px;letter-spacing:1px;min-height:30px;line-height:1.7;">CLICK A BASE TO BEGIN</div>
-    <button class="dbtn red" id="btn-lv-saturation">⚠ SATURATION WAVE</button>
-    <button class="dbtn"     id="btn-reset">↺ CLEAR THEATRE</button>
-    <button class="dbtn"     id="btn-back" onclick="window.location.href='dashboard.html?mode='+MODE">◄ DASHBOARD</button>
-    <button class="dbtn"     onclick="window.open('kinetic_3d.html?theater='+MODE,'_blank')">↗ 3D KINETIC</button>
-    <button class="dbtn"     onclick="window.location.href='tactical_legacy.html?mode='+MODE">↗ TACTICAL</button>
-    <button class="dbtn"     onclick="window.location.href='cortex_c2.html'">↗ CORTEX-C2</button>
-    <button class="dbtn"     onclick="window.location.href='index.html'" title="Portal Home">⌂ PORTAL</button>
+    <div id="lv-base-info">CLICK A BASE TO BEGIN</div>
+    <button class="dbtn red"   id="btn-lv-saturation">⚠ SATURATION WAVE</button>
+    <button class="dbtn amber" id="btn-auto-wave">⟳ AUTO-WAVE: OFF</button>
+    <button class="dbtn"       id="btn-reset">↺ CLEAR THEATRE</button>
+    <button class="dbtn"       id="btn-back" onclick="window.location.href='dashboard.html?mode='+MODE">◄ DASHBOARD</button>
+    <button class="dbtn"       onclick="window.open('kinetic_3d.html?theater='+MODE,'_blank')">↗ 3D KINETIC</button>
+    <button class="dbtn"       onclick="window.location.href='cortex_c2.html'">↗ CORTEX-C2</button>
+    <button class="dbtn"       onclick="window.location.href='index.html'" title="Portal Home">⌂ PORTAL</button>
   </div>
 </aside>
 
-<!-- FREEZE OVERLAY (live_view) -->
+<!-- FREEZE OVERLAY -->
 <div id="lv-freeze"><h2>⏸ TACTICAL FREEZE</h2><p>RETURN TO DASHBOARD TO APPROVE / REJECT</p></div>
 
-<!-- RIGHT: 3D View -->
+<!-- MAIN VIEW -->
 <div id="main-view">
+
+  <!-- Header -->
   <div id="view-header">
     <div class="vtitle">LIVE KINETIC AUDIT :: <span id="lv-active-model" style="color:#ffcc00;">LOADING CORE...</span></div>
     <div id="sel-label">SELECT A BASE TO DEMO</div>
+    <div id="auto-indicator">⟳ AUTO-WAVE ACTIVE</div>
     <div class="hint">CLICK BASE · DRAG ORBIT · SCROLL ZOOM</div>
   </div>
 
-  <div id="canvas-container"></div>
+  <!-- Event Flash Banner -->
+  <div id="event-banner"></div>
 
-  <div id="wep-legend">
-    <div class="wl-item"><div class="wl-dot" style="background:#ff3e3e"></div>CRUISE</div>
-    <div class="wl-item"><div class="wl-dot" style="background:#ffcc00"></div>HYPERSONIC</div>
-    <div class="wl-item"><div class="wl-dot" style="background:#ff00ff"></div>LOITER</div>
-    <div class="wl-item"><div class="wl-dot" style="background:#ff5500"></div>BALLISTIC</div>
-    <div class="wl-item"><div class="wl-dot" style="background:#00f2ff"></div>SAM INTERCEPTOR</div>
-  </div>
+  <!-- Canvas + Telemetry -->
+  <div id="center-row">
+    <div id="canvas-container"></div>
 
-  <div id="cot-panel">
-    <div id="cot-feed">
-      <p class="info">> System primed. Click a base on the left to trigger a demo intercept.</p>
+    <div id="threat-telem">
+      <div id="telem-header">
+        ACTIVE THREATS
+        <span id="telem-count">0 TRACKED</span>
+      </div>
+      <div id="telem-list">
+        <div id="telem-empty">NO ACTIVE THREATS<br>FIRE A DEMO OR WAVE</div>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- Legend + CoT -->
+  <div id="bottom-strip">
+    <div id="wep-legend">
+      <div class="wl-item"><div class="wl-dot" style="background:#ff3e3e"></div>CRUISE</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#ffcc00"></div>HYPERSONIC</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#ff00ff"></div>LOITER</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#ff5500"></div>BALLISTIC</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#ff8800"></div>⚡ MARV</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#ff3300"></div>💥 MIRV</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#00ccff"></div>✈ FIGHTER</div>
+      <div class="wl-item"><div class="wl-dot" style="background:#00f2ff"></div>SAM</div>
+    </div>
+    <div id="cot-panel">
+      <div id="cot-feed">
+        <p class="info"><span class="ts">00:00</span>> System primed. Click a base on the left to trigger a demo intercept.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#main-view -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="viz_engine.js"></script>
 <script>
-// NOTE: SAAB_CH and all engine functions are provided by viz_engine.js
-// We only do UI wiring here — NO redeclarations.
+// ─────────────────────────────────────────────────────────────────────────
+// live_view.html V6 — wired on top of viz_engine.js globals:
+//   THEATER_DATA, WEAPONS, threats[], stats{}, triggerDemo(), launchStandaloneWave()
+// ─────────────────────────────────────────────────────────────────────────
+
+const _lvStart = Date.now();
+function nowTs() {
+  const s = Math.floor((Date.now() - _lvStart) / 1000);
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+
+// ── Scoreboard ────────────────────────────────────────────────────────────
+function refreshScoreboard() {
+  const s = (typeof stats !== 'undefined') ? stats : {};
+  document.getElementById('sb-kills').textContent  = s.kills        || 0;
+  document.getElementById('sb-leaks').textContent  = s.leaks        || 0;
+  document.getElementById('sb-total').textContent  = s.totalThreats || 0;
+}
+setInterval(refreshScoreboard, 500);
+
+// ── Event Banner ──────────────────────────────────────────────────────────
+let _bannerTimer = null;
+function showBanner(text, cls, ms=2200) {
+  const el = document.getElementById('event-banner');
+  el.textContent = text;
+  el.className = 'show ' + cls;
+  if (_bannerTimer) clearTimeout(_bannerTimer);
+  _bannerTimer = setTimeout(() => { el.className = ''; }, ms);
+}
+
+// ── CoT hook (viz_engine.js fires window._addCoTHook after prepend) ───────────
+// newest entry is first child since addCoT uses cotFeed.prepend()
+window._addCoTHook = function(msg, type) {
+  const feed = document.getElementById('cot-feed');
+  if (feed && feed.firstElementChild) {
+    const newest = feed.firstElementChild;
+    if (!newest.querySelector('.ts')) {
+      newest.innerHTML = `<span class="ts">${nowTs()}</span>` + newest.innerHTML;
+    }
+    const m = (msg || '').toUpperCase();
+    if (m.includes('MARV') && (m.includes('ACTIV') || m.includes('JINK'))) {
+      newest.classList.add('marv-ev');
+      showBanner('⚡ MARV TERMINAL JINK ACTIVE — Pk DEGRADED', 'ev-marv');
+    } else if (m.includes('MIRV') || m.includes('BUS SEP') || m.includes('WARHEAD')) {
+      newest.classList.add('mirv-ev');
+      showBanner('💥 MIRV BUS SEPARATED — MULTIPLE WARHEADS INBOUND', 'ev-mirv', 3000);
+    } else if (m.includes('DOGFIGHT') || m.includes('FIGHTER')) {
+      newest.classList.add('dog-ev');
+      if (m.includes('KILL'))              showBanner('✅ DOGFIGHT — ENEMY AIRCRAFT DESTROYED', 'ev-kill');
+      else if (m.includes('RTB'))          showBanner('🟡 DOGFIGHT — ENEMY AIRCRAFT RTB', 'ev-rtb');
+      else if (m.includes('ENEMY_WIN') || m.includes('ENEMY WIN'))
+                                           showBanner('❌ DOGFIGHT — OUR INTERCEPTOR LOST', 'ev-enemy', 3000);
+      else                                 showBanner('✈ DOGFIGHT ENGAGED', 'ev-kill');
+    } else if (m.includes('INTERCEPT')) {
+      showBanner('✅ THREAT INTERCEPTED', 'ev-intercept');
+    } else if (m.includes('LEAK') || m.includes('IMPACT')) {
+      showBanner('🚨 THREAT LEAKED — ASSET HIT', 'ev-leak', 3500);
+    }
+  }
+  // scroll to top — addCoT prepends, so newest is at the top
+  const panel = document.getElementById('cot-panel');
+  if (panel) panel.scrollTop = 0;
+};
+
+// ── Threat Telemetry Panel ────────────────────────────────────────────────
+function _telemClass(label) {
+  const u = (label || '').toUpperCase();
+  if (u.includes('MARV'))    return 'marv';
+  if (u.includes('MIRV'))    return 'mirv';
+  if (u.includes('FIGHTER')) return 'dog';
+  if (u.includes('HYPER'))   return 'hyp';
+  if (u.includes('BALLIST')) return 'bal';
+  if (u.includes('LOITER'))  return 'loi';
+  return '';
+}
+function _statusHTML(t) {
+  if (!t) return '';
+  if (t.marvActive)                return '<div class="tc-status jink">⚡ JINK ACTIVE</div>';
+  if (t.mirvReleased)              return '<div class="tc-status sep">💥 BUS SEPARATED</div>';
+  if (t.dogOutcome === 'KILL')      return '<div class="tc-status dog-win">✅ KILL</div>';
+  if (t.dogOutcome === 'RTB')       return '<div class="tc-status dog-rtb">🟡 RTB</div>';
+  if (t.dogOutcome === 'ENEMY_WIN') return '<div class="tc-status dog-lose">❌ ENEMY WIN</div>';
+  if (t.rtbActive)                  return '<div class="tc-status dog-rtb">↩ RETREATING</div>';
+  return '';
+}
+function refreshTelemetry() {
+  const list    = document.getElementById('telem-list');
+  const countEl = document.getElementById('telem-count');
+  const empty   = document.getElementById('telem-empty');
+  if (!list) return;
+  const all = (typeof threats !== 'undefined') ? threats : [];
+  const active = all.filter(t => !t.dead || t.marvActive || t.mirvReleased || t.dogOutcome || t.rtbActive);
+  countEl.textContent = active.length + ' TRACKED';
+  if (active.length === 0) {
+    list.innerHTML = '';
+    if (empty) { list.appendChild(empty); empty.style.display='block'; }
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = '';
+  active.forEach(t => {
+    const wdef  = (typeof WEAPONS !== 'undefined') ? (WEAPONS[t.weaponKey] || {}) : {};
+    const label = wdef.label || t.weaponKey || 'UNK';
+    const tc    = _telemClass(label);
+    const frac  = (t._frame != null && t._totalFrames > 0) ? Math.min(t._frame / t._totalFrames, 1) : 0;
+    const card  = document.createElement('div');
+    card.className = 'tc' + (tc?' '+tc:'') + (t.dead?' dead':'');
+    card.innerHTML = `
+      <div class="tc-id">${t.id || '??'}</div>
+      <div class="tc-type">${label}${t.dead?' — NEUTRALISED':''}</div>
+      ${_statusHTML(t)}
+      <div class="tc-bar-wrap"><div class="tc-bar" style="width:${Math.round(frac*100)}%"></div></div>
+    `;
+    list.appendChild(card);
+  });
+}
+setInterval(refreshTelemetry, 300);
+
+// ── Auto-Wave ─────────────────────────────────────────────────────────────
+let _autoInterval = null;
+const _btnAuto = document.getElementById('btn-auto-wave');
+const _autoInd = document.getElementById('auto-indicator');
+_btnAuto.addEventListener('click', () => {
+  if (_autoInterval) {
+    clearInterval(_autoInterval); _autoInterval = null;
+    _btnAuto.textContent = '⟳ AUTO-WAVE: OFF';
+    _btnAuto.classList.remove('active-auto'); _autoInd.classList.remove('on');
+  } else {
+    const fire = () => {
+      const pool = (typeof THEATER_DATA!=='undefined') ? THEATER_DATA.filter(n=>n.type==='HVA'||n.type==='BASE') : [];
+      if (!pool.length) return;
+      const node = pool[Math.floor(Math.random()*pool.length)];
+      if (typeof triggerDemo === 'function') triggerDemo(node.id);
+    };
+    fire();
+    _autoInterval = setInterval(fire, 6000);
+    _btnAuto.textContent = '⟳ AUTO-WAVE: ON';
+    _btnAuto.classList.add('active-auto'); _autoInd.classList.add('on');
+  }
+});
+
+// ── Build Base Cards ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Build base cards from THEATER_DATA (defined in viz_engine.js)
   const list = document.getElementById('base-list');
   THEATER_DATA.forEach(node => {
     const card = document.createElement('div');
@@ -169,34 +438,32 @@ document.addEventListener('DOMContentLoaded', () => {
     card.innerHTML = `
       <div class="bc-id">${node.id}</div>
       <div class="bc-name">${node.name}</div>
-      <div class="bc-meta">${node.domain ? 'DOMAIN: '+node.domain : 'HIGH-VALUE ASSET'}${node.sam ? ' · SAM: '+node.sam : ''}</div>
+      <div class="bc-meta">${node.domain?'DOMAIN: '+node.domain:'HVA'}${node.sam?' · SAM: '+node.sam:''}</div>
     `;
     card.addEventListener('click', () => {
       document.querySelectorAll('.base-card').forEach(c=>c.classList.remove('active'));
       card.classList.add('active');
       document.getElementById('sel-label').textContent = `▶ ${node.id} — ${node.name}`;
       const infoEl = document.getElementById('lv-base-info');
-      if (infoEl) {
-        const effs = (node.effectors || []).join(' · ') || 'DEFAULT';
-        const tag = node.type === 'HVA' ? '⬟ HVA' : '◉ BASE';
-        infoEl.innerHTML = `${tag} | SAM: ${node.sam || 0} rds<br>${effs}`;
-      }
-      triggerDemo(node.id);  // from viz_engine.js
+      const effs = (node.effectors||[]).join(' · ')||'DEFAULT';
+      const tag = node.type==='HVA' ? '⬟ HVA' : '◉ BASE';
+      infoEl.innerHTML = `${tag} | SAM: ${node.sam||0} rds<br>${effs}`;
+      triggerDemo(node.id);
     });
     list.appendChild(card);
   });
 
-  // Saturation wave — standalone mode (no ground-truth dependency)
   document.getElementById('btn-lv-saturation').addEventListener('click', () => {
     document.querySelectorAll('.base-card').forEach(c=>c.classList.remove('active'));
     document.getElementById('sel-label').textContent = '▶ SATURATION — ALL ASSETS';
     document.getElementById('lv-base-info').innerHTML = 'SATURATION WAVE INBOUND — CORTEX-1 ENGAGING';
-    launchStandaloneWave();  // from viz_engine.js
+    launchStandaloneWave();
   });
 
-  document.getElementById('btn-reset').addEventListener('click', ()=>location.reload());
-
-  // Dashboard sync handled by viz_engine.js Mirror Mode
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (_autoInterval) clearInterval(_autoInterval);
+    location.reload();
+  });
 });
 </script>
 </body>

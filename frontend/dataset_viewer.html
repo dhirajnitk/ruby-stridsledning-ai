@@ -39,11 +39,11 @@
         
         <div class="controls">
             <select id="dataset-select">
-                <option value="eval_shared_gold.npz">SHARED EVALUATION GOLD</option>
-                <option value="rl_train_20k.npz">RL HEURISTIC TRAINING</option>
+                <option value="chronos_60_maneuver.npz">CHRONOS 60 — MANEUVER CORPUS (200 scenarios × 10 timesteps)</option>
             </select>
             <button onclick="fetchSample()">ACQUIRE NEW SNAPSHOT</button>
         </div>
+        <div id="dataset-meta" style="font-size:11px;color:#6c7086;font-family:'Cascadia Code',monospace;margin-bottom:16px;letter-spacing:0.5px;">Loading corpus metadata…</div>
         
         <div class="grid">
             <div class="panel">
@@ -65,7 +65,7 @@
                 
                 <div class="panel-header" style="margin-top: 40px;">Strategic Consequence Score</div>
                 <div id="score-val" style="font-size: 48px; font-weight: bold; color: #f38ba8; font-family: 'Cascadia Code';">---</div>
-                <div style="font-size: 11px; color: #6c7086; margin-top: 5px;">(Predicted threat volume / 1000km theater)</div>
+                <div style="font-size: 11px; color: #6c7086; margin-top: 5px;">(Time-averaged 15-D tactical feature score · Chronos GRU corpus)</div>
             </div>
         </div>
         
@@ -106,12 +106,18 @@
             const res = await fetch(`/get_dataset_sample?dataset=${dataset}`);
             const data = await res.json();
             
-            if (data.error) { alert(data.error); return; }
+            if (data.error) { alert('Backend error: ' + data.error); return; }
 
             // Update Score
             document.getElementById('score-val').innerText = data.score.toFixed(1);
+
+            // Show dataset metadata if present
+            const metaEl = document.getElementById('dataset-meta');
+            if (metaEl && data.shape) {
+                metaEl.innerText = `CORPUS: ${data.shape[0]} scenarios × ${data.n_timesteps} timesteps × 15 features  |  SCENARIO #${data.index}`;
+            }
             
-            // Update DNA Chart
+            // Update DNA Chart (15-dim time-averaged feature vector)
             dnaChart.data.datasets[0].data = data.features.slice(0, 8);
             dnaChart.update();
 

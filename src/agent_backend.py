@@ -396,23 +396,46 @@ async def llm_proxy(request: ProxyLLMRequest):
 
 # 7. STRATEGIC DATASET EXPLORATION
 @app.get("/get_dataset_sample")
-async def get_dataset_sample(dataset: str = "eval_shared_gold.npz"):
+async def get_dataset_sample(dataset: str = "chronos_60_maneuver.npz"):
+    # Datasets live in data/training/strategic_mega_corpus/
     path = os.path.join("data/training/strategic_mega_corpus", dataset)
     if not os.path.exists(path):
-        return {"error": "Dataset not found"}
-    
+        # Try bare filename in same dir as fallback
+        alt = os.path.join("data/training/strategic_mega_corpus", os.path.basename(dataset))
+        if os.path.exists(alt):
+            path = alt
+        else:
+            return {"error": f"Dataset not found: {dataset}", "available": ["chronos_60_maneuver.npz"]}
+
     try:
         data = np.load(path)
         idx = random.randint(0, len(data['features']) - 1)
-        
-        # In a real C2 system, we'd reverse-map the 15-dim features back to a full scene.
-        # For the viewer, we'll return the features and the target weights.
+        feat = data['features'][idx]  # shape: (T, 15) — time-series of 15-dim feature vectors
+
+        # Collapse time dimension: use mean across timesteps for a stable 15-D snapshot
+        if feat.ndim == 2:
+            feat_1d = feat.mean(axis=0).tolist()   # (15,)
+        else:
+            feat_1d = feat.tolist()                 # already 1-D
+
+        # scores is per-scenario scalar
+        score_val = float(data['scores'][idx])
+
+        # weights shape: (N, 11) — use first 3 for Balanced/Aggressive/Fortress display
+        weights_raw = data['weights'][idx].tolist() if 'weights' in data else [0.33, 0.33, 0.34]
+        weights_display = weights_raw[:3]
+        # Normalise so they sum to 1 (display as percentages)
+        w_sum = sum(abs(w) for w in weights_display) or 1
+        weights_display = [abs(w) / w_sum for w in weights_display]
+
         return {
             "index": idx,
-            "features": data['features'][idx].tolist(),
-            "score": float(data['scores'][idx]),
-            "weights": data['weights'][idx].tolist(),
-            "dataset": dataset
+            "features": feat_1d,
+            "score": score_val,
+            "weights": weights_display,
+            "dataset": dataset,
+            "shape": list(data['features'].shape),
+            "n_timesteps": feat.shape[0] if feat.ndim == 2 else 1,
         }
     except Exception as e:
         return {"error": str(e)}

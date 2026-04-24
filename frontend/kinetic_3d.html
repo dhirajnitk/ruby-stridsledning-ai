@@ -56,6 +56,9 @@ button.green:hover{background:rgba(0,255,136,0.1)}
       <option value="HYPERSONIC">HYPERSONIC GLIDE</option>
       <option value="LOITER">LOITERING MUNITION</option>
       <option value="BALLISTIC">BALLISTIC MISSILE</option>
+      <option value="MARV">⚡ MARV (Maneuvering RV)</option>
+      <option value="MIRV">💥 MIRV (3-Warhead Bus)</option>
+      <option value="FIGHTER_DOG">✈ FIGHTER w/ Dogfight</option>
     </select>
     <select id="sel-outcome">
       <option value="intercept">INTERCEPT (HIT)</option>
@@ -145,6 +148,13 @@ const WEAPONS={
   HYPERSONIC:{speed:4.0,color:0xffcc00,trail:'#ffcc00',label:'HYPERSONIC',alt:120000},
   LOITER:    {speed:0.6,color:0xff00ff,trail:'#ff00ff',label:'LOITER',alt:30000},
   BALLISTIC: {speed:2.5,color:0xff5500,trail:'#ff5500',label:'BALLISTIC',alt:180000},
+  // ── Advanced trajectory types ──────────────────────────────────────────
+  MARV:      {speed:2.5,color:0xff8800,trail:'#ff8800',label:'MARV',alt:160000,
+              isMarv:true,  marvTriggerKm:100, marvJinkFrac:0.45},
+  MIRV:      {speed:2.0,color:0xff3300,trail:'#ff3300',label:'MIRV-BUS',alt:180000,
+              isMirv:true,  mirvCount:3, mirvReleaseFrac:0.45},
+  FIGHTER_DOG:{speed:1.8,color:0x00ccff,trail:'#00ccff',label:'FIGHTER',alt:40000,
+              isDogfight:true, dogWinProb:0.30, canRtb:true},
 };
 
 // ── SCENE SETUP ───────────────────────────────────────────────
@@ -443,6 +453,19 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
   const totalFrames=220;
   let frame=0;
 
+  // ── Advanced trajectory state ─────────────────────────────────────────
+  let marvActive = false;
+  let mirvReleased = false;
+  let mirvChildren = [];   // child kinetic objects spawned after bus separation
+  let dogOutcome = null;   // null | 'KILL' | 'RTB' | 'ENEMY_WIN'
+  let rtbActive = false;
+  let rtbVx=0, rtbVz=0;
+
+  // For RTB: origin (spawn) is far from target — store as direction vector
+  const spawnDirX = spawnX - tgtX;
+  const spawnDirZ = spawnZ - tgtZ;
+  const spawnDirLen = Math.hypot(spawnDirX, spawnDirZ) || 1;
+
   // ── SALVO SETUP: 2 closest non-HVA bases ranked by distance to target ────
   const nonHva=bases.filter(b=>!b.hva);
   const sortedBases=[...nonHva].sort((a,b)=>
@@ -570,10 +593,120 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
       const t=frame/totalFrames;
 
       // ── MISSILE POSITION ─────────────────────────────────────────────────
-      const mx=spawnX+(tgtX-spawnX)*t;
-      const mz=spawnZ+(tgtZ-spawnZ)*t;
+      let mx=spawnX+(tgtX-spawnX)*t;
+      let mz=spawnZ+(tgtZ-spawnZ)*t;
       const peakY=wdef.alt*(1-t*t*0.3);
-      const my=peakY*(1-t)+10000*t;
+      let my=peakY*(1-t)+10000*t;
+
+      // ── MARV: terminal jink after trigger range ──────────────────────
+      if(wdef.isMarv){
+        const distToTgt=Math.hypot(mx-tgtX,mz-tgtZ);
+        const triggerM=(wdef.marvTriggerKm||100)*1000;
+        if(distToTgt<=triggerM && !marvActive){
+          marvActive=true;
+          log(`⚡ MARV ACTIVATED — TERMINAL JINK ENGAGED (${(distToTgt/1000).toFixed(0)}km out)`,'w');
+          k._state='lostlock'; // harder to track — degrades Pk
+        }
+        if(marvActive){
+          const jinkMag=(wdef.marvJinkFrac||0.4)*28000;
+          mx+=(Math.random()-0.5)*jinkMag;
+          mz+=(Math.random()-0.5)*jinkMag;
+          my+=(Math.random()-0.5)*jinkMag*0.25;
+        }
+      }
+
+      // ── MIRV: bus separation at configured fraction ──────────────────
+      if(wdef.isMirv && !mirvReleased && t>=(wdef.mirvReleaseFrac||0.45)){
+        mirvReleased=true;
+        const count=wdef.mirvCount||3;
+        log(`💥 MIRV BUS SEPARATION — ${count} WARHEADS INBOUND`,'a');
+        for(let ci=0;ci<count;ci++){
+          // Spawn child ballistic missiles in a spread pattern
+          const spreadAngle=(ci/(count-1||1)-0.5)*0.6; // ±0.3 rad spread
+          const cos_a=Math.cos(spreadAngle), sin_a=Math.sin(spreadAngle);
+          const dx0=tgtX-mx, dz0=tgtZ-mz;
+          const ox=dx0*cos_a-dz0*sin_a, oz=dx0*sin_a+dz0*cos_a;
+          const spawnChildX=mx, spawnChildZ=mz;
+          // Offset child targets slightly to simulate multi-base coverage
+          const childTgt=bases[ci%bases.length];
+          const childTgtX=childTgt.x*SC+(Math.random()-0.5)*50000;
+          const childTgtZ=childTgt.y*SC+(Math.random()-0.5)*50000;
+          log(`  MRV-${ci}: → ${childTgt.name}`,'w');
+          // Brief visual flash then launch child
+          (function(cI,cX,cZ,ctX,ctZ){
+            setTimeout(()=>{
+              const cGeo=new THREE.ConeGeometry(4500,18000,8);
+              const cMesh=new THREE.Mesh(cGeo,new THREE.MeshBasicMaterial({color:0xff3300}));
+              cMesh.position.set(cX,my,cZ);
+              scene.add(cMesh);
+              const cTrail=makeTrail(0xff3300,30);
+              let cf=0;
+              const childK={done:false,tick:()=>{
+                cf++;
+                const ct=cf/120;
+                cMesh.position.set(cX+(ctX-cX)*ct,my*(1-ct)+5000*ct,cZ+(ctZ-cZ)*ct);
+                pushTrail(cTrail,cMesh.position.x,cMesh.position.y,cMesh.position.z);
+                if(ct>=1){
+                  childK.done=true;
+                  explode(cMesh.position,0xff3300,80);
+                  log(`  MRV-${cI} IMPACT — DEFENSE BREACH`,'a');
+                  sImpacts++; updateStats();
+                  scene.remove(cMesh); cMesh.geometry.dispose(); cMesh.material.dispose();
+                  setTimeout(()=>{ scene.remove(cTrail.line); cTrail.line.geometry.dispose(); cTrail.line.material.dispose(); },2000);
+                }
+              }};
+              kinetics.push(childK);
+            },ci*200);
+          })(ci,spawnChildX,spawnChildZ,childTgtX,childTgtZ);
+        }
+      }
+
+      // ── DOGFIGHT: resolve at 30% of flight ──────────────────────────
+      if(wdef.isDogfight && !dogOutcome && t>=0.30){
+        const r=Math.random();
+        const winProb=wdef.dogWinProb||0.30;
+        if(r<winProb){
+          dogOutcome='ENEMY_WIN';
+          log(`✈ DOGFIGHT — ENEMY WINS MERGE · OUR INTERCEPTOR LOST`,'a');
+          k._state='tracking'; // threat continues inbound
+        } else if(wdef.canRtb && r<winProb+0.35){
+          dogOutcome='RTB';
+          rtbActive=true;
+          rtbVx=(spawnDirX/spawnDirLen)*16000;
+          rtbVz=(spawnDirZ/spawnDirLen)*16000;
+          log(`✈ DOGFIGHT — ENEMY BREAKS OFF · RTB INITIATED`,'w');
+          k._state='lostlock';
+          // No kill, no impact — just retreats
+        } else {
+          dogOutcome='KILL';
+          k.done=true;
+          log(`✈ DOGFIGHT — FIGHTER DESTROYED IN MERGE`,'s');
+          sKills++; waveActive=Math.max(0,waveActive-1); updateStats();
+          explode(new THREE.Vector3(mx,my,mz),0x00ccff,100);
+          scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+          sams.forEach(sam=>disposeSAM(sam));
+          setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },3000);
+          return;
+        }
+      }
+
+      // ── RTB: retreating fighter flies away from target ───────────────
+      if(rtbActive){
+        mMesh.position.x+=rtbVx;
+        mMesh.position.z+=rtbVz;
+        pushTrail(trail,mMesh.position.x,mMesh.position.y,mMesh.position.z);
+        updateKineticLabel(statusDiv,'lostlock',mMesh.position.x,mMesh.position.z);
+        const distFromSpawn=Math.hypot(mMesh.position.x-spawnX,mMesh.position.z-spawnZ);
+        if(distFromSpawn>600000||frame>totalFrames){
+          k.done=true;
+          log('✈ RTB COMPLETE — FIGHTER EXITED THEATRE','i');
+          scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+          sams.forEach(sam=>disposeSAM(sam));
+          setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },2000);
+        }
+        return; // skip SAM/kill logic while retreating
+      }
+
       mMesh.position.set(mx,my,mz);
       if(frame>1){
         const dir=new THREE.Vector3(tgtX-spawnX,0-spawnY,tgtZ-spawnZ).normalize();
@@ -713,15 +846,15 @@ document.getElementById('btn-fire').addEventListener('click',()=>{
 });
 
 document.getElementById('btn-wave').addEventListener('click',()=>{
-  const weps=['CRUISE','HYPERSONIC','LOITER','BALLISTIC','CRUISE'];
+  const weps=['CRUISE','HYPERSONIC','LOITER','BALLISTIC','MARV','MIRV','FIGHTER_DOG','CRUISE'];
   // BUG-K07 FIX: wave outcome rate selector
   const rate=parseFloat(document.getElementById('sel-wave-rate').value);
-  const outcomes=weps.map(()=>Math.random()<rate?'intercept':'miss');
+  const outcomes=weps.map(w=>w==='FIGHTER_DOG'?'intercept':(Math.random()<rate?'intercept':'miss'));
   const nIntercept=outcomes.filter(o=>o==='intercept').length;
   waveActive=nIntercept; // only intercept-outcome missiles count (only they can contribute kills)
   weps.forEach((w,i)=>setTimeout(()=>launchKinetic(currentTheater,w,outcomes[i],true),i*800));
-  log(`SATURATION WAVE INBOUND — ${weps.length} THREATS | DEF RATE ${Math.round(rate*100)}%`, 'a');
-  if(rate<1) log(`LEAKERS EXPECTED: ${weps.length-nIntercept}`, 'w');
+  log(`SATURATION WAVE INBOUND — ${weps.length} THREATS (incl MARV/MIRV/DOGFIGHT) | DEF RATE ${Math.round(rate*100)}%`,'a');
+  if(rate<1) log(`LEAKERS EXPECTED: ${weps.length-nIntercept}`,'w');
 });
 
 document.getElementById('btn-reset').addEventListener('click',()=>location.reload());

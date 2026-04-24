@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Optional
 import csv
 import os
 
@@ -31,6 +31,36 @@ class Threat:
     heading: str
     estimated_type: str
     threat_value: float
+
+    # ── Advanced trajectory behaviours ──────────────────────────────
+    # MARV: Maneuvering Re-entry Vehicle.
+    #   When True the threat executes a terminal-phase evasive manoeuvre,
+    #   applying a Pk penalty to any interceptor engagement.
+    #   marv_pk_penalty: multiplicative modifier on Pk (e.g. 0.55 → 45% harder to hit).
+    #   marv_trigger_range_km: range from target at which the manoeuvre kicks in.
+    is_marv: bool = False
+    marv_pk_penalty: float = 0.55          # effective Pk = base_Pk × 0.55
+    marv_trigger_range_km: float = 80.0    # start manoeuvring within 80 km of target
+
+    # MIRV: Multiple Independently targetable Re-entry Vehicles.
+    #   When True the threat spawns `mirv_count` child threats at `mirv_release_range_km`.
+    #   The child threats are injected into the active threat list by the engine rollout.
+    is_mirv: bool = False
+    mirv_count: int = 3
+    mirv_release_range_km: float = 150.0   # release altitude/range from target
+    mirv_warhead_value: float = 0.0        # set at runtime: parent.threat_value / mirv_count
+    mirv_released: bool = False            # internal state — True after spawning
+
+    # DOGFIGHT / RTB: applies to fighter/aircraft threats.
+    #   can_dogfight: the aircraft will engage our interceptors in WVR combat when met.
+    #   dogfight_win_prob: probability the enemy wins the 1v1 (0.0–1.0).
+    #   can_rtb: if losing the dogfight the aircraft breaks off and returns to base.
+    #   rtb_speed_kmh: retreat speed after break-off.
+    can_dogfight: bool = False
+    dogfight_win_prob: float = 0.5        # 50/50 by default
+    can_rtb: bool = False
+    rtb_speed_kmh: float = 1200.0
+    is_retreating: bool = False            # internal state — True after break-off
 
 @dataclass
 class GameState:

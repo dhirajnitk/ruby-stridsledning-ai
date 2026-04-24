@@ -85,9 +85,9 @@ class TacticalEngine:
     def _calculate_utility(base, t, eff_def, weights, flags):
         dist = math.hypot(base.x - t.x, base.y - t.y)
         t_arrival_mins = (dist / t.speed_kmh) * 60.0 if t.speed_kmh > 0 else 999
-        utility = 150.0 
+        utility = 150.0
         tt = t.estimated_type.lower()
-        
+
         # Neural Effector Priority
         prio = weights.get("effector_priorities", {}).get(eff_def.name.lower(), 0.5)
         utility += (prio * 1000.0)
@@ -101,8 +101,43 @@ class TacticalEngine:
         pk = eff_def.pk_matrix.get(tt, 0.5)
         utility += (pk * 700.0)
         utility -= (eff_def.cost_weight * 0.8)
-        
-        if t_arrival_mins < 2.0:   utility += 1000.0 
+
+        # ── MARV: terminal manoeuvre degrades Pk — boost intercept urgency
+        #    so the engine prefers committing multiple interceptors early,
+        #    before the jink phase begins (i.e. when still outside trigger range).
+        if getattr(t, "is_marv", False):
+            trigger_km = getattr(t, "marv_trigger_range_km", 80.0)
+            if dist > trigger_km:
+                # Threat still in midcourse — intercept now while Pk is nominal
+                utility += 600.0
+            else:
+                # Already jinking — Pk is degraded; still worth trying but less confident
+                pk_eff = pk * getattr(t, "marv_pk_penalty", 0.55)
+                utility += (pk_eff * 400.0)
+
+        # ── MIRV: bus spawns mirv_count independent warheads — each interceptor
+        #    only covers the bus, not its children.  Reward launching BEFORE
+        #    release range so one shot can kill all warheads simultaneously.
+        if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False):
+            release_km = getattr(t, "mirv_release_range_km", 150.0)
+            if dist > release_km:
+                # Pre-release: killing bus kills all warheads — highest priority
+                mirv_n = getattr(t, "mirv_count", 3)
+                utility += 800.0 * mirv_n   # proportional to number of warheads saved
+            else:
+                # Post-release: bus is empty, treat as normal ballistic remnant
+                utility += 100.0
+
+        # ── DOGFIGHT: fighter can down our interceptor — favour longer-range
+        #    shots (Meteor / PAC-3) to engage before merge.
+        if getattr(t, "can_dogfight", False):
+            dog_prob = getattr(t, "dogfight_win_prob", 0.5)
+            # Prefer effectors that have range advantage (fire before merge)
+            range_bonus = min(eff_def.range_km / 100.0, 5.0) * 200.0
+            # Penalise if enemy win probability is high — deprioritise costly shots
+            utility += range_bonus * (1.0 - dog_prob)
+
+        if t_arrival_mins < 2.0:   utility += 1000.0
         if t.heading == base.name: utility += 200.0
         return utility
 
@@ -137,11 +172,68 @@ class TacticalEngine:
 
 class StrategicMCTS:
     @staticmethod
+    def _resolve_dogfight(t, eff, rollout_score):
+        """
+        Resolve a fighter/aircraft intercept as a dogfight when can_dogfight=True.
+
+        Outcomes (all stochastic):
+          WIN  (enemy wins dogfight) → our interceptor is lost, threat survives.
+                                        Score penalised by threat_value × 1.0.
+          LOSE (we win dogfight)     → enemy destroyed, same as a normal kill.
+          RTB  (enemy breaks off)    → enemy retreats, threat_value halved
+                                        (aborted mission, still costs ammo).
+
+        Returns (threat_neutralised:bool, score_delta:float, outcome:str)
+        """
+        r = random.random()
+        if r < t.dogfight_win_prob:
+            # Enemy wins the merge — our interceptor shot down
+            return False, -(t.threat_value * 1.0), "ENEMY_WIN"
+        elif t.can_rtb and r < (t.dogfight_win_prob + (1.0 - t.dogfight_win_prob) * 0.4):
+            # Enemy breaks off (RTB) — partial success
+            return True, t.threat_value * 0.05, "RTB"
+        else:
+            # We kill the fighter cleanly
+            return True, t.threat_value * 0.2, "KILL"
+
+    @staticmethod
     def _single_rollout(state, assignments, threats, weather="clear", weights=None, flags=None):
         threat_by_id = {t.id: t for t in threats}
         rollout_score, actual_leaked = 100.0, 0
         weather_mod = {"clear": 1.0, "storm": 0.8, "fog": 0.7}.get(weather, 1.0)
         threat_hit = {t.id: False for t in threats}
+
+        # ── MIRV: expand parent threats into child warheads before engagement ──
+        active_threats = list(threats)
+        mirv_children = []
+        for t in threats:
+            if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False):
+                # Check if parent is within MIRV release range of any base/capital
+                cap = next((b for b in state.bases if "Capital" in b.name), state.bases[0])
+                dist_to_cap = math.hypot(t.x - cap.x, t.y - cap.y)
+                if dist_to_cap <= getattr(t, "mirv_release_range_km", 150.0):
+                    t.mirv_released = True
+                    child_val = t.threat_value / max(1, t.mirv_count)
+                    # Spread warheads towards random bases
+                    targets = random.choices(state.bases, k=t.mirv_count)
+                    for i, tgt_base in enumerate(targets):
+                        spread_x = t.x + random.uniform(-30, 30)
+                        spread_y = t.y + random.uniform(-30, 30)
+                        child = Threat(
+                            id=f"{t.id}-MRV{i}",
+                            x=spread_x, y=spread_y,
+                            speed_kmh=t.speed_kmh * 1.2,   # warheads slightly faster
+                            heading=tgt_base.name,
+                            estimated_type="ballistic",     # re-entry vehicles
+                            threat_value=child_val,
+                        )
+                        mirv_children.append(child)
+                        threat_hit[child.id] = False
+                    # Parent bus is now empty — mark it hit (bus itself is not a warhead)
+                    threat_hit[t.id] = True
+
+        active_threats = active_threats + mirv_children
+
         for a in assignments:
             t = threat_by_id.get(a["threat_id"])
             if not t: continue
@@ -149,14 +241,38 @@ class StrategicMCTS:
             if not eff: continue
             b = next(base for base in state.bases if base.name == a["base"])
             if math.hypot(b.x - t.x, b.y - t.y) > eff.range_km: continue
-            if random.random() < (eff.pk_matrix.get(t.estimated_type, 0.5) * weather_mod):
+
+            effective_pk = eff.pk_matrix.get(t.estimated_type, 0.5) * weather_mod
+
+            # ── MARV: apply Pk penalty when threat is in terminal manoeuvre ──
+            if getattr(t, "is_marv", False):
+                cap = next((base for base in state.bases if "Capital" in base.name), state.bases[0])
+                dist_to_target = math.hypot(t.x - cap.x, t.y - cap.y)
+                if dist_to_target <= getattr(t, "marv_trigger_range_km", 80.0):
+                    effective_pk *= getattr(t, "marv_pk_penalty", 0.55)
+
+            # ── DOGFIGHT: fighter aircraft engage interceptors ──
+            tt = t.estimated_type.lower()
+            if getattr(t, "can_dogfight", False) and ("fighter" in tt or "aircraft" in tt):
+                neutralised, delta, outcome = StrategicMCTS._resolve_dogfight(t, eff, rollout_score)
+                rollout_score += delta
+                if neutralised:
+                    threat_hit[t.id] = True
+                # if enemy wins (not neutralised) the threat remains — handled in leak loop below
+                continue
+
+            if random.random() < effective_pk:
                 threat_hit[t.id] = True
                 rollout_score += t.threat_value * 0.2
-            else: rollout_score -= 10.0
-        for t in threats:
-            if not threat_hit[t.id]:
+            else:
+                rollout_score -= 10.0
+
+        # ── MIRV child warheads not covered by existing assignments leak through ──
+        for t in active_threats:
+            if not threat_hit.get(t.id, False):
                 rollout_score -= t.threat_value * 1.5
                 actual_leaked += 1
+
         return rollout_score, {"leaked": actual_leaked}
 
     @staticmethod

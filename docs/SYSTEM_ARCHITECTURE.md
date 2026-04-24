@@ -1,6 +1,262 @@
 # Boreal Chessmaster — System Architecture & Neural Engine Integration
-**Date:** April 22, 2026  
-**Status:** All integrations live and browser-verified
+**Date:** 2026-04-24 (updated)
+**Status:** All integrations live — MARV/MIRV/Dogfight physics added, Live View V6 revamped
+
+---
+
+## Table of Contents
+1. [Architecture Overview](#1-architecture-overview)
+2. [Component Inventory](#2-component-inventory)
+3. [Full Data Flow](#3-full-data-flow)
+4. [Advanced Threat Physics (NEW)](#4-advanced-threat-physics-new)
+5. [Neural Engine API Contract](#5-neural-engine-api-contract)
+6. [Frontend Pages Reference](#6-frontend-pages-reference)
+7. [Running the Stack](#7-running-the-stack)
+
+---
+
+## 1. Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  BROWSER — CORTEX PORTAL (frontend/)                                        │
+│                                                                             │
+│  index.html ─── portal landing page / module selector / theater toggle     │
+│                                                                             │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────────────┐ │
+│  │  cortex_c2.html  │  │  dashboard.html  │  │  kinetic_3d.html          │ │
+│  │  HITL/AUTO/MAN   │  │  SVG theater map │  │  Three.js 3D intercept    │ │
+│  │  COA planner     │  │  benchmark panel │  │  MARV/MIRV/Dogfight       │ │
+│  │  radar scope     │  │  inventory grid  │  │  Standalone JS physics    │ │
+│  │  LLM analysis    │  │                  │  │                           │ │
+│  └──────────────────┘  └─────────┬────────┘  └────────────┬──────────────┘ │
+│                                  │                         │               │
+│                          viz_engine.js ◄──────────────────►BroadcastChannel│
+│                          ├─ THEATER_DATA                saab_kinetic_v8   │
+│                          ├─ WEAPONS (incl MARV/MIRV/DOG)                  │
+│                          ├─ Threat class (update() state machine)         │
+│                          ├─ WAVE_SEQ 7 waves                              │
+│                          ├─ callEngine() → POST /evaluate_advanced        │
+│                          └─ window._addCoTHook (event bridge)             │
+│                                                                             │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────────────┐ │
+│  │  live_view.html  │  │ dataset_viewer   │  │  strategic_3d.html        │ │
+│  │  V6: scoreboard  │  │ CHRONOS 60 radar │  │  Cesium CZML replay       │ │
+│  │  telemetry strip │  │ chart · 200 scen │  │  scenario_hostile.czml    │ │
+│  │  event banners   │  │ · 15-D features  │  │  scenario_commercial.czml │ │
+│  │  auto-wave mode  │  │                  │  │                           │ │
+│  └──────────────────┘  └──────────────────┘  └───────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+           │ POST /evaluate_advanced · WS /ws/logs · GET /get_dataset_sample
+           ▼  http://localhost:8000
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FASTAPI BACKEND  (src/agent_backend.py)                                    │
+│                                                                             │
+│  POST /evaluate_advanced                                                    │
+│  ├─ Accepts: threats[], bases[], weather, doctrine, use_rl                 │
+│  ├─ core/engine.py → TacticalEngine.get_optimal_assignments()              │
+│  │    → _calculate_utility() [MARV/MIRV/Dogfight aware since v4.0]        │
+│  ├─ core/engine.py → StrategicMCTS._single_rollout()                      │
+│  │    → MIRV expansion, MARV Pk penalty, dogfight resolution               │
+│  └─ Returns: tactical_assignments[], strategic_score, human_sitrep         │
+│                                                                             │
+│  WS /ws/logs — streams real-time engine telemetry to CoT feed              │
+│  GET /get_dataset_sample — CHRONOS 60 NPZ sample (200×10×15)              │
+│                                                                             │
+│  core/models.py  — Threat dataclass (14 MARV/MIRV/dogfight fields)        │
+│  core/engine.py  — TacticalEngine + StrategicMCTS                         │
+│  simulation.py   — Tick-based SimThreat with RTB origin fix               │
+│                                                                             │
+│  models/                                                                    │
+│  ├─ elite_v3_5.pth         (TRANSFORMER-RESNET,   Pk 97.8%)               │
+│  ├─ hybrid_rl.pth          (RESNET-128 + RL,       Pk 87.5%)               │
+│  ├─ titan.pth              (SELF-ATTENTION,         Pk 90.8%)               │
+│  ├─ supreme_v3_1.pth       (CHRONOS GRU,            Pk 94.2%)              │
+│  ├─ supreme_v2.pth                                                         │
+│  ├─ generalist_e10.pth                                                     │
+│  ├─ boreal_chronos_gru.pth                                                 │
+│  ├─ policy_network_params.json (RL policy)                                 │
+│  └─ value_network_params.json  (RL value)                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Component Inventory
+
+| File | Purpose | Status |
+|---|---|---|
+| `frontend/index.html` | CORTEX Portal landing page — module selector, theater toggle | ✅ Current |
+| `frontend/cortex_c2.html` | Full C2 operator console — HITL/AUTO/MANUAL, COA, radar scope, LLM | ✅ Current |
+| `frontend/dashboard.html` | Strategic Command — SVG map, benchmark, HITL queue, inventory | ✅ Current |
+| `frontend/kinetic_3d.html` | 3D intercept sim (Three.js) — MARV/MIRV/Dogfight, wave mode | ✅ Current |
+| `frontend/live_view.html` | Live Kinetic Audit V6 — scoreboard, telemetry, auto-wave | ✅ V6 Apr 2026 |
+| `frontend/dataset_viewer.html` | CHRONOS 60 DNA Explorer — radar chart, 15-D features | ✅ Current |
+| `frontend/strategic_3d.html` | Cesium CZML orbital scenario replay | ✅ Current |
+| `frontend/tactical_legacy.html` | V3 legacy SVG map — prior iteration | ✅ Legacy |
+| `frontend/viz_engine.js` | Shared simulation engine (WEAPONS, Threat class, callEngine) | ✅ Current |
+| `src/agent_backend.py` | FastAPI — /evaluate_advanced, /ws/logs, /get_dataset_sample | ✅ Current |
+| `src/core/engine.py` | TacticalEngine + StrategicMCTS + MARV/MIRV/Dogfight utility | ✅ Current |
+| `src/core/models.py` | Threat dataclass — 14 advanced trajectory fields | ✅ Current |
+| `src/simulation.py` | Tick-based live sim with RTB origin physics | ✅ RTB fixed |
+| `src/test_advanced_trajectories.py` | 6-test validation suite — all passing | ✅ 6/6 |
+
+---
+
+## 3. Full Data Flow
+
+### Wave Engagement (dashboard.html / live_view.html)
+```
+User fires threat or clicks base
+        │
+        ▼
+Threat constructor (viz_engine.js)
+  Sets: marvActive, mirvReleased, dogOutcome, rtbActive, _frame, _totalFrames
+        │
+        ▼
+update() called each animation frame
+  ├─ MARV: jink when distToTgt ≤ marvTriggerKm × 1000
+  ├─ MIRV: spawn child Threats at mirvReleaseFrac travel; add to threats[]
+  ├─ Dogfight: at 30% travel, stochastic KILL/RTB/ENEMY_WIN
+  └─ RTB: reverse velocity away from target; check escape distance
+        │
+        ▼
+callEngine(threats[]) → POST /evaluate_advanced
+  agent_backend.py → TacticalEngine.get_optimal_assignments()
+    _calculate_utility() checks:
+      is_marv → +600 pre-jink, degraded Pk inside jink
+      is_mirv → +800 × mirv_count pre-release
+      can_dogfight → range bonus × (1 - win_prob)
+        │
+        ▼
+  StrategicMCTS._single_rollout()
+    MIRV expansion → child Threat objects
+    MARV Pk penalty applied
+    _resolve_dogfight() → KILL / RTB / ENEMY_WIN
+        │
+        ▼
+  Returns: assignments[], score, sitrep
+        │
+        ▼
+SAM interceptor launched toward threat
+CoT feed updated → window._addCoTHook → event banners, telemetry
+```
+
+---
+
+## 4. Advanced Threat Physics (NEW)
+
+### MARV — Maneuvering Re-entry Vehicle
+```python
+if getattr(t, 'is_marv', False):
+    trigger_km = getattr(t, 'marv_trigger_range_km', 80.0)
+    if dist > trigger_km:
+        utility += 600.0          # intercept early — Pk nominal
+    else:
+        pk_eff = pk * 0.55
+        utility += pk_eff * 400.0 # inside jink — degraded Pk
+```
+
+### MIRV — Multiple Independently Targetable RV
+```python
+if getattr(t, 'is_mirv', False) and not getattr(t, 'mirv_released', False):
+    if dist > release_km:
+        utility += 800.0 * mirv_count  # kill bus = kill all warheads
+    else:
+        utility += 100.0               # bus empty, treat as normal
+```
+
+### Dogfight Resolution
+```python
+def _resolve_dogfight(t, eff, rollout_score):
+    r = random.random()
+    if r < t.dogfight_win_prob:   return False, -(t.threat_value*1.0), "ENEMY_WIN"
+    elif t.can_rtb and r < (t.dogfight_win_prob + (1-t.dogfight_win_prob)*0.4):
+                                  return True,  t.threat_value*0.05, "RTB"
+    else:                         return True,  t.threat_value*0.2,  "KILL"
+```
+
+---
+
+## 5. Neural Engine API Contract
+
+### POST `/evaluate_advanced`
+```json
+Request:
+{
+  "threats": [{"id":"T1","x":400,"y":600,"speed_kmh":800,
+               "heading":"Capital","estimated_type":"cruise-missile",
+               "threat_value":100,"is_marv":false,"is_mirv":false,
+               "can_dogfight":false}],
+  "state": {"bases":[{"name":"Capital","x":0,"y":0,"inventory":{"thaad":8}}]},
+  "weather": "clear",
+  "doctrine": "balanced",
+  "use_rl": false
+}
+
+Response:
+{
+  "tactical_assignments": [{"base":"Capital","effector":"thaad","threat_id":"T1"}],
+  "strategic_score": 87.4,
+  "rl_prediction": null,
+  "human_sitrep": "CORTEX-1: 1 THAAD assigned to T1...",
+  "active_doctrine": "balanced"
+}
+```
+
+### GET `/get_dataset_sample?dataset=chronos_60_maneuver.npz`
+```json
+{
+  "index": 42,
+  "features": [49.0, 53505.8, 21178.0, 9350.0, 480.0, 1200.0, 12000.0,
+               100.0, 0.0, 0.353, 0.0, 49.0, 273.6, 53.5, 9.35],
+  "score": -13925.0,
+  "weights": [0.333, 0.333, 0.333],
+  "dataset": "chronos_60_maneuver.npz",
+  "shape": [200, 10, 15],
+  "n_timesteps": 10
+}
+```
+
+---
+
+## 6. Frontend Pages Reference
+
+| Page | URL | Key Features |
+|---|---|---|
+| CORTEX Portal | `index.html` | Module selector, theater toggle (Boreal/Sweden), backend health check |
+| CORTEX-C2 | `cortex_c2.html` | HITL/AUTO/MANUAL, 3-COA, circular radar, LLM analysis, weapon swap |
+| Strategic Dashboard | `dashboard.html` | SVG map sim, benchmark, HITL queue, doctrine selector, inventory |
+| 3D Kinetic Boreal | `kinetic_3d.html?theater=boreal` | Three.js 3D, MARV/MIRV/Dogfight, wave mode |
+| 3D Kinetic Sweden | `kinetic_3d.html?theater=sweden` | Same engine, Sweden theater |
+| Live Kinetic Audit | `live_view.html` | V6: scoreboard, telemetry panel, event banners, auto-wave |
+| Dataset Viewer | `dataset_viewer.html` | CHRONOS 60 radar chart, 15-D feature profile, oracle weights |
+| Strategic 3D | `strategic_3d.html` | Cesium CZML orbital replay, commercial/hostile scenarios |
+| Tactical Legacy | `tactical_legacy.html` | V3 SVG map — legacy reference view |
+
+---
+
+## 7. Running the Stack
+
+```powershell
+# 1. Activate venv
+C:\Users\dhiraj.kumar\Downloads\Saab\.venv_saab\Scripts\Activate.ps1
+
+# 2. Start backend
+cd C:\Users\dhiraj.kumar\Downloads\Saab\ruby-stridsledning-ai
+python -m uvicorn src.agent_backend:app --host 0.0.0.0 --port 8000 --reload
+
+# 3. Open portal
+# Backend serves frontend at http://localhost:8000
+# Or: python -m http.server 8080 from the frontend/ folder
+
+# 4. Run validation tests
+python src/test_advanced_trajectories.py
+# Expected: 6/6 PASS (MARV/MIRV/Dogfight/RTB)
+```
+
+**Theater selection:** Set `SAAB_MODE=boreal` or `SAAB_MODE=sweden` env var to switch theater data. The portal theater toggle updates all `?mode=` links in-browser.
+
 
 ---
 
