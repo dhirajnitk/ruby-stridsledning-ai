@@ -116,3 +116,18 @@ Each folder contains PNG images named by clip (e.g., `clip01_portal_main.png`, `
 4. Maintain the scenario and clip order for narrative consistency.
 
 These assets ensure visual fidelity and tactical accuracy for all generated video clips.
+
+### Generated image map
+
+The current screenshot set is fully sequential and maps 1:1 to the prompt clip order in each scenario folder:
+
+- `scenario_01`: `clip01_portal_main.png` through `clip08_live_view_engaged.png`
+- `scenario_02`: `clip01_kinetic3d_idle.png` through `clip04_mirv_separation.png`
+- `scenario_03`: `clip01_marv_launch.png` through `clip03_marv_intercept.png`
+- `scenario_04`: `clip01_dogfight_launch.png` through `clip03_dogfight_outcome.png`
+- `scenario_05`: `clip01_saturation_launch.png` through `clip06_live_view_scoreboard.png`
+- `scenario_06`: `clip01_hypersonic_launch.png` through `clip02_hypersonic_terminal.png`
+- `scenario_07`: `clip01_c2_console_idle.png` through `clip04_c2_sitrep.png`
+- `scenario_08`: `clip01_sweden_theater_idle.png` through `clip04_gotland_complete.png`
+- `scenario_09`: `clip01_strategic3d_load.png` through `clip06_dataset_viewer_loaded.png`
+- `scenario_10`: `clip01_final_stand_wave.png` through `clip04_final_stand_complete.png`

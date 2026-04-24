@@ -33,18 +33,21 @@ async function goto(page, url, wait = 3000) {
   console.log('\n[S01] Portal + Dashboard + Live View');
   await goto(page, `${BASE_URL}/index.html`, 2000);
   await shot(page, `${BASE}/scenario_01/clip01_portal_main.png`);
+  await page.evaluate(() => window.scrollTo(0, 160));
+  await page.waitForTimeout(400);
+  await shot(page, `${BASE}/scenario_01/clip02_portal_overview.png`);
 
   await goto(page, `${BASE_URL}/dashboard.html?mode=boreal`, 3000);
-  await shot(page, `${BASE}/scenario_01/clip02_dashboard_boreal.png`);
+  await shot(page, `${BASE}/scenario_01/clip03_dashboard_boreal.png`);
   await page.evaluate(() => window.scrollTo(0, 300));
   await page.waitForTimeout(800);
-  await shot(page, `${BASE}/scenario_01/clip03_dashboard_active_engagement.png`);
+  await shot(page, `${BASE}/scenario_01/clip04_dashboard_active_engagement.png`);
   await page.evaluate(() => window.scrollTo(0, 600));
   await page.waitForTimeout(800);
-  await shot(page, `${BASE}/scenario_01/clip04_dashboard_mid_engagement.png`);
+  await shot(page, `${BASE}/scenario_01/clip05_dashboard_mid_engagement.png`);
 
   await goto(page, `${BASE_URL}/live_view.html?mode=boreal`, 3500);
-  await shot(page, `${BASE}/scenario_01/clip05_live_view_idle.png`);
+  await shot(page, `${BASE}/scenario_01/clip06_live_view_idle.png`);
   // Fire a saturation wave
   await page.evaluate(() => {
     const btns = Array.from(document.querySelectorAll('button'));
@@ -52,8 +55,8 @@ async function goto(page, url, wait = 3000) {
     if (w) w.click();
   });
   await page.waitForTimeout(2000);
-  await shot(page, `${BASE}/scenario_01/clip06_live_view_active.png`);
-  await shot(page, `${BASE}/scenario_01/clip07_live_view_engaged.png`);
+  await shot(page, `${BASE}/scenario_01/clip07_live_view_active.png`);
+  await shot(page, `${BASE}/scenario_01/clip08_live_view_engaged.png`);
 
   // ── Scenario 02: MIRV ─────────────────────────────────────────────────────
   console.log('\n[S02] MIRV');
