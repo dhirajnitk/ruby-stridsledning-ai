@@ -11,10 +11,10 @@ class ResBlock(nn.Module):
 
 class BorealDirectEngine(nn.Module):
     """Elite/Supreme direct-action policy network.
-    Input : (Batch, 15) theater feature vector
+    Input : (Batch, 18) theater feature vector (15 original + 3 MARV/MIRV/Dogfight)
     Output: (policy (Batch, output_dim), value (Batch, 1)) tuple
     """
-    def __init__(self, input_dim=15, output_dim=11):
+    def __init__(self, input_dim=18, output_dim=11):
         super().__init__()
         self.embed = nn.Linear(input_dim, 128)
         self.attn = nn.MultiheadAttention(128, 4, batch_first=True)
@@ -33,7 +33,7 @@ class BorealDirectEngine(nn.Module):
 
 class BorealValueNetwork(nn.Module):
     """Hybrid RL critic — returns scalar value only."""
-    def __init__(self, input_dim=15):
+    def __init__(self, input_dim=18):
         super().__init__()
         self.input = nn.Linear(input_dim, 128)
         self.res1 = ResBlock(128)

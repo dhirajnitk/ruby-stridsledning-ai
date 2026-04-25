@@ -13,15 +13,15 @@ MCTS_ITERATIONS = 500  # High fidelity for the teacher function
 DATA_OUTPUT_PATH = "data/rl_training_data.csv"
 
 def extract_features(state: GameState, threats: list[Threat], weather: str, primary="balanced", blend=1.0):
-    """Extracts the canonical 15-feature observation vector matching core/engine.py.
+    """Extracts the canonical 18-feature observation vector matching core/engine.py.
 
     FIX B8: was 10D with wrong inventory keys (\"fighter\", \"sam\", \"drone\");
-            now 15D using the same keys as extract_rl_features() in core/engine.py.
+            now 18D using the same keys as extract_rl_features() in core/engine.py.
     """
     import math as _math
     num_threats = len(threats)
     if not num_threats:
-        return [0.0] * 15
+        return [0.0] * 18
     capital = next((b for b in state.bases if "Capital" in b.name), state.bases[0])
     cx, cy = capital.x, capital.y
 
@@ -44,10 +44,18 @@ def extract_features(state: GameState, threats: list[Threat], weather: str, prim
     dist_norm     = avg_dist  / 1000.0
     val_norm      = total_val / 1000.0
 
+    # Advanced Trajectory Awareness (V2 — MARV/MIRV/Dogfight)
+    has_marv = 1.0 if any(getattr(t, "is_marv", False) for t in threats) else 0.0
+    has_mirv = 1.0 if any(getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)
+                          for t in threats) else 0.0
+    total_mirv_warheads = float(sum(getattr(t, "mirv_count", 0) for t in threats
+                                    if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)))
+
     return [
         num_threats, avg_dist, min_dist, total_val,
         fighters, sams, drones, cap_sams, weather_bin, blend,
         west_threats, east_threats, ammo_stress, dist_norm, val_norm,
+        has_marv, has_mirv, total_mirv_warheads,
     ]
 
 def collect_training_data():

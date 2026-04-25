@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SAAB CORTEX-1 Demo — Captioned Playback</title>
+<style>
+  body { background: #11111b; color: #cdd6f4; font-family: 'Segoe UI', monospace; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  h1 { color: #fab387; font-size: 18px; letter-spacing: 3px; margin-bottom: 6px; }
+  .sub { color: #89b4fa; font-size: 11px; letter-spacing: 1px; margin-bottom: 18px; }
+  video { width: 100%; max-width: 1280px; border: 2px solid #313244; border-radius: 8px; background: #000; }
+  video::cue { font-family: 'Segoe UI', monospace; font-size: 16px; }
+  .info { margin-top: 12px; font-size: 11px; color: #585b70; }
+  .score-table { margin-top: 18px; border-collapse: collapse; font-size: 12px; }
+  .score-table th { color: #89b4fa; padding: 4px 16px; text-align: left; border-bottom: 1px solid #313244; }
+  .score-table td { padding: 4px 16px; border-bottom: 1px solid #1e1e2e; }
+  .good { color: #a6e3a1; } .bad { color: #f38ba8; } .ok { color: #f9e2af; }
+</style>
+</head>
+<body>
+<h1>SAAB CORTEX-1 — FULL CAPABILITY DEMO</h1>
+<div class="sub">SA Health · Human-In-The-Loop · Manual Override · Boreal + Sweden AOR · 1 min 48 sec</div>
+
+<video controls>
+  <source src="video.webm" type="video/webm">
+  <track kind="subtitles" src="video.vtt" srclang="en" label="Engine Commentary" default>
+  Your browser does not support the video element.
+</video>
+
+<div class="info">Subtitles: video.vtt (WebVTT) · Backup: video.srt · Recorded: Playwright 1.59.1 headless Chromium 1920×1080</div>
+
+<table class="score-table">
+  <tr><th>ACT</th><th>Theater</th><th>Model</th><th>Doctrine</th><th>Score</th><th>Assigns</th><th>Status</th></tr>
+  <tr><td>C2 Strategic Audit</td><td>Boreal</td><td>ELITE V3.5</td><td>BALANCED 70%</td><td class="good">+200.18</td><td class="good">30</td><td class="good">✓ NOMINAL</td></tr>
+  <tr><td>Tactical Phase A (AUTO)</td><td>Boreal</td><td>ELITE V3.5</td><td>FORTRESS</td><td class="bad">−380.00</td><td class="bad">0</td><td class="ok">⚠ FALLBACK BARRAGE</td></tr>
+  <tr><td>Tactical Phase B (HITL)</td><td>Boreal</td><td>ELITE V3.5</td><td>FORTRESS</td><td>—</td><td>—</td><td class="good">✓ CHRONOSTASIS + COMMENCE</td></tr>
+  <tr><td>Tactical Phase C (AMBUSH)</td><td>Boreal</td><td>ELITE V3.5</td><td>AGGRESSIVE</td><td class="bad">500 ERR</td><td class="bad">—</td><td class="ok">⚠ ENGINE TypeError (salvo optimizer)</td></tr>
+  <tr><td>Tactical (AUTO)</td><td>Sweden AOR</td><td>ELITE V3.5</td><td>AGGRESSIVE</td><td class="ok">−77.12</td><td class="good">✓</td><td class="good">✓ INTERCEPTS ASSIGNED</td></tr>
+</table>
+</body>
+</html>

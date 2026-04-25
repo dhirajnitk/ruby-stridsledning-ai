@@ -5,67 +5,12 @@ import numpy as np
 import os
 import json
 
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+
 # --- 1. ARCHITECTURE DEFINITIONS ---
-
-class ResBlock(nn.Module):
-    def __init__(self, size):
-        super().__init__()
-        self.fc1 = nn.Linear(size, size)
-        self.fc2 = nn.Linear(size, size)
-    def forward(self, x):
-        res = x
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
-        return torch.relu(x + res)
-
-class EliteTransformer(nn.Module):
-    """ELITE V3.5: Transformer-ResNet Hybrid for Direct Action."""
-    def __init__(self, in_dim=15, out_dim=231): # 21 Bases * 11 Effectors
-        super().__init__()
-        self.encoder = nn.Linear(in_dim, 256)
-        self.transformer = nn.TransformerEncoderLayer(d_model=256, nhead=8, batch_first=True)
-        self.res_stack = nn.Sequential(ResBlock(256), ResBlock(256))
-        self.output = nn.Linear(256, out_dim)
-    def forward(self, x):
-        x = torch.relu(self.encoder(x))
-        if x.dim() == 2: x = x.unsqueeze(1) # Add seq dim if missing
-        x = self.transformer(x)
-        x = x.squeeze(1)
-        x = self.res_stack(x)
-        return self.output(x)
-
-class ChronosGRU(nn.Module):
-    """SUPREME V3.1: Sequential GRU for Temporal Awareness."""
-    def __init__(self, in_dim=15, out_dim=231):
-        super().__init__()
-        self.gru = nn.GRU(in_dim, 256, num_layers=3, batch_first=True)
-        self.fc = nn.Linear(256, out_dim)
-    def forward(self, x):
-        _, h = self.gru(x)
-        return self.fc(h[-1])
-
-class StandardResNet(nn.Module):
-    """SUPREME V2 / HYBRID: Classical ResNet Triage."""
-    def __init__(self, in_dim=15, out_dim=231, depth=2):
-        super().__init__()
-        self.input = nn.Linear(in_dim, 128)
-        self.layers = nn.ModuleList([ResBlock(128) for _ in range(depth)])
-        self.output = nn.Linear(128, out_dim)
-    def forward(self, x):
-        x = torch.relu(self.input(x))
-        for layer in self.layers: x = layer(x)
-        return self.output(x)
-
-class GeneralistMLP(nn.Module):
-    """GENERALIST E10: Lightweight Policy Core."""
-    def __init__(self, in_dim=15, out_dim=231):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(in_dim, 512), nn.ReLU(),
-            nn.Linear(512, 256), nn.ReLU(),
-            nn.Linear(256, out_dim)
-        )
-    def forward(self, x): return self.net(x)
+from core.inference import TransformerResNet, ChronosGRU, StandardResNet, GeneralistMLP
+from ppo_titan_transformer import BorealTitanEngine
 
 # --- 2. TRAINING ENGINE ---
 
@@ -77,15 +22,22 @@ def train_model(name, model, data_path, epochs=10, batch_size=32):
 
     corpus = np.load(data_path)
     X = torch.tensor(corpus['features'], dtype=torch.float32)
-    Y = torch.tensor(corpus['labels'], dtype=torch.float32)
+    # Support both old format (labels) and new MARV/MIRV format (weights)
+    if 'labels' in corpus:
+        Y = torch.tensor(corpus['labels'], dtype=torch.float32)
+    elif 'weights' in corpus:
+        Y = torch.tensor(corpus['weights'], dtype=torch.float32)
+    else:
+        print(f"[ERROR] No 'labels' or 'weights' key in {data_path}. Keys: {list(corpus.keys())}")
+        return
     
     # Reshape labels if they are per-threat (we take the mean/max assignment as truth for the batch)
     # Note: For high-fidelity training, we would use a more complex loss.
     if Y.dim() == 3: # [Batch, N_Threats, N_Actions]
         Y = Y.mean(dim=1) # Simplified centroid for demonstration
-
+    
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.MSELoss()
 
     model.train()
     for epoch in range(epochs):
@@ -97,6 +49,11 @@ def train_model(name, model, data_path, epochs=10, batch_size=32):
 
             optimizer.zero_grad()
             output = model(batch_x)
+            
+            # Handle models that return (policy, value) tuples like BorealTitanEngine
+            if isinstance(output, tuple):
+                output = output[0]
+                
             loss = criterion(output, batch_y)
             loss.backward()
             optimizer.step()
@@ -105,7 +62,7 @@ def train_model(name, model, data_path, epochs=10, batch_size=32):
         if (epoch + 1) % 5 == 0:
             print(f"  > Epoch {epoch+1}/{epochs} | Loss: {epoch_loss/X.size(0):.6f}")
 
-    save_path = f"models/boreal_{name.lower()}.pth"
+    save_path = f"models/{name}.pth"
     torch.save(model.state_dict(), save_path)
     print(f"[COMPLETE] Model saved to {save_path}\n")
 
@@ -115,21 +72,50 @@ if __name__ == "__main__":
     os.makedirs("models", exist_ok=True)
     
     # 1. ELITE (Transformer)
-    train_model("elite", EliteTransformer(), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
+    train_model("elite_v3_5", TransformerResNet(18, 11), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
     
     # 2. SUPREME V3.1 (GRU)
-    train_model("supreme3", ChronosGRU(), "data/training/strategic_mega_corpus/boreal_temporal_gold.npz")
+    train_model("supreme_v3_1", ChronosGRU(18, 11), "data/training/strategic_mega_corpus/boreal_temporal_gold.npz")
     
     # 3. SUPREME V2 (ResNet)
-    train_model("supreme2", StandardResNet(depth=2), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
+    train_model("supreme_v2", StandardResNet(18, 11, width=64), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
     
     # 4. TITAN (Large Transformer)
-    train_model("titan", EliteTransformer(in_dim=15, out_dim=231), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
+    train_model("titan", BorealTitanEngine(18, 11), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
     
     # 5. HYBRID (ResNet Deep)
-    train_model("hybrid", StandardResNet(depth=4), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
+    train_model("hybrid_rl", StandardResNet(18, 11, width=128), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
     
     # 6. GENERALIST (MLP)
-    train_model("generalist", GeneralistMLP(), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
+    train_model("generalist_e10", GeneralistMLP(18, 11), "data/training/strategic_mega_corpus/boreal_snapshot_gold.npz")
 
-    print("[SYSTEM] ALL 9 NEURAL CORES HAVE BEEN INITIALIZED AND TRAINED.")
+    # --- PHASE 2: MARV/MIRV FINE-TUNING (18-D features) ---
+    # Fine-tune existing models on MARV/MIRV dataset to learn trajectory awareness
+    # without losing prior knowledge. Uses lower learning rate (1e-5).
+    marv_mirv_path = "data/training/strategic_mega_corpus/marv_mirv_train.npz"
+    if os.path.exists(marv_mirv_path):
+        print("\n[PHASE 2] MARV/MIRV Fine-Tuning (18-D trajectory awareness)...")
+        
+        # Load previously trained weights and fine-tune
+        models_to_finetune = {
+            "elite_v3_5": TransformerResNet(18, 11),
+            "supreme_v3_1": ChronosGRU(18, 11),
+            "supreme_v2": StandardResNet(18, 11, width=64),
+            "titan": BorealTitanEngine(18, 11),
+            "hybrid_rl": StandardResNet(18, 11, width=128),
+            "generalist_e10": GeneralistMLP(18, 11),
+        }
+        for name, model in models_to_finetune.items():
+            weight_path = f"models/{name}.pth"
+            if os.path.exists(weight_path):
+                try:
+                    model.load_state_dict(torch.load(weight_path, weights_only=True), strict=False)
+                    print(f"  > Loaded pre-trained weights from {weight_path}")
+                except Exception as e:
+                    print(f"  > Fresh init for {name} (dim change): {e}")
+            train_model(name, model, marv_mirv_path, epochs=5, batch_size=32)
+    else:
+        print(f"[SKIP] MARV/MIRV dataset not found at {marv_mirv_path}")
+        print(f"       Run: python src/generate_marv_mirv_data.py")
+
+    print("[SYSTEM] ALL NEURAL CORES HAVE BEEN INITIALIZED AND TRAINED.")

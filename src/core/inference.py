@@ -12,8 +12,8 @@ class ResBlock(nn.Module):
     def forward(self, x): return torch.relu(self.fc2(torch.relu(self.fc1(x))) + x)
 
 class TransformerResNet(nn.Module):
-    """Elite V3.5 / default: 15 → 128 (embed+attn+res) → 11"""
-    def __init__(self, in_dim=15, out_dim=11):
+    """Elite V3.5 / default: 18 → 128 (embed+attn+res) → 11"""
+    def __init__(self, in_dim=18, out_dim=11):
         super().__init__()
         self.embed = nn.Linear(in_dim, 128)
         self.attn = nn.MultiheadAttention(128, 4, batch_first=True)
@@ -25,8 +25,8 @@ class TransformerResNet(nn.Module):
         return torch.sigmoid(self.head(x))
 
 class ChronosGRU(nn.Module):
-    """Supreme V3.1: 15 → GRU(128, 2-layer) → 11"""
-    def __init__(self, in_dim=15, out_dim=11):
+    """Supreme V3.1: 18 → GRU(128, 2-layer) → 11"""
+    def __init__(self, in_dim=18, out_dim=11):
         super().__init__()
         self.gru = nn.GRU(in_dim, 128, num_layers=2, batch_first=True)
         self.head = nn.Linear(128, out_dim)
@@ -34,16 +34,16 @@ class ChronosGRU(nn.Module):
         _, h = self.gru(x.unsqueeze(1)); return torch.sigmoid(self.head(h[-1]))
 
 class StandardResNet(nn.Module):
-    """Supreme V2: 15 → ResBlock(64) → 11"""
-    def __init__(self, in_dim=15, out_dim=11, width=64):
+    """Supreme V2: 18 → ResBlock(64) → 11"""
+    def __init__(self, in_dim=18, out_dim=11, width=64):
         super().__init__()
         self.input = nn.Linear(in_dim, width); self.res1 = ResBlock(width); self.head = nn.Linear(width, out_dim)
     def forward(self, x):
         x = torch.relu(self.input(x)); x = self.res1(x); return torch.sigmoid(self.head(x))
 
 class GeneralistMLP(nn.Module):
-    """Generalist E10: 15 → MLP(256, 128) → 11  (FIX B6: was missing)"""
-    def __init__(self, in_dim=15, out_dim=11):
+    """Generalist E10: 18 → MLP(256, 128) → 11  (FIX B6: was missing)"""
+    def __init__(self, in_dim=18, out_dim=11):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(in_dim, 256), nn.ReLU(),
@@ -58,21 +58,21 @@ class BorealInference:
         self.model_name = model_name.lower().replace(" ", "_")
         
         # Load Scalers for Normalization
-        self.mean = np.zeros(15)
-        self.scale = np.ones(15)
+        self.mean = np.zeros(18)
+        self.scale = np.ones(18)
         params_path = "models/policy_network_params.json"
         if os.path.exists(params_path):
             with open(params_path, "r") as f:
                 p = json.load(f)
-                self.mean = np.array(p["scaler_mean"][:15])
-                self.scale = np.array(p["scaler_scale"][:15])
+                self.mean = np.array(p["scaler_mean"][:18]) if len(p.get("scaler_mean",[])) >= 18 else np.zeros(18)
+                self.scale = np.array(p["scaler_scale"][:18]) if len(p.get("scaler_scale",[])) >= 18 else np.ones(18)
         
         # FIX B6: Proper per-model architecture mapping
         mn = self.model_name
         if "supreme_v3_1" in mn or "chronos" in mn:
-            self.model = ChronosGRU(15, 11)
+            self.model = ChronosGRU(18, 11)
         elif "supreme_v2" in mn:
-            self.model = StandardResNet(15, 11, width=64)
+            self.model = StandardResNet(18, 11, width=64)
         elif "titan" in mn:
             # Titan uses deep transformer — import at runtime to avoid circular deps
             try:
@@ -80,17 +80,17 @@ class BorealInference:
                 _src = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
                 if _src not in sys.path: sys.path.insert(0, _src)
                 from ppo_titan_transformer import BorealTitanEngine
-                self.model = BorealTitanEngine(input_dim=15, output_dim=11)
+                self.model = BorealTitanEngine(input_dim=18, output_dim=11)
             except Exception:
-                self.model = TransformerResNet(15, 11)  # graceful fallback
+                self.model = TransformerResNet(18, 11)  # graceful fallback
         elif "generalist" in mn:
-            self.model = GeneralistMLP(15, 11)
+            self.model = GeneralistMLP(18, 11)
         elif "hybrid" in mn:
             # Hybrid RL uses a standard ResNet with depth-2 residual blocks
-            self.model = StandardResNet(15, 11, width=128)
+            self.model = StandardResNet(18, 11, width=128)
         else:
             # elite_v3_5, heuristic, etc.
-            self.model = TransformerResNet(15, 11)
+            self.model = TransformerResNet(18, 11)
 
         model_path = f"models/{self.model_name}.pth"
         if os.path.exists(model_path):

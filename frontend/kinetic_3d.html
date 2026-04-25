@@ -200,8 +200,9 @@ scene.add(gridH);
 // ── BASE MARKERS ──────────────────────────────────────────────
 // Theater center coordinates (SVG units) for camera positioning
 const THEATER_CENTERS = {
-  sweden: { x: 0,   z: 0,   camX: 0,      camY: 600000, camZ: 1200000, tgtX: 0,      tgtZ: 0      },
-  boreal: { x: 456, z: 391, camX: 759000, camY: 700000, camZ: 1852000, tgtX: 759000, tgtZ: 652000 }
+  // Sweden: Y is negated → north at negative Z. Camera south (positive Z) looking at Stockholm (0,0).
+  sweden: { x: 0,   z: 0,   camX: 0,      camY: 600000, camZ: 1400000, tgtX: 0,      tgtZ: -200000 },
+  boreal: { x: 456, z: 391, camX: 759000, camY: 700000, camZ: 1852000, tgtX: 759000, tgtZ: 652000  }
 };
 
 let baseMarkers=[];
@@ -213,7 +214,10 @@ function buildBases(theater){
     const geo=new THREE.CylinderGeometry(0,12000,28000,6);
     const col=b.hva?0x00ff88:0x00f2ff;
     const mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col,wireframe:true}));
-    mesh.position.set(b.x*SC,0,b.y*SC);
+    // BUG-FIX: Sweden CSV uses north-positive Y (latitude increases upward).
+    // THREE.js Z increases toward viewer, so negate Y for Sweden so north renders at top.
+    const zPos = theater === 'sweden' ? -b.y*SC : b.y*SC;
+    mesh.position.set(b.x*SC,0,zPos);
     scene.add(mesh); baseMarkers.push(mesh);
 
     // Glow ring
@@ -222,11 +226,11 @@ function buildBases(theater){
       new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.4})
     );
     ring.rotation.x=Math.PI/2;
-    ring.position.set(b.x*SC,100,b.y*SC);
+    ring.position.set(b.x*SC,100,zPos);
     scene.add(ring); baseMarkers.push(ring);
 
     // Label
-    addLabel(b.name,b.x*SC,b.y*SC,col);
+    addLabel(b.name,b.x*SC,zPos,col);
   });
 
   // Reposition camera & orbit to theater center
@@ -434,15 +438,17 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
   const bases=THEATERS[theater];
   const tgt=bases[Math.floor(Math.random()*bases.length)];
   const wdef=WEAPONS[weaponKey];
+  // BUG-FIX: Sweden uses north-positive Y; negate to match corrected base positions.
+  const zSign = theater === 'sweden' ? -1 : 1;
 
   // Spawn from random edge
   const angle=Math.random()*Math.PI*2;
   const dist=800000+Math.random()*400000;
   const spawnX=tgt.x*SC+Math.cos(angle)*dist;
-  const spawnZ=tgt.y*SC+Math.sin(angle)*dist;
+  const spawnZ=zSign*tgt.y*SC+Math.sin(angle)*dist;
   const spawnY=wdef.alt*(0.5+Math.random()*0.5);
 
-  const tgtX=tgt.x*SC, tgtZ=tgt.y*SC;
+  const tgtX=tgt.x*SC, tgtZ=zSign*tgt.y*SC;
 
   // Missile mesh
   const mGeo=new THREE.ConeGeometry(5000,20000,8);
@@ -499,7 +505,7 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
   const sams=[];
 
   function spawnSAM(base,label){
-    const dbx=base.x*SC, dbz=base.y*SC;
+    const dbx=base.x*SC, dbz=zSign*base.y*SC;
     const iGeo=new THREE.ConeGeometry(4000,16000,6);
     const iMesh=new THREE.Mesh(iGeo,new THREE.MeshBasicMaterial({color:0x00f2ff}));
     scene.add(iMesh);
@@ -810,7 +816,7 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
 
 // ── ANIMATION LOOP ────────────────────────────────────────────
 const urlP = new URLSearchParams(window.location.search);
-let currentTheater = urlP.get('theater') || 'sweden';
+let currentTheater = urlP.get('theater') || 'boreal';
 document.getElementById('sel-theater').value = currentTheater;
 buildBases(currentTheater);
 

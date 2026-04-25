@@ -1,0 +1,223 @@
+WEBVTT
+Kind: subtitles
+Language: en
+
+STYLE
+::cue {
+  font-family: 'Segoe UI', monospace;
+  font-size: 18px;
+  color: #cdd6f4;
+  background: rgba(17, 17, 27, 0.82);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+::cue(.act) { color: #fab387; font-weight: bold; font-size: 20px; }
+::cue(.engine) { color: #89dceb; }
+::cue(.kill) { color: #a6e3a1; }
+::cue(.warn) { color: #f38ba8; }
+::cue(.hitl) { color: #f38ba8; font-weight: bold; }
+::cue(.sa) { color: #00f2ff; }
+
+00:00:00.000 --> 00:00:03.000 align:center
+<c.act>SAAB CORTEX-1 AI DEFENSE SYSTEM</c>
+End-to-end capability demonstration
+Boreal Passage &amp; Sweden AOR theaters
+
+00:00:02.500 --> 00:00:07.000 align:center
+<c.act>ACT 1 — SYSTEM PORTAL</c>
+Multi-theater C2 entry hub
+Hovering: CORTEX C2 · KINETIC 3D · TACTICAL DISPLAY
+
+00:00:07.000 --> 00:00:11.000 align:center
+<c.act>ACT 2 — CORTEX C2 STRATEGIC CONSOLE</c>
+Strategic audit interface — live backend online
+Theater: BOREAL PASSAGE
+
+00:00:11.000 --> 00:00:15.500 align:center
+Engine model loaded: <c.engine>ELITE V3.5</c>
+Scenario: SWARM ATTACK
+Doctrine cycling: FORTRESS → AGGRESSIVE → BALANCED
+
+00:00:15.500 --> 00:00:20.500 align:center
+<c.engine>[ENGINE] Dispatching /evaluate_advanced → ELITE V3.5</c>
+Input: 30 theater assets across 12 Boreal bases
+Doctrine: BALANCED · Blend ratio: 70%
+
+00:00:20.500 --> 00:00:24.500 align:center
+<c.kill>[ENGINE RESULT] Score: +200.18 ✓</c>
+Tactical assignments generated: 30
+All forward bases covered — THEATER NOMINAL
+
+00:00:22.000 --> 00:00:26.000 align:center
+Theater toggle: BOREAL → SWEDEN AOR → BOREAL
+Map reloads confirm dual-theater sensor overlay
+
+00:00:23.500 --> 00:00:28.000 align:center
+<c.act>ACT 3 — FORTRESS HUB LIVE VIEW</c>
+Boreal Passage kinetic audit panel
+Launching saturation wave scenario
+
+00:00:25.000 --> 00:00:31.500 align:center
+<c.warn>[LIVE] Saturation wave — 8 inbound vectors</c>
+viz_engine.js: terrain NaN corrections active
+Fortress Hub Registry minimap: confirmed
+
+00:00:31.500 --> 00:00:36.000 align:center
+<c.act>ACT 4 — BOREAL KINETIC 3D SIMULATOR</c>
+Three.js r128 intercept engine — theater: BOREAL
+Mode: AUTO ENGAGE
+
+00:00:33.500 --> 00:00:38.500 align:center
+<c.engine>[SIM] Weapon 1: HYPERSONIC (Mach 10+)</c>
+SAM-1 intercept assigned
+Intercept trajectory: computed in &lt;1 frame
+
+00:00:38.000 --> 00:00:43.000 align:center
+<c.engine>[SIM] Weapon 2: BALLISTIC</c>
+Terminal phase re-entry intercept
+THAAD engagement envelope active
+
+00:00:43.000 --> 00:00:47.500 align:center
+<c.hitl>[SIM] MODE SWITCH: AUTO → HITL</c>
+Human-In-The-Loop engaged on CRUISE missile
+Intercept PENDING commander approval
+
+00:00:45.500 --> 00:00:50.500 align:center
+<c.kill>[HITL — KINETIC 3D] Commander approved ✓</c>
+SAM arc confirmed · Intercept detonation visible
+Mode restored: AUTO ENGAGE
+
+00:00:50.500 --> 00:00:55.000 align:center
+<c.act>ACT 5 — BOREAL TACTICAL DISPLAY</c>
+Radar canvas: 1000×780px · 1667 km theater (SCALE 0.6)
+Model: ELITE V3.5 · Doctrine: FORTRESS
+
+00:00:52.500 --> 00:00:56.500 align:center
+<c.warn>PHASE A — AUTONOMOUS ENGAGEMENT</c>
+4 bombers spawned at eastern staging zone
+Sinusoidal curved approach trajectories active
+
+00:00:54.000 --> 00:00:58.000 align:center
+<c.sa>SA HEALTH PANEL:</c>
+Active Threats: 4 · Staging: 0
+Mode: AUTO ENGAGE · Bar: CRITICAL
+
+00:00:57.500 --> 00:01:02.000 align:center
+<c.engine>[ENGINE] ELITE V3.5 · FORTRESS doctrine</c>
+Strategic consequence score: <c.warn>−380.00</c>
+Assignments: 0 — no valid intercept geometry
+
+00:00:59.500 --> 00:01:03.500 align:center
+<c.warn>Engine note: score −380 = negative defense value</c>
+FORTRESS doctrine: inventory depth insufficient
+for unassigned threat geometry at evaluation time
+
+00:01:01.000 --> 00:01:05.500 align:center
+<c.kill>[KILL RESOLUTION] Area-defense barrage active</c>
+Deterministic scheduler: t+700ms per unassigned threat
+Canvas HUD kill counter: 0 → 4
+
+00:01:03.500 --> 00:01:07.500 align:center
+<c.sa>SA HEALTH UPDATE:</c>
+Active Threats: 0 · Intercepts: 4
+Health bar: → SECTOR SECURE ◆
+
+00:01:06.500 --> 00:01:10.000 align:center
+<c.hitl>PHASE B — HUMAN-IN-THE-LOOP OVERRIDE</c>
+Commander enables: MANUAL OVERRIDE
+SA badge: AUTO ENGAGE → ! MANUAL OVERRIDE
+
+00:01:08.000 --> 00:01:13.000 align:center
+<c.warn>3 additional bombers spawned</c>
+Eastern Highridge approach corridor
+SA health bar drops — threats rising
+
+00:01:12.000 --> 00:01:16.500 align:center
+<c.engine>[ENGINE] /evaluate_advanced in OVERRIDE mode</c>
+AI returns SITREP + recommended intercept plan
+Override flag: automatic kill scheduling BLOCKED
+
+00:01:14.500 --> 00:01:21.000 align:center
+<c.hitl>⚡ CHRONOSTASIS ACTIVE ⚡</c>
+Strategic Override Triggered — Simulation Frozen
+Red pulsing border · AI SITREP displayed to commander
+
+00:01:19.500 --> 00:01:24.000 align:center
+<c.kill>[COMMANDER] COMMENCE ENGAGEMENT authorized ✓</c>
+fireWeapons() called · All threats engaged
+Closest-base assignment fallback executed
+
+00:01:21.000 --> 00:01:26.000 align:center
+<c.kill>3× explosive detonations cascade on radar canvas</c>
+Orange+white flash · 120px radius · 50-frame life
+SA: Intercepts +3 · Health bar → GREEN
+
+00:01:25.000 --> 00:01:29.000 align:center
+Override disabled → system returns to AUTO ENGAGE
+SA badge: ! MANUAL OVERRIDE → ⟳ AUTO ENGAGE
+PHASE B — HITL cycle complete
+
+00:01:27.500 --> 00:01:32.000 align:center
+<c.hitl>PHASE C — SATURATION AMBUSH</c>
+Doctrine: AGGRESSIVE
+btn-blind: 8 ghost threats · tight formation
+
+00:01:29.500 --> 00:01:34.000 align:center
+<c.sa>SA HEALTH — CRITICAL:</c>
+Active Threats: 8 · Mode: AUTO ENGAGE
+Bar: RED — CRITICAL — ENGAGE
+
+00:01:31.500 --> 00:01:35.500 align:center
+<c.engine>[ENGINE] /evaluate_advanced · AGGRESSIVE doctrine</c>
+<c.warn>Backend TypeError: NoneType in salvo optimizer</c>
+engine.py line 153 — 500 response returned
+
+00:01:33.000 --> 00:01:38.000 align:center
+<c.warn>Frontend catch: AI link failure handled gracefully</c>
+Fallback kill schedule: 8 threats × deterministic timer
+t+700–1540ms stagger across all ghost contacts
+
+00:01:35.500 --> 00:01:41.000 align:center
+<c.kill>8× cascade detonations — mass intercept complete</c>
+SAM arcs: cyan dashed missiles to all targets
+Kill counter: +8 · SA health → SECTOR SECURE
+
+00:01:40.500 --> 00:01:44.500 align:center
+<c.act>ACT 6 — SWEDEN AOR TACTICAL</c>
+Stockholm-centered coordinate frame
+Y-axis negation active (north-positive mapping)
+
+00:01:42.500 --> 00:01:47.000 align:center
+4 threats approaching Stockholm from Baltic sea
+Doctrine: AGGRESSIVE · Model: ELITE V3.5
+11 Swedish military installations online
+
+00:01:45.500 --> 00:01:50.500 align:center
+<c.engine>[ENGINE] ELITE V3.5 · AGGRESSIVE · Sweden AOR</c>
+Strategic consequence score: <c.kill>−77.12 ✓</c>
+Assignments issued — SAM intercepts scheduled
+
+00:01:48.000 --> 00:01:54.000 align:center
+Sweden −77 vs Boreal −380:
+Denser installation coverage + AGGRESSIVE doctrine
+yields significantly higher defense efficiency
+
+00:01:52.000 --> 00:01:57.000 align:center
+<c.kill>DEMO COMPLETE — Portal return</c>
+All systems nominal across both theaters
+Video runtime: 1 min 48 sec
+
+00:01:55.000 --> 00:02:05.000 align:center
+<c.act>PERFORMANCE SUMMARY</c>
+──────────────────────────────────────
+CORTEX C2 · Boreal BALANCED:    <c.kill>+200.18 ✓</c>
+Boreal Tactical · FORTRESS:     <c.warn>−380.00 [0 assigns]</c>
+Sweden Tactical · AGGRESSIVE:   <c.kill>−77.12  ✓</c>
+
+00:01:58.000 --> 00:02:08.000 align:center
+<c.act>CAPABILITIES DEMONSTRATED</c>
+<c.kill>✓</c> Neural scoring — ELITE V3.5 model
+<c.kill>✓</c> HITL override + CHRONOSTASIS freeze
+<c.kill>✓</c> Real-time SA health monitoring
+<c.kill>✓</c> Manual engagement authorization
+<c.kill>✓</c> Multi-theater map awareness

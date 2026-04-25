@@ -86,6 +86,16 @@ class IncomingThreat(BaseModel):
     heading: Optional[str] = "Capital X"
     estimated_type: Optional[str] = "bomber"
     threat_value: Optional[float] = 50.0
+    # Advanced trajectory flags (MARV/MIRV/Dogfight)
+    is_marv: Optional[bool] = False
+    marv_pk_penalty: Optional[float] = 0.55
+    marv_trigger_range_km: Optional[float] = 80.0
+    is_mirv: Optional[bool] = False
+    mirv_count: Optional[int] = 3
+    mirv_release_range_km: Optional[float] = 150.0
+    can_dogfight: Optional[bool] = False
+    dogfight_win_prob: Optional[float] = 0.5
+    can_rtb: Optional[bool] = False
 
 class IncomingBase(BaseModel):
     name: str
@@ -269,7 +279,12 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
     else:
         game_state = load_battlefield_state(CSV_FILE_PATH)
         
-    active_threats = [Threat(t.id, t.x, t.y, t.speed_kmh, t.heading, t.estimated_type, t.threat_value) for t in request.threats]
+    active_threats = [Threat(
+        t.id, t.x, t.y, t.speed_kmh, t.heading, t.estimated_type, t.threat_value,
+        is_marv=t.is_marv, marv_pk_penalty=t.marv_pk_penalty, marv_trigger_range_km=t.marv_trigger_range_km,
+        is_mirv=t.is_mirv, mirv_count=t.mirv_count, mirv_release_range_km=t.mirv_release_range_km,
+        can_dogfight=t.can_dogfight, dogfight_win_prob=t.dogfight_win_prob, can_rtb=t.can_rtb,
+    ) for t in request.threats]
     
     if not active_threats: 
         return {

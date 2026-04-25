@@ -329,8 +329,9 @@ function renderMap() {
     mapGeometry.appendChild(path);
   } else {
     if (title) title.innerText = 'STRATEGIC MAP :: BOREAL THEATER';
-    // Draw a border polygon connecting all boreal nodes
-    const sorted = [...THEATER_DATA].sort((a,b) => Math.atan2(a.y-650,a.x-800) - Math.atan2(b.y-650,b.x-800));
+    // Draw a border polygon connecting all boreal nodes (exclude TERRAIN — no x/y coords)
+    const baseNodes = THEATER_DATA.filter(n => n.type === 'BASE' || n.type === 'HVA' || n.type === 'ZONE');
+    const sorted = [...baseNodes].sort((a,b) => Math.atan2(a.y-650,a.x-800) - Math.atan2(b.y-650,b.x-800));
     const pts = sorted.map(n => `${toSvgX(n.x)},${toSvgY(n.y)}`).join(' L');
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', `M${pts} Z`);
@@ -364,7 +365,8 @@ function renderMap() {
     }
   }
 
-  THEATER_DATA.forEach(node => {
+  // Skip TERRAIN nodes here — they are rendered as polygons above, they have no x/y point
+  THEATER_DATA.filter(node => node.type !== 'TERRAIN').forEach(node => {
     const sx = toSvgX(node.x), sy = toSvgY(node.y);
     const isZone = node.type === 'ZONE';
     const col = node.type === 'HVA' ? '#00ff88' : (isZone ? 'rgba(0,242,255,0.4)' : '#00f2ff');
@@ -1229,7 +1231,8 @@ function init3D() {
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
   scene.add(new THREE.GridHelper(5000000, 50, 0x00f2ff, 0x112233));
 
-  THEATER_DATA.forEach(n => {
+  // Skip TERRAIN/ZONE nodes — they have no x/y point coords suitable for 3D placement
+  THEATER_DATA.filter(n => n.type === 'BASE' || n.type === 'HVA').forEach(n => {
     const col = n.type === 'HVA' ? 0x00ff88 : 0x00f2ff;
     const mesh = new THREE.Mesh(new THREE.CylinderGeometry(15000, 20000, 40000, 6), new THREE.MeshBasicMaterial({ color: col, wireframe: true }));
     mesh.position.set(to3X(n.x), 20000, to3Z(n.y));

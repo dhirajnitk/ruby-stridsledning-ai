@@ -21,6 +21,17 @@
     #base-panel-header h3 { font-size:0.58rem; letter-spacing:2px; margin-bottom:2px; }
     #base-panel-header p  { font-size:0.43rem; color:rgba(0,242,255,0.5); letter-spacing:1px; }
 
+    /* Fortress Hub Minimap */
+    #hub-minimap {
+      width:100%; overflow:hidden; flex-shrink:0;
+      border-bottom:1px solid rgba(0,242,255,0.12);
+      background:rgba(0,0,0,0.4);
+    }
+    #hub-minimap img {
+      width:100%; height:100px; object-fit:cover; display:block;
+      opacity:0.55; filter:saturate(0.65) brightness(0.8) hue-rotate(150deg);
+    }
+
     /* Scoreboard */
     #scoreboard {
       display:grid; grid-template-columns:1fr 1fr 1fr;
@@ -194,6 +205,11 @@
     <p>CLICK BASE → DEMO INTERCEPT</p>
   </div>
 
+  <!-- Theater minimap -->
+  <div id="hub-minimap">
+    <img id="hub-map-img" src="the-boreal-passage-map.svg" alt="Theater Map" title="Theater Overview">
+  </div>
+
   <!-- Kill / Leak / Total Scoreboard -->
   <div id="scoreboard">
     <div class="sb-cell kills">
@@ -297,6 +313,17 @@ function nowTs() {
   const s = Math.floor((Date.now() - _lvStart) / 1000);
   return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
 }
+
+// ── Hub minimap — set based on MODE (MODE is set in viz_engine.js) ────────
+(function() {
+  const mapEl = document.getElementById('hub-map-img');
+  if (mapEl) {
+    // MODE is set by viz_engine.js which loads before this script
+    mapEl.src = (typeof MODE !== 'undefined' && MODE === 'sweden')
+      ? 'sweden-military-map.svg'
+      : 'the-boreal-passage-map.svg';
+  }
+})();
 
 // ── Scoreboard ────────────────────────────────────────────────────────────
 function refreshScoreboard() {

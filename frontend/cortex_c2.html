@@ -498,7 +498,7 @@ body{
     <div class="backend-dot" id="backend-dot"></div>
     <span id="backend-lbl">backend: checking</span>
     <div class="c2-hdr-sep"></div>
-    <select id="model-select" onchange="onModelChange()" style="background:var(--s2);border:1px solid var(--bd2);color:var(--tx1);font-size:9.5px;border-radius:4px;padding:2px 6px;font-family:'JetBrains Mono',monospace;cursor:pointer">
+    <select id="model-select" onchange="onModelChange()" style="background:#3d0000;border:1px solid #cc0000;color:#ff9999;font-size:9.5px;border-radius:4px;padding:2px 6px;font-family:'JetBrains Mono',monospace;cursor:pointer">
       <option value="elite">Elite V3.5 · TRANSFORMER-RESNET</option>
       <option value="supreme3">Supreme V3.1 · GRU (Chronos)</option>
       <option value="supreme2">Supreme V2 · Legacy</option>
@@ -541,6 +541,16 @@ body{
     <div class="sc-card" data-sc="jammed" onclick="loadScenario('jammed')">
       <div class="sc-title">Jammed sensors + high-value threats</div>
       <div class="sc-desc">Inbound hypersonic and multiple decoys, low sensor agreement, blind spot over the primary track. Demonstrates DEFER mode: system withdraws rather than act on degraded picture.</div>
+    </div>
+
+    <div class="sc-card" data-sc="mirv" onclick="loadScenario('mirv')" style="border-color:rgba(255,85,0,0.4)">
+      <div class="sc-title">🚀 MIRV Bus Strike — warhead separation</div>
+      <div class="sc-desc">2 MIRV buses (3 warheads each) + 2 MARV escorts. Tests 2-phase intercept: destroy bus pre-release (THAAD) or handle 6 individual warheads post-separation.</div>
+    </div>
+
+    <div class="sc-card" data-sc="marv" onclick="loadScenario('marv')" style="border-color:rgba(255,204,0,0.4)">
+      <div class="sc-title">⚡ MARV Terminal Manoeuvre — Pk degradation</div>
+      <div class="sc-desc">4 MARV ballistics with terminal jinking (Pk penalty 0.40–0.55), 1 dogfighting fighter (35% win prob), 1 hypersonic. Stress-tests early intercept doctrine.</div>
     </div>
 
     <button id="btn-run-audit" onclick="runStrategicAudit()" style="margin-top:8px; width:100%; font-size:10px; font-weight:700; padding:8px; background:rgba(88,166,255,0.1); border:1px solid var(--blu); color:var(--blu); border-radius:4px; cursor:pointer; letter-spacing:1px">▶ RUN STRATEGIC AUDIT (MC)</button>
@@ -645,7 +655,12 @@ body{
             <stop offset="0%" stop-color="rgba(0,30,8,0.55)"/>
             <stop offset="100%" stop-color="rgba(0,10,3,0.75)"/>
           </radialGradient>
+          <clipPath id="radarClip">
+            <circle cx="430" cy="280" r="292"/>
+          </clipPath>
         </defs>
+        <!-- Theater map — clipped to radar scope -->
+        <image id="tac-map-img" href="the-boreal-passage-map.svg" x="138" y="-12" width="584" height="584" opacity="0.22" preserveAspectRatio="xMidYMid slice" clip-path="url(#radarClip)"/>
         <!-- Radar scope background -->
         <circle cx="430" cy="280" r="293" fill="url(#scopeGrad)" stroke="rgba(63,185,80,0.12)" stroke-width="1"/>
         <!-- Range rings and spokes -->
@@ -1131,6 +1146,8 @@ function executeManualFire() {
 // ═══════════════════════════════════════════════════
 function switchTheater(key) {
   ACTIVE_THEATER = key;
+  const mapImg = document.getElementById('tac-map-img');
+  if (mapImg) mapImg.setAttribute('href', key === 'sweden' ? 'sweden-military-map.svg' : 'the-boreal-passage-map.svg');
   ['boreal','sweden'].forEach(t => {
     const btn = document.getElementById('thr-' + t);
     if (btn) btn.className = 'thr-btn' + (t === key ? ' active' : '');
@@ -1187,6 +1204,10 @@ async function pollKinematics(sc) {
         speed_kmh: spd[t.type]||600,
         estimated_type: typeMap[t.type]||'cruise-missile',
         threat_value: t.value,
+        // MARV/MIRV/Dogfight flags (pass through to engine)
+        is_marv: !!t.marv, marv_pk_penalty: t.marv_pk_penalty || 0.55,
+        is_mirv: !!t.mirv, mirv_count: t.mirv_count || 3, mirv_release_range_km: t.mirv_release_km || 150,
+        can_dogfight: !!t.dogfight, dogfight_win_prob: t.dogfight_win || 0.5,
       })),
       doctrine_primary: ACTIVE_DOCTRINE, use_rl: true,
       model_id: document.getElementById('model-select')?.value || 'heuristic',
@@ -1414,6 +1435,30 @@ const BOREAL_SCENARIOS = {
     ],
     jammed: true, decoys: 3,
   },
+  mirv: {
+    id:'mirv', title:'MIRV Bus Strike — 3-warhead separation + MARV escort',
+    threats:[
+      { id:'BUS1', type:'BALLISTIC', label:'MIRV-BUS',     target:'ARK', value:200, spawnX:251, spawnY:720, mirv:true, mirv_count:3, mirv_release_km:150 },
+      { id:'BUS2', type:'BALLISTIC', label:'MIRV-BUS',     target:'NVB', value:180, spawnX:80,  spawnY:680, mirv:true, mirv_count:3, mirv_release_km:160 },
+      { id:'M01',  type:'BALLISTIC', label:'MARV',          target:'HRC', value:180, spawnX:540, spawnY:720, marv:true, marv_pk_penalty:0.45 },
+      { id:'M02',  type:'BALLISTIC', label:'MARV',          target:'ARK', value:160, spawnX:350, spawnY:700, marv:true, marv_pk_penalty:0.50 },
+      { id:'C01',  type:'CRUISE',    label:'cruise-escort', target:'BWP', value:60,  spawnX:695, spawnY:620 },
+      { id:'D01',  type:'LOITER',    label:'decoy',         target:'ARK', value:5,   spawnX:260, spawnY:660, decoy:true },
+    ],
+    jammed: false, decoys: 1,
+  },
+  marv: {
+    id:'marv', title:'MARV Terminal Manoeuvre — degraded Pk stress test',
+    threats:[
+      { id:'MV1', type:'BALLISTIC', label:'MARV',     target:'ARK', value:200, spawnX:300, spawnY:560, marv:true, marv_pk_penalty:0.40 },
+      { id:'MV2', type:'BALLISTIC', label:'MARV',     target:'NVB', value:180, spawnX:100, spawnY:530, marv:true, marv_pk_penalty:0.45 },
+      { id:'MV3', type:'BALLISTIC', label:'MARV',     target:'HRC', value:180, spawnX:600, spawnY:540, marv:true, marv_pk_penalty:0.50 },
+      { id:'MV4', type:'BALLISTIC', label:'MARV',     target:'BWP', value:160, spawnX:750, spawnY:560, marv:true, marv_pk_penalty:0.55 },
+      { id:'F01', type:'FIGHTER',   label:'dogfighter', target:'ARK', value:120, spawnX:400, spawnY:620, dogfight:true, dogfight_win:0.35 },
+      { id:'H01', type:'HYPERSONIC',label:'hypersonic', target:'ARK', value:90,  spawnX:490, spawnY:720 },
+    ],
+    jammed: false, decoys: 0,
+  },
 };
 
 // Sweden theater scenarios — threats target Swedish installations
@@ -1612,16 +1657,32 @@ function buildCandidates(threats) {
         // Skip if ammo depleted (HELWS is directed energy — unlimited)
         const st = inventoryState[b.id];
         if (st && effKey !== 'HELWS' && (st.effAmmo[effKey] ?? 999) <= 0) return;
-        const pkNominal = eff.pk[t.type] || 0;
+        let pkNominal = eff.pk[t.type] || 0;
         if (pkNominal < 0.08) return;
+
+        // ── MARV: terminal manoeuvre degrades Pk ──
+        // If the threat has marv=true and a pk_penalty, multiply Pk down
+        if (t.marv && t.marv_pk_penalty) {
+          pkNominal *= t.marv_pk_penalty;
+        }
+
         // Apply sensor-quality multiplier to get effective Pk
         const sqMult = _currentSq ? getSensorPkMult(t.type, _currentSq) : 1.0;
         const pk = parseFloat((pkNominal * sqMult).toFixed(3));
+
+        // ── MIRV: bus carries N warheads — boost effective threat value ──
+        // Killing the bus pre-release saves all warheads (800 × N bonus)
+        let effectiveVal = t.value;
+        if (t.mirv && t.mirv_count) {
+          effectiveVal += 800 * t.mirv_count;  // Same as backend engine formula
+        }
+
         cands.push({
           threatId:t.id, threatLabel:t.label||t.type, threatType:t.type,
-          threatVal:t.value, isDecoy:!!t.decoy,
+          threatVal:effectiveVal, isDecoy:!!t.decoy,
           baseId:b.id, baseName:b.name, effKey, effName:eff.name,
-          pk, pkNominal, sqMult, cost:eff.cost, dist,
+          pk, pkNominal: eff.pk[t.type] || 0, sqMult, cost:eff.cost, dist,
+          isMirv:!!t.mirv, isMarv:!!t.marv, isDogfight:!!t.dogfight,
         });
       });
     });

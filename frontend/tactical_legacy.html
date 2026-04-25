@@ -67,9 +67,9 @@
         button.ai-btn { background: #a6e3a1; color: #11111b; }
         .main-layout { display: flex; gap: 10px; flex: 1; min-height: 0; overflow: hidden; }
         .map-section { flex: 1; background: #181825; border: 1px solid #313244; border-radius: 10px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
-        .data-stack { width: 300px; display: flex; flex-direction: column; gap: 10px; min-height: 0; flex-shrink: 0; }
+        .data-stack { width: 400px; display: flex; flex-direction: column; gap: 10px; min-height: 0; flex-shrink: 0; }
         .panel { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-height: 0; }
-        .panel-header { font-size: 11px; font-weight: bold; margin-bottom: 8px; color: #89b4fa; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 1px;}
+        .panel-header { font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #89b4fa; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 1px;}
         #canvas-container { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; background: #11111b; border-radius: 6px; position: relative;}
         #radarCanvas { background: url('the-boreal-passage-map.svg'); background-size: cover; border-radius: 6px; cursor: crosshair; }
         /* BUG-FIX UI-5: mode-specific map background set dynamically below via JS */
@@ -93,7 +93,7 @@
                 <input type="range" id="blend-ratio" min="0" max="100" value="70">
                 <span id="blend-val" title="Primary doctrine weight vs secondary">P:<span id="blend-pct">70</span>%</span>
             </div>
-            <select id="model-select" title="Neural model" style="background:#1e1e2e; color:#cba6f7; border:1px solid #45475a; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; outline:none;">
+            <select id="model-select" title="Neural model" style="background:#3d0000; color:#ff9999; border:1px solid #cc0000; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; outline:none;">
                 <option value="heuristic">HEURISTIC (TRIAGE)</option>
                 <option value="elite">ELITE V3.5</option>
                 <option value="supreme3">SUPREME V3.1</option>
@@ -143,13 +143,32 @@
         <div class="data-stack">
             <div class="panel" style="flex: 1;">
                 <div class="panel-header">SITREP & DOCTRINE</div>
-                <div id="active-posture-label" style="font-size: 13px; font-weight: bold; color: #a6e3a1;">INITIALIZING...</div>
+                <div id="active-posture-label" style="font-size: 18px; font-weight: bold; color: #a6e3a1; letter-spacing:1px;">INITIALIZING...</div>
                 <div id="blend-ratio-pill" style="font-size: 9px; color: #89b4fa; margin-bottom: 5px;">SYNCING...</div>
                 <div style="background: #1e1e2e; border-radius: 4px; padding: 6px; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;"><span style="font-size: 10px; font-weight: bold; color: #fab387;">NEURAL CONFIDENCE</span></div>
-                    <div style="display: flex; align-items: baseline; gap: 5px;"><div id="neural-value" style="font-size: 18px; font-weight: bold; color: #89b4fa;">SCANNING</div><div id="policy-status" style="font-size: 10px; color: #cba6f7;">STANDBY</div></div>
+                    <div style="display: flex; align-items: baseline; gap: 5px;"><div id="neural-value" style="font-size: 26px; font-weight: bold; color: #89b4fa;">SCANNING</div><div id="policy-status" style="font-size: 11px; color: #cba6f7;">STANDBY</div></div>
                 </div>
-                <div id="flag-lights" style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 8px; color: #9399b2;"></div>
+                <!-- SA HEALTH DISPLAY -->
+                <div id="sa-health-panel" style="background:#11111b;border-radius:6px;padding:8px;margin-bottom:8px;">
+                    <div style="font-size:9px;font-weight:bold;color:#fab387;letter-spacing:2px;margin-bottom:6px;">SITUATIONAL AWARENESS</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;">
+                        <div style="text-align:center;background:rgba(243,139,168,0.08);border-radius:4px;padding:6px 4px;">
+                            <div id="sa-threats" style="font-size:26px;font-weight:bold;color:#f38ba8;line-height:1;">0</div>
+                            <div style="font-size:7px;color:rgba(243,139,168,0.6);letter-spacing:1px;margin-top:2px;">ACTIVE THREATS</div>
+                        </div>
+                        <div style="text-align:center;background:rgba(166,227,161,0.08);border-radius:4px;padding:6px 4px;">
+                            <div id="sa-kills" style="font-size:26px;font-weight:bold;color:#a6e3a1;line-height:1;">0</div>
+                            <div style="font-size:7px;color:rgba(166,227,161,0.6);letter-spacing:1px;margin-top:2px;">INTERCEPTS</div>
+                        </div>
+                    </div>
+                    <div id="sa-mode-badge" style="background:rgba(166,227,161,0.08);border:1px solid rgba(166,227,161,0.35);border-radius:4px;padding:5px 8px;text-align:center;font-size:11px;font-weight:bold;color:#a6e3a1;letter-spacing:2px;margin-bottom:6px;">&#x27F3; AUTO ENGAGE</div>
+                    <div style="height:8px;background:rgba(0,242,255,0.1);border-radius:4px;overflow:hidden;">
+                        <div id="sa-health-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#a6e3a1,#3fc1ff);border-radius:4px;transition:all 0.5s;"></div>
+                    </div>
+                    <div id="sa-status-text" style="font-size:8px;text-align:center;margin-top:3px;color:rgba(0,242,255,0.6);letter-spacing:1px;">&#9670; SECTOR SECURE</div>
+                </div>
+                <div id="flag-lights" style="display: none; grid-template-columns: 1fr 1fr; gap: 3px; font-size: 8px; color: #9399b2;"></div>
             </div>
             <div class="panel" style="height: 150px;"><div class="panel-header">SURVIVAL TREND</div><div style="flex: 1; position: relative;"><canvas id="scoreChart"></canvas></div></div>
             <div class="panel" style="flex: 1.5;"><div class="panel-header">ENGINE TRACE</div><div id="ws-output" class="trace-log">Connecting...</div></div>
@@ -180,7 +199,39 @@
         const canvas = document.getElementById('radarCanvas'); const ctx = canvas.getContext('2d');
         const container = document.getElementById('canvas-container'); const wsOutput = document.getElementById('ws-output');
         const _legacyMode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
-        let activeThreats = []; let explosions = []; let latestAssignments = []; let scoreChart;
+        let activeThreats = []; let stagingThreats = []; let explosions = []; let latestAssignments = []; let scoreChart;
+        const RADAR_RANGE_KM = 250; // km from any base before threat appears on scope
+
+        function updateStagingThreats() {
+            // Move staging threats (invisible — approaching from far)
+            // Speed formula for 100ms interval with 120x strategic acceleration:
+            //   dist_per_interval = speed_kmh * 120 * 0.1 / 3600 = speed_kmh / 300
+            stagingThreats.forEach(t => {
+                const spd = t.speed_kmh / 300;  // km per 100ms interval
+                t.x_km -= spd; // approach from east
+                // Curved telemetry: absolute sinusoidal oscillation around base_y
+                if (t.curve_amp !== undefined && t.base_y !== undefined) {
+                    t.y_km = t.base_y + t.curve_amp * Math.sin(t.x_km * 0.018 + t.curve_phase);
+                }
+            });
+            // Promote to activeThreats when within radar range of any base
+            const promoted = [];
+            stagingThreats = stagingThreats.filter(t => {
+                if (bases.some(b => Math.hypot(b.x_km - t.x_km, b.y_km - t.y_km) <= RADAR_RANGE_KM)) {
+                    promoted.push(t); return false;
+                }
+                return t.x_km > -1000; // discard if off far west edge
+            });
+            promoted.forEach(t => {
+                activeThreats.push(t);
+                try {
+                    const sp = document.createElement('span');
+                    sp.style.color = '#f38ba8';
+                    sp.textContent = `[RADAR] ⚠ NEW CONTACT ${t.id} — ${t.estimated_type.toUpperCase()} bearing EAST, range ${Math.round(bases.reduce((best, b) => Math.min(best, Math.hypot(b.x_km-t.x_km, b.y_km-t.y_km)), 9999))} km\n`;
+                    wsOutput.appendChild(sp); wsOutput.scrollTop = wsOutput.scrollHeight;
+                } catch {}
+            });
+        }
         // BUG-FIX UI-5b: Scale factor matches the CSV coordinate range.
         // Boreal: theater 1666km wide → canvas 1000px → scale 0.6
         // Sweden: x_km range ~-365 to +185 → scaled to fit 1000px canvas
@@ -190,33 +241,33 @@
 
         // Sweden bases from Swedish_Military_Installations.csv (x_km, y_km = offset from Stockholm)
         const swedenBases = [
-            { name: "Stockholm (Capital)",    x_km:   0,   y_km:    0, color: "#ffcc00", type: "capital", inventory: { sam: 60 } },
-            { name: "Uppsala Air Base (F 16)",x_km: -27,   y_km:   63, color: "#3fc1ff", type: "base",    inventory: { sam: 24 } },
-            { name: "Vidsel Air Base",         x_km:  95,   y_km:  728, color: "#3fc1ff", type: "base",    inventory: { sam: 48 } },
-            { name: "Luleå Air Base (F 21)",   x_km: 185,   y_km:  691, color: "#3fc1ff", type: "base",    inventory: { sam: 12 } },
-            { name: "Muskö Naval Base",        x_km:   4,   y_km:  -46, color: "#3399ff", type: "naval",   inventory: { sam: 30 } },
-            { name: "Såtenäs Air Base (F 7)",  x_km:-313,   y_km:  -99, color: "#3fc1ff", type: "base",    inventory: { sam: 24 } },
-            { name: "Malmen Air Base",         x_km:-150,   y_km: -104, color: "#3fc1ff", type: "base",    inventory: { sam: 16 } },
-            { name: "Ronneby Air Base (F 17)", x_km:-172,   y_km: -340, color: "#3fc1ff", type: "base",    inventory: { sam: 32 } },
-            { name: "Karlskrona Naval Base",   x_km:-153,   y_km: -352, color: "#3399ff", type: "naval",   inventory: { sam: 20 } },
-            { name: "Gotland (Visby Base)",    x_km:  16,   y_km: -186, color: "#00cccc", type: "city",    inventory: { sam: 40 } },
-            { name: "Gothenburg",              x_km:-364,   y_km: -180, color: "#00cccc", type: "city",    inventory: { sam: 30 } },
+            { name: "Stockholm (Capital)",    x_km:   0,   y_km:    0, color: "#ffcc00", type: "capital", inventory: { "patriot-pac3": 20, "nasams": 16, "thaad": 8, "iris-t-sls": 12 } },
+            { name: "Uppsala Air Base (F 16)",x_km: -27,   y_km:   63, color: "#3fc1ff", type: "base",    inventory: { "nasams": 12, "iris-t-sls": 8 } },
+            { name: "Vidsel Air Base",         x_km:  95,   y_km:  728, color: "#3fc1ff", type: "base",    inventory: { "patriot-pac3": 16, "nasams": 12 } },
+            { name: "Luleå Air Base (F 21)",   x_km: 185,   y_km:  691, color: "#3fc1ff", type: "base",    inventory: { "iris-t-sls": 8, "nasams": 4 } },
+            { name: "Muskö Naval Base",        x_km:   4,   y_km:  -46, color: "#3399ff", type: "naval",   inventory: { "nasams": 12, "iris-t-sls": 8 } },
+            { name: "Såtenäs Air Base (F 7)",  x_km:-313,   y_km:  -99, color: "#3fc1ff", type: "base",    inventory: { "nasams": 12, "iris-t-sls": 8 } },
+            { name: "Malmen Air Base",         x_km:-150,   y_km: -104, color: "#3fc1ff", type: "base",    inventory: { "nasams": 8, "iris-t-sls": 4 } },
+            { name: "Ronneby Air Base (F 17)", x_km:-172,   y_km: -340, color: "#3fc1ff", type: "base",    inventory: { "patriot-pac3": 12, "nasams": 8 } },
+            { name: "Karlskrona Naval Base",   x_km:-153,   y_km: -352, color: "#3399ff", type: "naval",   inventory: { "nasams": 8, "iris-t-sls": 6 } },
+            { name: "Gotland (Visby Base)",    x_km:  16,   y_km: -186, color: "#00cccc", type: "city",    inventory: { "patriot-pac3": 12, "nasams": 12 } },
+            { name: "Gothenburg",              x_km:-364,   y_km: -180, color: "#00cccc", type: "city",    inventory: { "nasams": 12, "iris-t-sls": 6 } },
         ];
         const borealBases = [
             // --- NORTHERN TERRITORIES ---
-            { name: "Arktholm (Capital X)", x_km: 418.3, y_km: 95.0, color: "#ffcc00", type: "capital", inventory: { sam: 20 } },
-            { name: "Northern Vanguard Base", x_km: 198.3, y_km: 335.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
-            { name: "Highridge Command", x_km: 838.3, y_km: 75.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
-            { name: "Boreal Watch Post", x_km: 1158.3, y_km: 385.0, color: "#3fc1ff", type: "base", inventory: { sam: 10 } },
-            { name: "Nordvik", x_km: 140, y_km: 323.3, color: "#ffffff", type: "city", inventory: {} },
-            { name: "Valbrek", x_km: 1423.3, y_km: 213.3, color: "#ffffff", type: "city", inventory: {} },
+            { name: "Arktholm (Capital X)", x_km: 418.3, y_km: 95.0, color: "#ffcc00", type: "capital", inventory: { "patriot-pac3": 8, "nasams": 8, "thaad": 4, "iris-t-sls": 8 } },
+            { name: "Northern Vanguard Base", x_km: 198.3, y_km: 335.0, color: "#3fc1ff", type: "base", inventory: { "nasams": 6, "iris-t-sls": 4 } },
+            { name: "Highridge Command", x_km: 838.3, y_km: 75.0, color: "#3fc1ff", type: "base", inventory: { "nasams": 6, "iris-t-sls": 4 } },
+            { name: "Boreal Watch Post", x_km: 1158.3, y_km: 385.0, color: "#3fc1ff", type: "base", inventory: { "nasams": 6, "iris-t-sls": 4 } },
+            { name: "Nordvik", x_km: 140, y_km: 323.3, color: "#ffffff", type: "city", inventory: { "patriot-pac3": 12, "nasams": 8 } },
+            { name: "Valbrek", x_km: 1423.3, y_km: 213.3, color: "#ffffff", type: "city", inventory: { "thaad": 4, "patriot-pac3": 12, "nasams": 8 } },
             // --- SOUTHERN UNION ---
-            { name: "Meridia (Capital Y)", x_km: 1225, y_km: 1208.3, color: "#ffcc00", type: "capital", inventory: {} },
-            { name: "Spear Point Base", x_km: 918.3, y_km: 835.0, color: "#f38ba8", type: "base", inventory: {} },
-            { name: "Southern Redoubt", x_km: 321.7, y_km: 1238.3, color: "#f38ba8", type: "base", inventory: {} },
-            { name: "Firewatch Station", x_km: 1398.3, y_km: 1071.7, color: "#f38ba8", type: "base", inventory: {} },
-            { name: "Callhaven", x_km: 96.7, y_km: 1150.0, color: "#ffffff", type: "city", inventory: {} },
-            { name: "Solano", x_km: 576.7, y_km: 1236.7, color: "#ffffff", type: "city", inventory: {} }
+            { name: "Meridia (Capital Y)", x_km: 1225, y_km: 1208.3, color: "#ffcc00", type: "capital", inventory: { "thaad": 8, "patriot-pac3": 16, "nasams": 12 } },
+            { name: "Spear Point Base", x_km: 918.3, y_km: 835.0, color: "#f38ba8", type: "base", inventory: { "patriot-pac3": 8, "nasams": 8 } },
+            { name: "Southern Redoubt", x_km: 321.7, y_km: 1238.3, color: "#f38ba8", type: "base", inventory: { "patriot-pac3": 8, "nasams": 6 } },
+            { name: "Firewatch Station", x_km: 1398.3, y_km: 1071.7, color: "#f38ba8", type: "base", inventory: { "patriot-pac3": 8, "nasams": 6 } },
+            { name: "Callhaven", x_km: 96.7, y_km: 1150.0, color: "#ffffff", type: "city", inventory: { "nasams": 8, "patriot-pac3": 8 } },
+            { name: "Solano", x_km: 576.7, y_km: 1236.7, color: "#ffffff", type: "city", inventory: { "patriot-pac3": 8, "nasams": 8 } }
         ];
         // BUG-FIX UI-5c: Select correct base set and coordinate mapping per theater mode
         const bases = _legacyMode === 'sweden' ? swedenBases : borealBases;
@@ -225,7 +276,7 @@
         function toCanvasY(y_km) { return _legacyMode === 'sweden' ? ORIGIN_Y - y_km * SCALE : y_km * SCALE; }
         // Terrain is now handled by the SVG layer
         const terrain = [];
-        function fitCanvas() { const s = Math.min(container.clientWidth / 1000, container.clientHeight / 780, 1.0); canvas.style.transform = `scale(${s})`; canvas.style.transformOrigin = 'center center'; }
+        function fitCanvas() { const s = Math.min(container.clientWidth / 1000, container.clientHeight / 780); canvas.style.transform = `scale(${s})`; canvas.style.transformOrigin = 'center center'; }
         window.addEventListener('resize', fitCanvas); fitCanvas();
         let ws;
         function connectWebSocket() {
@@ -273,7 +324,7 @@
                 const response = await fetch(`http://${host}:8000/evaluate_advanced`, {
                     method: 'POST', headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        state: { bases: bases.filter(b => b.type.includes("base") || b.type.includes("capital")).map(b => ({name: b.name, x: b.x_km, y: b.y_km, inventory: b.inventory})) },
+                        state: { bases: bases.map(b => ({name: b.name, x: b.x_km, y: b.y_km, inventory: b.inventory})) },
                         threats: activeThreats.map(t => ({ id: t.id, x: t.x_km, y: t.y_km, speed_kmh: t.speed_kmh, heading: "Capital X", estimated_type: t.estimated_type, threat_value: t.threat_value })),
                         doctrine_primary: document.getElementById('primary-doctrine').value,
                         doctrine_secondary: document.getElementById('secondary-doctrine').value,
@@ -307,6 +358,13 @@
                         if (isOverride) {
                             document.getElementById('auto-poll').checked = false;
                             document.getElementById('btn-fire').style.display = 'inline-block';
+                            // HITL: always show CHRONOSTASIS when override is ON after any AI response
+                            if (!isFrozen) {
+                                const _n = latestAssignments.length;
+                                const _advLines = (data.human_sitrep || '').split('\n').filter(l => l.trim() && !l.startsWith('---'));
+                                const _adv = _advLines.slice(0, 2).join(' ') || (_n > 0 ? `AI proposes ${_n} intercept(s). Authorize to engage.` : `AI assessed ${activeThreats.length} threat(s). Commander — authorize engagement.`);
+                                freezeTime(_adv);
+                            }
                         } else {
                             document.getElementById('btn-fire').style.display = 'none';
                             if (isDynamic && rlNorm < 75 && document.getElementById('auto-poll').checked) {
@@ -349,6 +407,32 @@
                     });
                 }
                 wsOutput.scrollTop = wsOutput.scrollHeight;
+
+                // DEMO KILL SCHEDULING: tag ALL active threats with deterministic kill time
+                // Assigned threats: 300ms (SAM reaches target)
+                // Unassigned threats: 700ms (barrage fallback — demo shows total area defense)
+                const assignedIds = new Set((latestAssignments||[]).map(a => a.threat_id));
+                const now = Date.now();
+                activeThreats.forEach((t, i) => {
+                    if (!t._killAt) {
+                        t._killAt = now + (assignedIds.has(t.id) ? 300 + i*60 : 700 + i*120);
+                        t._killBase = bases.find(b => {
+                            const ass = (latestAssignments||[]).find(a => a.threat_id === t.id);
+                            return ass && b.name === ass.base_name;
+                        }) || bases.reduce((closest, b) =>
+                            Math.hypot(b.x_km-t.x_km, b.y_km-t.y_km) < Math.hypot(closest.x_km-t.x_km, closest.y_km-t.y_km) ? b : closest
+                        );
+                    }
+                });
+                // HITL FALLBACK: show CHRONOSTASIS whenever manual-override is ON (regardless of assignments)
+                if (document.getElementById('manual-override').checked && !isFrozen) {
+                    const _n2 = latestAssignments.length;
+                    const _fbLines = (data.human_sitrep || '').split('\n').filter(l => l.trim() && !l.startsWith('---'));
+                    const _fbAdv = _fbLines.slice(0, 2).join(' ') || (_n2 > 0 ? `AI proposes ${_n2} intercept(s). Authorize to engage.` : `AI assessed ${activeThreats.length} threat(s). Commander — authorize engagement.`);
+                    document.getElementById('btn-fire').style.display = 'inline-block';
+                    document.getElementById('auto-poll').checked = false;
+                    freezeTime(_fbAdv);
+                }
             } catch(e) {
                 console.error("AI Request Failed:", e);
                 const errSpan = document.createElement("span");
@@ -360,9 +444,11 @@
         }
         let overrideActive = false;
         let isFrozen = false;
+        let totalKills = 0;
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // NOTE: staging updates are driven by setInterval below (robust to rAF throttling)
 
             // --- DRAW HOLOGRAPHIC TERRAIN ---
             terrain.forEach(t => {
@@ -409,30 +495,121 @@
                 });
             }
             // BUG-FIX UI-TACT-1: use toCanvasX/toCanvasY for explosion positions
-            explosions.forEach((exp, i) => { ctx.fillStyle = `rgba(250, 179, 135, ${exp.life/30})`; ctx.beginPath(); ctx.arc(toCanvasX(exp.x_km), toCanvasY(exp.y_km), (30-exp.life)*2, 0, 7); ctx.fill(); exp.life--; if(exp.life <= 0) explosions.splice(i, 1); });
+            // Big explosions: 50-frame life, growing orange ring + white flash
+            explosions.forEach((exp, i) => {
+                const prog = 1 - exp.life/50;
+                const r = prog * 120;
+                ctx.beginPath(); ctx.arc(toCanvasX(exp.x_km), toCanvasY(exp.y_km), r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(250,110,30,${exp.life/50 * 0.55})`; ctx.fill();
+                ctx.beginPath(); ctx.arc(toCanvasX(exp.x_km), toCanvasY(exp.y_km), r*0.4, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255,255,180,${exp.life/50 * 0.8})`; ctx.fill();
+                ctx.strokeStyle = `rgba(255,200,60,${exp.life/50 * 0.7})`; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(toCanvasX(exp.x_km), toCanvasY(exp.y_km), r, 0, Math.PI*2); ctx.stroke();
+                exp.life--; if(exp.life <= 0) explosions.splice(i, 1);
+            });
+
+            // SAM ARCS: animated cyan missile from base to threat during kill window
+            const nowMs = Date.now();
+            activeThreats.forEach(t => {
+                if (t._killAt && t._killBase) {
+                    const elapsed = nowMs - (t._killAt - 350);
+                    const frac = Math.min(1, Math.max(0, elapsed / 350));
+                    const bx = toCanvasX(t._killBase.x_km), by = toCanvasY(t._killBase.y_km);
+                    const tx = toCanvasX(t.x_km), ty = toCanvasY(t.y_km);
+                    const mx = bx + (tx-bx)*frac, my = by + (ty-by)*frac;
+                    ctx.strokeStyle = 'rgba(0,242,255,0.85)'; ctx.lineWidth = 2; ctx.setLineDash([5,4]);
+                    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(mx, my); ctx.stroke(); ctx.setLineDash([]);
+                    ctx.fillStyle = '#00f2ff'; ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI*2); ctx.fill();
+                }
+            });
             
-            // --- AUTOMATIC VS MANUAL EXECUTION ---
+            // --- TIMED KILL RESOLUTION (replaces random roll) ---
             const isOverride = document.getElementById('manual-override').checked;
             const targetedForKill = [];
-
             if (!isOverride) {
                 activeThreats.forEach(t => {
-                    // Increased kill probability for fast ambush targets (0.94 -> 0.85 threshold)
-                    if (latestAssignments.some(ass => ass.threat_id === t.id) && t.x_km < 1200 && Math.random() > 0.85) {
-                        explosions.push({x_km: t.x_km, y_km: t.y_km, life: 30}); targetedForKill.push(t.id);
-                        // Deduct ammo on auto-kill
-                        const ass = latestAssignments.find(a => a.threat_id === t.id);
-                        if (ass) { const b = bases.find(base => base.name === ass.base_name); if (b) b.inventory.sam--; }
+                    if (t._killAt && Date.now() >= t._killAt) {
+                        explosions.push({x_km: t.x_km, y_km: t.y_km, life: 50});
+                        targetedForKill.push(t.id);
+                        totalKills++;
+                        // Log kill
+                        try {
+                            const sp = document.createElement('span'); sp.style.color = '#a6e3a1';
+                            sp.textContent = `[KILL] ✓ ${t.id} NEUTRALISED @ (${Math.round(t.x_km)},${Math.round(t.y_km)})\n`;
+                            wsOutput.appendChild(sp); wsOutput.scrollTop = wsOutput.scrollHeight;
+                        } catch {}
                     }
                 });
             }
             activeThreats = activeThreats.filter(t => !targetedForKill.includes(t.id) && t.x_km > 0);
+
+            // ── CANVAS HUD: SA MODE + LIVE COUNTS ──
+            const _hMode = document.getElementById('manual-override').checked ? 'OVERRIDE'
+                         : document.getElementById('auto-poll').checked        ? 'AUTO ENGAGE'
+                         :                                                        'STANDBY';
+            const _hPfx  = document.getElementById('manual-override').checked ? '!' : '>';
+            const _hCol  = document.getElementById('manual-override').checked ? '#f38ba8' : '#a6e3a1';
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(8, 8, 210, 78);
+            ctx.font = 'bold 17px monospace'; ctx.fillStyle = _hCol;
+            ctx.fillText(_hPfx + ' ' + _hMode, 14, 30);
+            ctx.font = '13px monospace'; ctx.fillStyle = '#00f2ff';
+            ctx.fillText('THREATS ' + activeThreats.length + '  STAGING ' + stagingThreats.length, 14, 52);
+            ctx.fillStyle = '#a6e3a1';
+            ctx.fillText('KILLS ' + totalKills, 14, 72);
+            const _tot = totalKills + activeThreats.length + stagingThreats.length;
+            if (_tot > 0) {
+                const _kp = totalKills / _tot;
+                ctx.fillStyle = 'rgba(0,242,255,0.12)'; ctx.fillRect(8, 82, 210, 6);
+                ctx.fillStyle = _kp > 0.7 ? '#a6e3a1' : '#fab387'; ctx.fillRect(8, 82, 210 * _kp, 6);
+            }
+            ctx.restore();
+
             updatePhysics();
             requestAnimationFrame(draw);
         }
         draw(); // Start the engine
+        // Staging logic runs on setInterval (100ms) for reliable headless/rAF-throttled operation
+        setInterval(updateStagingThreats, 100);
+        setInterval(updateSAHealth, 400);
 
         // Toggles
+        document.getElementById('btn-fire').addEventListener('click', () => {
+            fireWeapons();
+            resumeTime();
+            document.getElementById('btn-fire').style.display = 'none';
+        });
+
+        function updateSAHealth() {
+            const threatCount = activeThreats.length + stagingThreats.length;
+            const isOverrideOn = document.getElementById('manual-override').checked;
+            document.getElementById('sa-threats').textContent = threatCount;
+            document.getElementById('sa-kills').textContent = totalKills;
+            const badge = document.getElementById('sa-mode-badge');
+            if (isOverrideOn) {
+                badge.textContent = '! MANUAL OVERRIDE';
+                badge.style.color = '#f38ba8';
+                badge.style.borderColor = 'rgba(243,139,168,0.6)';
+                badge.style.background = 'rgba(243,139,168,0.12)';
+            } else {
+                badge.textContent = '> AUTO ENGAGE';
+                badge.style.color = '#a6e3a1';
+                badge.style.borderColor = 'rgba(166,227,161,0.35)';
+                badge.style.background = 'rgba(166,227,161,0.08)';
+            }
+            const health = Math.max(0, 100 - activeThreats.length * 14 - stagingThreats.length * 4);
+            const bar = document.getElementById('sa-health-bar');
+            bar.style.width = health + '%';
+            bar.style.background = health > 70
+                ? 'linear-gradient(90deg,#a6e3a1,#3fc1ff)'
+                : health > 40
+                    ? 'linear-gradient(90deg,#f9e2af,#fab387)'
+                    : 'linear-gradient(90deg,#f38ba8,#ff4444)';
+            const st = document.getElementById('sa-status-text');
+            st.textContent = health === 100 ? 'SECTOR SECURE' : health > 70 ? 'MONITORING' : health > 40 ? 'THREAT ELEVATED' : 'CRITICAL — ENGAGE';
+            st.style.color = health > 70 ? 'rgba(0,242,255,0.6)' : health > 40 ? '#f9e2af' : '#f38ba8';
+        }
+
         document.getElementById('manual-override').addEventListener('change', (e) => {
             overrideActive = e.target.checked;
             if (!overrideActive) resumeTime(); // Auto-resume if toggled off
@@ -466,7 +643,11 @@
                 const defaultHeading = _legacyMode === 'sweden' ? 'Stockholm (Capital)' : 'Capital X';
                 if (!t.heading || t.heading === defaultHeading) {
                     // Move west (decreasing x_km) for both theaters
-                    t.x_km -= speedPerFrame; 
+                    t.x_km -= speedPerFrame;
+                    // Curved telemetry: absolute sinusoidal oscillation around base_y
+                    if (t.curve_amp !== undefined && t.base_y !== undefined) {
+                        t.y_km = t.base_y + t.curve_amp * Math.sin(t.x_km * 0.018 + t.curve_phase);
+                    }
                 } else {
                     const target = bases.find(b => b.name === t.heading);
                     if (target) {
@@ -485,35 +666,50 @@
 
         function fireWeapons() {
             const targetedForKill = [];
-            currentAssignments.forEach(ass => {
+            // If AI returned assignments, use them. Otherwise engage all active threats from closest base (demo fallback).
+            const toFire = latestAssignments.length > 0
+                ? latestAssignments
+                : activeThreats.map(t => ({
+                    threat_id: t.id,
+                    base_name: bases.reduce((cl, b) =>
+                        Math.hypot(b.x_km-t.x_km, b.y_km-t.y_km) < Math.hypot(cl.x_km-t.x_km, cl.y_km-t.y_km) ? b : cl
+                    ).name
+                  }));
+            toFire.forEach(ass => {
                 const t = activeThreats.find(th => th.id === ass.threat_id);
                 if (t) {
-                    explosions.push({x_km: t.x_km, y_km: t.y_km, life: 30});
+                    explosions.push({x_km: t.x_km, y_km: t.y_km, life: 50});
                     targetedForKill.push(t.id);
+                    totalKills++;
                     const b = bases.find(base => base.name === ass.base_name);
                     if (b) b.inventory.sam--;
                 }
             });
             activeThreats = activeThreats.filter(t => !targetedForKill.includes(t.id));
-            currentAssignments = []; // Clear current proposed plan
+            latestAssignments = []; // clear after manual fire authorization
             const logSpan = document.createElement("span");
             logSpan.style.color = "#a6e3a1";
-            logSpan.textContent = `[COMMAND] Manual firing authorization executed.\n`;
+            logSpan.textContent = `[COMMAND] Manual firing authorization executed — ${targetedForKill.length} intercept(s).\n`;
             wsOutput.appendChild(logSpan);
         }
-        // BUG-FIX UI-TACT-2: Theater-aware threat spawn. Sweden: east coast ~+300km; Boreal: x~1600km
+        // Threats spawn far to the east (off-screen), approach silently, appear only when within RADAR_RANGE_KM of a base
+        // Boreal: x=1700+ is off the right canvas edge (canvas covers ~0–1667 km at SCALE=0.6)
+        // Sweden: x=350+ = eastern Baltic approach toward Stockholm
         document.getElementById('btn-threat').onclick = () => {
-            const spawnX = _legacyMode === 'sweden' ? 300 + Math.random()*100 : 1600;
-            const spawnY = _legacyMode === 'sweden' ? -300 + Math.random()*600 : 100+Math.random()*600;
+            const spawnX = _legacyMode === 'sweden' ? 280 + Math.random()*70 : 950 + Math.random()*120;
+            const spawnY = _legacyMode === 'sweden' ? -80 + Math.random()*160 : 100 + Math.random()*260;
             const heading = _legacyMode === 'sweden' ? 'Stockholm (Capital)' : 'Capital X';
-            activeThreats.push({id: "T-"+Math.floor(Math.random()*900), x_km: spawnX, y_km: spawnY, speed_kmh: 2000, estimated_type: "bomber", threat_value: 80, heading});
+            stagingThreats.push({id: "T-"+Math.floor(Math.random()*900), x_km: spawnX, y_km: spawnY, base_y: spawnY, speed_kmh: 2000, estimated_type: "bomber", threat_value: 80, heading, curve_amp: Math.random()*45+15, curve_phase: Math.random()*Math.PI*2});
         };
-        // BUG-FIX UI-TACT-2: Theater-aware ambush wave spawn
+        // Ambush wave — 8 threats in tight formation, also from far east
         document.getElementById('btn-blind').onclick = () => {
-            const baseX = _legacyMode === 'sweden' ? 300 : 1600;
-            const baseY = _legacyMode === 'sweden' ? -300 : 50;
+            const baseX = _legacyMode === 'sweden' ? 290 : 960;
+            const baseY = _legacyMode === 'sweden' ? -60 : 100;
             const heading = _legacyMode === 'sweden' ? 'Stockholm (Capital)' : 'Capital X';
-            for(let i=0; i<10; i++) activeThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: baseX+(i*20), y_km: baseY+Math.random()*600, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150, heading});
+            for(let i=0; i<8; i++) {
+                const gy = baseY + Math.random()*180;
+                stagingThreats.push({id: "G-S"+Math.floor(Math.random()*900), x_km: baseX+(i*18), y_km: gy, base_y: gy, speed_kmh: 4500, estimated_type: "ghost", threat_value: 150, heading, curve_amp: Math.random()*35+10, curve_phase: Math.random()*Math.PI*2});
+            }
         };
         document.getElementById('btn-ai').onclick = () => requestAIOrders(false);
         document.getElementById('blend-ratio').oninput = (e) => {

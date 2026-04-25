@@ -40,7 +40,12 @@ def load_neural_models():
     except: pass
 
 def extract_rl_features(state, threats, weather="clear", primary="balanced", blend=1.0, **kwargs):
-    if not threats: return [0.0] * 15
+    """Extract 18-D feature vector for neural model input.
+    
+    Features 0-14: Original 15-D production vector (preserved for backward compatibility).
+    Features 15-17: Advanced trajectory awareness (MARV/MIRV/Dogfight).
+    """
+    if not threats: return [0.0] * 18
     
     num_threats = len(threats)
     capital = next((b for b in state.bases if "Capital" in b.name), state.bases[0])
@@ -66,11 +71,19 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     dist_norm = avg_dist / 1000.0
     val_norm = total_val / 1000.0
     
-    # FINAL 15-FEATURE PRODUCTION VECTOR
+    # Advanced Trajectory Awareness (V2 — MARV/MIRV)
+    has_marv = 1.0 if any(getattr(t, "is_marv", False) for t in threats) else 0.0
+    has_mirv = 1.0 if any(getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)
+                          for t in threats) else 0.0
+    total_mirv_warheads = float(sum(getattr(t, "mirv_count", 0) for t in threats
+                                    if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)))
+    
+    # FINAL 18-FEATURE PRODUCTION VECTOR (V2)
     return [
         num_threats, avg_dist, min_dist, total_val,
         fighters, sams, drones, cap_sams, weather_bin, blend,
-        west_threats, east_threats, ammo_stress, dist_norm, val_norm
+        west_threats, east_threats, ammo_stress, dist_norm, val_norm,
+        has_marv, has_mirv, total_mirv_warheads
     ]
 
 class DoctrineManager:
