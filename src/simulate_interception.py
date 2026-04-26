@@ -81,6 +81,11 @@ def simulate_chase(tx=None, ty=None, destx=None, desty=None, mx=None, my=None, i
     m_dir_vec = t_pos - m_pos
     m_heading = math.atan2(m_dir_vec[1], m_dir_vec[0])
     
+    # Introduce an initial off-boresight launch angle so the missile curves.
+    # Proportional Navigation will smoothly correct this over the flight path,
+    # demonstrating the kinematic chase visually.
+    m_heading += math.radians(25)
+    
     m_vel = np.array([m_speed * math.cos(m_heading), m_speed * math.sin(m_heading)])
     
     # Guidance Parameters

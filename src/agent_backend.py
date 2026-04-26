@@ -97,6 +97,7 @@ class IncomingThreat(BaseModel):
     can_dogfight: Optional[bool] = False
     dogfight_win_prob: Optional[float] = 0.5
     can_rtb: Optional[bool] = False
+    interceptors_assigned: Optional[int] = 0
 
 class IncomingBase(BaseModel):
     name: str

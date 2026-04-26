@@ -308,6 +308,11 @@ function updateTheaterInventory() {
       <span class="tinv-stat">${statusTxt}</span>
     </div>`;
   }).join('');
+  
+  // Broadcast inventory to 3D simulator
+  const SAAB_CH = new BroadcastChannel('saab_kinetic_v8');
+  const totalSAM = Object.values(ammo).reduce((a, b) => a + b, 0);
+  SAAB_CH.postMessage({ type: 'INVENTORY_SYNC', totalSAM, impacts: stats.impacts, kills: stats.intercepted });
 }
 
 window.cancelApproval = (threatId) => {
@@ -789,7 +794,7 @@ class Interceptor {
 
     const dist = this.pos.distanceTo(targetPos);
     if (dist < 15000) {
-      // Use effector's specific Pk matrix against threat type
+      this.done = true; // Mark as finished regardless of hit/miss
       const pk = this.eff.pk[this._threatType] || ACTIVE_MODEL.pk || 0.75;
       if (Math.random() < pk) {
         this.hit = true; this.dispose(); return true;
@@ -823,6 +828,7 @@ class Threat {
     const tx = to3X(targetNode.x), tz = to3Z(targetNode.y);
     this.pos = new THREE.Vector3(600000 + idx*20000, 5000, tz + (Math.random()-0.5)*200000);
     this.vel = new THREE.Vector3(tx, 5000, tz).sub(this.pos).normalize().multiplyScalar(this.wdef.speed);
+    this.interceptors = [];
 
     // ── Advanced trajectory state ─────────────────────────────────────
     this.marvActive   = false;
@@ -832,22 +838,46 @@ class Threat {
     this._spawnPos    = this.pos.clone(); // for RTB direction
     this._frame       = 0;
     this._totalFrames = 300;
+    this.jinkPhase = Math.random() * Math.PI * 2;
+    this.jinkV = { x: 0, z: 0 };
     
-    this.interceptors = []; // SALVO-READY
+    this.path = []; // Temporal data buffer
     
+    // 2D SVG components
     this.circle2D = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this.circle2D.setAttribute('r', this.wdef.r2d);
     this.circle2D.setAttribute('fill', this.wdef.color3);
     this.circle2D.style.cursor = 'pointer';
     
-    // Deep link into kinetic chase physics with live geometry
+    // Path trail (Temporal Visualisation)
+    this.trail2D = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    this.trail2D.setAttribute('fill', 'none');
+    this.trail2D.setAttribute('stroke', this.wdef.color3);
+    this.trail2D.setAttribute('stroke-width', '1');
+    this.trail2D.setAttribute('stroke-dasharray', '2 2');
+    this.trail2D.setAttribute('opacity', '0.4');
+    threatLayerG?.appendChild(this.trail2D);
+
+    // Specialized marker for MARV/MIRV
+    if (this.wdef.isMarv || this.wdef.isMirv) {
+        this.marker2D = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = this.wdef.isMarv ? "M-6,0 L0,-10 L6,0 L0,4 Z" : "M-5,-5 L5,-5 L5,5 L-5,5 Z"; // Diamond vs Square
+        this.marker2D.setAttribute('d', d);
+        this.marker2D.setAttribute('fill', 'none');
+        this.marker2D.setAttribute('stroke', this.wdef.color3);
+        this.marker2D.setAttribute('stroke-width', '1.5');
+        threatLayerG?.appendChild(this.marker2D);
+    }
+    
+    // Deep link into kinetic chase physics with live geometry + history
     this.circle2D.onclick = () => {
       // Find assigned base if it exists, else default to Arktholm (x=251, y=57 in Boreal)
       const effBaseId = this.interceptors.length > 0 ? Object.keys(BASES).find(k => BASES[k].name === this.interceptors[0].eff.name) || 'ARK' : 'ARK';
       const effBase = BASES[effBaseId] || BASES['ARK'];
       
       const isMarv = this.wdef.isMarv ? 'True' : 'False';
-      const qs = `?tx=${this.pos.x/1666}&ty=${this.pos.z/1666}&destx=${this.targetNode.x}&desty=${this.targetNode.y}&mx=${effBase.x}&my=${effBase.y}&is_marv=${isMarv}`;
+      const hist = JSON.stringify(this.path.slice(-20).map(p => ({x: p.x/1666, y: p.z/1666})));
+      const qs = `?tx=${this.pos.x/1666}&ty=${this.pos.z/1666}&destx=${this.targetNode.x}&desty=${this.targetNode.y}&mx=${effBase.x}&my=${effBase.y}&is_marv=${isMarv}&history=${encodeURIComponent(hist)}`;
       window.open(`kinetic_chase.html${qs}`, '_blank');
     };
     
@@ -873,9 +903,24 @@ class Threat {
         addCoT(`⚡ MARV TERMINAL JINK — ${this.id} (${(distToTgt/1000).toFixed(0)}km out)`, 'alert');
       }
       if (this.marvActive) {
-        const jink = (this.wdef.marvJinkFrac || 0.4) * 12000;
-        this.pos.x += (Math.random()-0.5) * jink;
-        this.pos.z += (Math.random()-0.5) * jink;
+        // Persistent Sinusoidal Jink (Aligned with Backend Physics: 3.8s period)
+        // 750 m/s amplitude at 1666 m/unit -> ~0.45 units/sec. 
+        // At 60FPS simulation speed, we tune for visual parity.
+        const jinkMag = (this.wdef.marvJinkFrac || 0.4) * 8000;
+        const jinkAccel = jinkMag * 0.15;
+        this.jinkPhase += 0.035; // ~3.6s period at 50Hz update rate
+        
+        this.jinkV.x += Math.sin(this.jinkPhase) * jinkAccel + (Math.random()-0.5) * jinkAccel * 0.5;
+        this.jinkV.z += Math.cos(this.jinkPhase + 1.1) * jinkAccel + (Math.random()-0.5) * jinkAccel * 0.5;
+        
+        const speed = Math.hypot(this.jinkV.x, this.jinkV.z);
+        if (speed > jinkMag) {
+            this.jinkV.x = (this.jinkV.x / speed) * jinkMag;
+            this.jinkV.z = (this.jinkV.z / speed) * jinkMag;
+        }
+        
+        this.pos.x += this.jinkV.x * 0.05;
+        this.pos.z += this.jinkV.z * 0.05;
       }
     }
 
@@ -949,14 +994,37 @@ class Threat {
     }
 
     this.pos.add(this.vel);
-    this.circle2D?.setAttribute('cx', toSvgX(this.pos.x/1666));
-    this.circle2D?.setAttribute('cy', toSvgY(this.pos.z/1666));
+    
+    // Store temporal data (every 5 frames to keep buffer small)
+    if (this._frame % 5 === 0) {
+        this.path.push(this.pos.clone());
+        if (this.path.length > 100) this.path.shift();
+    }
+
+    const sx = toSvgX(this.pos.x/1666), sy = toSvgY(this.pos.z/1666);
+    this.circle2D?.setAttribute('cx', sx);
+    this.circle2D?.setAttribute('cy', sy);
+    
+    if (this.marker2D) {
+        this.marker2D.setAttribute('transform', `translate(${sx},${sy}) rotate(${this.wdef.isMarv ? (Math.sin(Date.now()/200)*20) : 0})`);
+        if (this.wdef.isMirv) {
+            this.marker2D.setAttribute('stroke-width', 1 + Math.sin(Date.now()/100)); // Pulsing for MIRV
+        }
+    }
+
+    if (this.trail2D && this.path.length > 1) {
+        const pts = this.path.map(p => `${toSvgX(p.x/1666)},${toSvgY(p.z/1666)}`).join(' ');
+        this.trail2D.setAttribute('points', pts);
+    }
+
     if (this.mesh) this.mesh.position.copy(this.pos);
   }
   dispose() {
     if (this._disposed) return;
     this._disposed = true; this.hit = true;
     this.circle2D?.remove();
+    this.trail2D?.remove();
+    this.marker2D?.remove();
     if (this.mesh) { scene?.remove(this.mesh); this.mesh.geometry.dispose(); this.mesh.material.dispose(); this.mesh = null; }
     
     // Dispose all interceptors in the salvo
@@ -1000,11 +1068,14 @@ async function callEngine(threatList) {
         state: { bases: stateBasesPayload },
         threats: threatList.map(t => ({
           id: t.id,
-          x: t.targetNode.x * kmFactor,
-          y: t.targetNode.y * kmFactor,
+          x: (t.pos.x / 1666) * kmFactor,
+          y: (t.pos.z / 1666) * kmFactor,
           speed_kmh: t.wdef.speed,
           estimated_type: typeMap[t.wdef.type] || 'cruise-missile',
-          threat_value: valMap[t.wdef.type] || 50
+          threat_value: valMap[t.wdef.type] || 50,
+          interceptors_assigned: t.interceptors.length,
+          is_marv: !!t.marvActive,
+          is_mirv: !!t.wdef.isMirv && !t.mirvReleased
         })),
         weather: 'clear',
         doctrine_primary: window._ACTIVE_DOCTRINE || 'balanced',
@@ -1224,6 +1295,9 @@ window.processApprovedAssignment = (threatId) => {
     pendingApprovals.delete(threatId);
 };
 
+// Initialize BroadcastChannel once globally
+const SAAB_SYNC_CH = new BroadcastChannel('saab_kinetic_v8');
+
 function updateSimulation() {
   if (!isSimulating) return;
 
@@ -1249,7 +1323,8 @@ function updateSimulation() {
     const dist = t.pos.distanceTo(new THREE.Vector3(to3X(t.targetNode.x), 5000, to3Z(t.targetNode.y)));
     
     // Auto-Engagement Logic with Range Scaling
-    if (t.interceptors.length === 0) {
+    // FIX: Re-engage if salvo count requirement increases (e.g. jink start)
+    if (t.interceptors.length < getSalvoCount(t)) {
         if (ENGINE_MODE === 'auto') {
             // Build all valid (base, effector) candidates that are in range
             const candidates = [];
@@ -1336,7 +1411,7 @@ function updateSimulation() {
             threatNeutralized = true;
             return false; // Remove this interceptor
         }
-        return !int.hit;
+        return !int.done;
     });
 
     if (threatNeutralized) {
@@ -1409,6 +1484,29 @@ function updateSimulation() {
       addCoT(`FINAL: TACTICAL ${getTacticalAcc()} | STRATEGIC ${getStrategicAcc()}`, 'success');
     }
   }
+
+  // --- SOURCE OF TRUTH BROADCAST ---
+  // Periodically stream the entire theater state to secondary views (Kinetic 3D, Chase)
+  if (!window.isMirror) {
+    const syncData = {
+      type: 'STATE_SYNC',
+      ts: Date.now(),
+      mode: MODE,
+      threats: threats.filter(t => !t.hit).map(t => ({
+        id: t.id,
+        x: t.pos.x, y: t.pos.y, z: t.pos.z,
+        wkey: t.wdef.type,
+        isMarv: !!t.marvActive,
+        isMirv: !!t.wdef.isMirv && !t.mirvReleased,
+        interceptors: t.interceptors.map(i => ({
+          pos: { x: i.pos.x, y: i.pos.y, z: i.pos.z },
+          eff: i.eff.name,
+          color: i.eff.color
+        }))
+      }))
+    };
+    SAAB_SYNC_CH.postMessage(syncData);
+  }
 }
 
 // --- 3D ENGINE ---
@@ -1471,7 +1569,9 @@ function init3D() {
     if (hits[0]?.object.userData.id) triggerDemo(hits[0].object.userData.id);
   });
 
-  (function loop() { requestAnimationFrame(loop); updateSimulation(); orbitControls.update(); renderer.render(scene, camera); })();
+  // Decouple physics/sync from rendering so it runs when tab is inactive
+  setInterval(updateSimulation, 16);
+  (function loop() { requestAnimationFrame(loop); orbitControls.update(); renderer.render(scene, camera); })();
 }
 
 function createBlast(pos, col) {

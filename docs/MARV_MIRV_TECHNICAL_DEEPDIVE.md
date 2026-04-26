@@ -350,3 +350,16 @@ This runs all 6 tests:
 
 > **All critical paths are now integrated.** The only remaining gap is RTB visualization in the frontend (retreat trajectory rendering).
 
+---
+
+## 10. Sinusoidal Synchronization & "Source of Truth"
+In the latest version of the Boreal Chessmaster (V8.5+), we have unified the physical representation of MARV threats across all visual and tactical domains.
+
+*   **The Problem:** Previously, the 2D Strategic map used random jitter for MARVs, while the 3D Kinetic sim used its own local sinusoidal model. This led to "ghosting" where a threat would hit in 3D but miss on the 2D map.
+*   **The Solution:** We implemented a **Master-Follower Architecture**.
+    *   **The Master:** `viz_engine.js` (Strategic Dashboard) calculates the "Ground Truth" trajectory using a sinusoidal jink (3.8s period, 750m/s amplitude).
+    *   **The Broadcast:** The dashboard streams this truth via `BroadcastChannel` in real-time.
+    *   **The Follower:** `kinetic_3d.html` acts as a visual surrogate, disabling its local physics and snapping its entities to the broadcasted coordinates.
+*   **The Result:** 100% tactical parity. Whether you are observing the engagement from the strategic theater view or a 3D kinetic chase, you are seeing the **exact same physical event**.
+
+

@@ -373,31 +373,51 @@ async function runSimulation(scenario, customParams = null) {
   sVectD.textContent = 'RANGE: 100km';
 
   try {
-    // raw=true: backend returns trajectories already re-centred on SAM origin
-    // This zooms the canvas view to the engagement geometry, making Pro-Nav curvature visible
     let url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=${scenario}&raw=true`;
+    if (scenario === 'custom' && customParams) {
+      url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=live` +
+            `&tx=${customParams.tx*1000}&ty=${customParams.ty*1000}` +
+            `&destx=${customParams.destx*1000}&desty=${customParams.desty*1000}` +
+            `&mx=${customParams.mx*1000}&my=${customParams.my*1000}` +
+            `&is_marv=${customParams.is_marv}&raw=true`;
+    }
+    
     const res = await fetch(url);
     const data = await res.json();
     if (data.status !== 'success') { sStatus.innerText = 'ERROR'; return; }
+    
+    // Handle history if provided
+    let tTrajectory = data.target_trajectory;
+    let historyPath = [];
+    if (customParams && customParams.history) {
+        try {
+            historyPath = JSON.parse(customParams.history).map(p => ({x: p.x*1000, y: p.y*1000}));
+            // Convert to relative coordinates if raw=true is used (backend centres on SAM)
+            const samX = customParams.mx * 1000, samY = customParams.my * 1000;
+            historyPath = historyPath.map(p => ({ x: p.x - samX, y: p.y - samY }));
+        } catch(e) { console.error("Failed to parse history", e); }
+    }
+
     sStatus.innerText = 'PLAYBACK';
     sStatus.style.color = 'var(--blu)';
-    // Pass PRESET_DEFBASE so the defended city diamond is drawn at the correct location
-    animateChase(data.target_trajectory, data.missile_trajectory, data.intercepted, data.miss_distance, true, PRESET_DEFBASE, [], 0);
+    
+    // Pass PRESET_DEFBASE or calculated base
+    const defBase = customParams ? { x: (customParams.destx - customParams.mx)*1000, y: (customParams.desty - customParams.my)*1000 } : PRESET_DEFBASE;
+    
+    animateChase(tTrajectory, data.missile_trajectory, data.intercepted, data.miss_distance, true, defBase, [], 0, historyPath);
   } catch(e) {
     sStatus.innerText = 'API ERROR';
   }
 }
 
 // ── ANIMATION ────────────────────────────────────────────────────────────────
-function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, samBaseIdx) {
+function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, samBaseIdx, historyPath = []) {
   let frame = 0;
   const totalFrames = Math.max(tPath.length, mPath.length);
 
   // Dynamic bounding box — use engagement paths + SAM origin ONLY.
-  // Do NOT include defBase: it sits at y≈0 far below the intercept zone and
-  // pulls the viewport to the canvas bottom, pushing the interception off-screen.
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  const allPts = [...tPath, ...mPath, {x:0,y:0}];
+  const allPts = [...tPath, ...mPath, ...historyPath, {x:0,y:0}];
   // Add other theater bases for geographic context (clamp to 600km radius from engagement)
   const samBase = (allBases && samBaseIdx !== undefined) ? allBases[samBaseIdx] : null;
   const otherBasePts = [];
@@ -521,6 +541,17 @@ function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, 
     ctx.lineTo(mapX(mPath[maxM].x), mapY(mPath[maxM].y));
     ctx.stroke(); ctx.setLineDash([]);
 
+    // Target History (Dashed Faded)
+    if (historyPath.length > 0) {
+        ctx.strokeStyle = 'rgba(248,81,73,0.2)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,5]);
+        ctx.beginPath();
+        for(let i=0; i<historyPath.length; i++) {
+            if(i===0) ctx.moveTo(mapX(historyPath[i].x), mapY(historyPath[i].y));
+            else ctx.lineTo(mapX(historyPath[i].x), mapY(historyPath[i].y));
+        }
+        ctx.stroke(); ctx.setLineDash([]);
+    }
+
     // Target trail
     ctx.strokeStyle = 'rgba(248,81,73,0.55)'; ctx.lineWidth = 2;
     ctx.beginPath();
@@ -563,9 +594,102 @@ function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, 
   step();
 }
 
+// ── GLOBAL STATE SYNC (Follow-the-Leader) ──────────────────────────────────
+let _syncActive = false;
+let _syncData = null;
+let _syncAnimId = null;
+let currentView = { minX: null, maxX: null, minY: null, maxY: null };
+
+const SAAB_CH = new BroadcastChannel('saab_kinetic_v8');
+SAAB_CH.onmessage = e => {
+    if (e.data?.type === 'STATE_SYNC') {
+        _syncActive = true;
+        _syncData = e.data;
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+        if (!_syncAnimId) syncLoop(); // Start render loop if not running
+    }
+};
+
+function syncLoop() {
+    renderSyncedState();
+    _syncAnimId = requestAnimationFrame(syncLoop);
+}
+
+function renderSyncedState() {
+    if (!_syncData) return;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for(let i=0; i<W; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,H); ctx.stroke(); }
+    for(let i=0; i<H; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+
+    // Dynamic bounding box for global theater view
+    let targetMinX = 400000, targetMaxX = 1200000, targetMinY = 300000, targetMaxY = 1100000;
+    if (_syncData.threats.length > 0) {
+        let tMinX = Infinity, tMaxX = -Infinity, tMinZ = Infinity, tMaxZ = -Infinity;
+        _syncData.threats.forEach(t => {
+            tMinX = Math.min(tMinX, t.x); tMaxX = Math.max(tMaxX, t.x);
+            tMinZ = Math.min(tMinZ, t.z); tMaxZ = Math.max(tMaxZ, t.z);
+            t.interceptors.forEach(i => {
+                tMinX = Math.min(tMinX, i.pos.x); tMaxX = Math.max(tMaxX, i.pos.x);
+                tMinZ = Math.min(tMinZ, i.pos.z); tMaxZ = Math.max(tMaxZ, i.pos.z);
+            });
+        });
+        // Add padding
+        const padX = Math.max(150000, (tMaxX - tMinX) * 0.25);
+        const padZ = Math.max(150000, (tMaxZ - tMinZ) * 0.25);
+        targetMinX = tMinX - padX; targetMaxX = tMaxX + padX;
+        targetMinY = tMinZ - padZ; targetMaxY = tMaxZ + padZ;
+    }
+
+    // Smooth camera interpolation to fix shakiness
+    if (currentView.minX === null) {
+        currentView.minX = targetMinX; currentView.maxX = targetMaxX;
+        currentView.minY = targetMinY; currentView.maxY = targetMaxY;
+    } else {
+        currentView.minX += (targetMinX - currentView.minX) * 0.05;
+        currentView.maxX += (targetMaxX - currentView.maxX) * 0.05;
+        currentView.minY += (targetMinY - currentView.minY) * 0.05;
+        currentView.maxY += (targetMaxY - currentView.maxY) * 0.05;
+    }
+
+    const rangeX = currentView.maxX - currentView.minX;
+    const rangeY = currentView.maxY - currentView.minY;
+    const mapX = x => ((x - currentView.minX) / rangeX) * W;
+    const mapY = y => H - (((y - currentView.minY) / rangeY) * H);
+
+    // Render threats
+    _syncData.threats.forEach(t => {
+        const px = mapX(t.x), py = mapY(t.z);
+        ctx.fillStyle = '#f85149';
+        ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(248,81,73,0.3)';
+        ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI*2); ctx.fill();
+        
+        t.interceptors.forEach(i => {
+            const ix = mapX(i.pos.x), iy = mapY(i.pos.z);
+            ctx.fillStyle = '#58a6ff';
+            ctx.beginPath(); ctx.arc(ix, iy, 4, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = 'rgba(88,166,255,0.5)';
+            ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ix, iy); ctx.stroke();
+        });
+    });
+    
+    const sStatus = document.getElementById('s-status');
+    const sTarget = document.getElementById('s-target');
+    if (sStatus) {
+      sStatus.innerText = 'DASHBOARD SYNC';
+      sStatus.style.color = 'var(--blu)';
+    }
+    if (sTarget) sTarget.innerText = 'GLOBAL THEATER VIEW';
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 drawGrid();
 loadBases();
+
 
 // Auto-run if launched from main dashboard deep-link with URL params
 window.onload = () => {
@@ -576,7 +700,8 @@ window.onload = () => {
       tx, ty: urlParams.get('ty'),
       destx: urlParams.get('destx'), desty: urlParams.get('desty'),
       mx: urlParams.get('mx'), my: urlParams.get('my'),
-      is_marv: urlParams.get('is_marv')
+      is_marv: urlParams.get('is_marv'),
+      history: urlParams.get('history')
     };
     runSimulation('custom', customParams);
   } else {

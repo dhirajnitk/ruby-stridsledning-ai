@@ -176,7 +176,10 @@ class TacticalEngine:
         for val, b_idx, t_idx, eff_name in indexed_pairs:
             base = state.bases[b_idx]
             threat = threats[t_idx]
-            if threat_coverage[threat.id] >= salvo_ratio: continue
+            
+            # Account for in-flight interceptors already assigned by the frontend
+            effective_coverage = threat_coverage[threat.id] + getattr(threat, "interceptors_assigned", 0)
+            if effective_coverage >= salvo_ratio: continue
             if base_inv[base.name].get(eff_name, 0) <= 0: continue
             assignments.append({"base": base.name, "effector": eff_name, "threat_id": threat.id})
             threat_coverage[threat.id] += 1

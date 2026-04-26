@@ -22,6 +22,9 @@ button.green:hover{background:rgba(0,255,136,0.1)}
 #stats-hud{position:fixed;top:50px;right:16px;z-index:10;background:rgba(0,0,0,.7);border:1px solid rgba(0,242,255,.2);padding:12px;border-radius:4px;min-width:160px}
 #stats-hud .sh{font-size:.45rem;color:#888;letter-spacing:1px;margin-bottom:4px}
 #stats-hud .sv{font-size:1.1rem;font-weight:bold;margin-bottom:8px}
+#sync-hud{position:fixed;top:50px;left:16px;z-index:10;background:rgba(0,0,0,.7);border:1px solid rgba(0,255,136,.25);padding:10px 12px;border-radius:4px;min-width:220px}
+#sync-hud .sh{font-size:.45rem;color:#888;letter-spacing:1px;margin-bottom:4px}
+#sync-hud .sv{font-size:.72rem;font-weight:bold;color:#00ff88;line-height:1.4}
 #label-overlay{position:fixed;top:50px;left:16px;z-index:10;pointer-events:none}
 .lbl{position:absolute;font-size:.48rem;letter-spacing:1px;white-space:nowrap;text-shadow:0 0 6px currentColor;transform:translate(-50%,-50%)}
 .klbl{position:absolute;font-size:.5rem;letter-spacing:2px;white-space:nowrap;font-weight:bold;transform:translate(-50%,-200%);padding:2px 6px;border-radius:2px;pointer-events:none}
@@ -85,6 +88,11 @@ button.green:hover{background:rgba(0,255,136,0.1)}
     <div class="sh">KILLS</div><div class="sv" id="s-kills" style="color:#00ff88">0</div>
     <div class="sh">IMPACTS</div><div class="sv" id="s-impacts" style="color:#ff3e3e">0</div>
     <div class="sh">SURVIVAL</div><div class="sv" id="s-surv" style="color:var(--ylw)">--%</div>
+  </div>
+
+  <div id="sync-hud">
+    <div class="sh">MIRROR SYNC</div>
+    <div class="sv" id="sync-state">WAITING FOR DASHBOARD</div>
   </div>
 </div>
 
@@ -202,10 +210,11 @@ scene.add(gridH);
 const THEATER_CENTERS = {
   // Sweden: Y is negated → north at negative Z. Camera south (positive Z) looking at Stockholm (0,0).
   sweden: { x: 0,   z: 0,   camX: 0,      camY: 600000, camZ: 1400000, tgtX: 0,      tgtZ: -200000 },
-  boreal: { x: 456, z: 391, camX: 759000, camY: 700000, camZ: 1852000, tgtX: 759000, tgtZ: 652000  }
+  boreal: { x: 456, z: 391, camX: 850000, camY: 750000, camZ: 1950000, tgtX: 850000, tgtZ: 750000  }
 };
 
 let baseMarkers=[];
+let mirrorFocus = null;
 function buildBases(theater){
   baseMarkers.forEach(m=>{ scene.remove(m); m.geometry.dispose(); m.material.dispose(); }); baseMarkers=[];
   sceneLabels.forEach(l=>l.div.remove()); sceneLabels.length=0;
@@ -244,6 +253,10 @@ function buildBases(theater){
   }
   
   orbit.update();
+}
+
+function setMirrorFocus(tx, ty, tz) {
+  mirrorFocus = { x: tx, y: ty, z: tz };
 }
 
 // ── DOM LABELS ────────────────────────────────────────────────
@@ -810,7 +823,18 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
         if(hasLock  && k._state!=='killed')                       { k._state='locked';   }
         if(!hasLock && k._state==='locked' && distToMissile>50000){ k._state='lostlock'; log('RADAR LOST — PREDICTED TRACK ACTIVE','a'); }
 
-        if(distToMissile<25000) killConfirmed=true;
+        if(distToMissile<25000 && !sam.expired){
+            sam.expired = true; // One chance per interceptor
+            const basePk = 0.85; // High-tier SAM baseline
+            const pkMod = k._state === 'lostlock' ? 0.6 : 1.0; // Penalty if lock is lost
+            if(Math.random() < (basePk * pkMod)) {
+                killConfirmed=true;
+            } else {
+                log(`INTERCEPT FAILURE — ${wdef.label} EVADED SAM`,'a');
+                // The SAM keeps flying past (doesn't hit)
+                setTimeout(() => disposeSAM(sam), 1000);
+            }
+        }
       });
 
       // ── KILL RESOLUTION ──────────────────────────────────────────────────
@@ -911,16 +935,130 @@ window.addEventListener('resize',()=>{
 
 const SAAB_CH = new BroadcastChannel('saab_kinetic_v8');
 SAAB_CH.onmessage = e => {
-  if (e.data?.type === 'THREAT_SPAWN') {
-    // Mirror the dashboard spawn in 3D Kinetic
-    // We map 'intercept' or 'miss' based on a deterministic check or just show the trajectory
-    launchKinetic(currentTheater, e.data.wkey, 'intercept'); 
-    log(`DASHBOARD SYNC: INBOUND ${e.data.wkey} detected`, 'a');
+  if (e.data?.type === 'INVENTORY_SYNC') {
+    sFired = e.data.totalSAM;
+    sKills = e.data.kills;
+    sImpacts = e.data.impacts;
+    updateStats();
   }
-  if (e.data?.type === 'LAUNCH') {
-    log('DASHBOARD SYNC: FULL ENGAGEMENT INITIALIZED', 'i');
+  if (e.data?.type === 'STATE_SYNC') {
+    // Sync active theater from master
+    if (e.data.mode && e.data.mode !== currentTheater) {
+        setTheater(e.data.mode);
+        log(`DASHBOARD SYNC: SWITCHING THEATER TO ${e.data.mode.toUpperCase()}`, 'i');
+    }
+
+    const syncInfo = document.getElementById('freeze-threat-info');
+    if (syncInfo) {
+      const mode = (e.data.mode || currentTheater || 'boreal').toUpperCase();
+      const threatCount = Array.isArray(e.data.threats) ? e.data.threats.length : 0;
+      syncInfo.textContent = `MASTER SYNC :: ${mode} · THREATS ${threatCount} · MIRROR VIEW`;
+    }
+    const syncState = document.getElementById('sync-state');
+    if (syncState) {
+      const mode = (e.data.mode || currentTheater || 'boreal').toUpperCase();
+      const threatCount = Array.isArray(e.data.threats) ? e.data.threats.length : 0;
+      syncState.textContent = `${mode} · ${threatCount} THREATS · FOLLOWING DASHBOARD`;
+    }
+
+    if (Array.isArray(e.data.threats) && e.data.threats.length > 0) {
+      const lead = e.data.threats[0];
+      setMirrorFocus(lead.x || 0, Math.max(180000, (lead.y || 0) + 220000), (lead.z || 0) + 160000);
+    }
+    
+    // ── SYNCED FOLLOW-THE-LEADER MODE ────────────────────────────
+    // Mirror the Strategic Dashboard's exact X,Y,Z "Source of Truth"
+    e.data.threats.forEach(st => {
+      let k = kinetics.find(x => x.id === st.id);
+      if (!k) {
+        // Create surrogate if not locally known
+        const wkey = st.wkey || 'CRUISE';
+        k = { id: st.id, isMirror: true, done: false, sams: [] };
+        const wdef = WEAPONS[wkey] || WEAPONS.CRUISE;
+        const mGeo = new THREE.ConeGeometry(5000, 20000, 8);
+        k.mesh = new THREE.Mesh(mGeo, new THREE.MeshBasicMaterial({ color: wdef.color }));
+        scene.add(k.mesh);
+        k.trail = makeTrail(wdef.color);
+        k.tick = () => {}; // No local physics for mirrors
+        kinetics.push(k);
+      }
+      
+      // Update position from master
+      k.mesh.position.set(st.x, st.y, st.z);
+      pushTrail(k.trail, st.x, st.y, st.z);
+      
+      // Sync interceptors for this threat
+      st.interceptors.forEach((si, idx) => {
+        let sam = k.sams[idx];
+        if (!sam) {
+          const iGeo = new THREE.ConeGeometry(4000, 16000, 6);
+          const iMesh = new THREE.Mesh(iGeo, new THREE.MeshBasicMaterial({ color: 0x00f2ff }));
+          scene.add(iMesh);
+          const iTrail = makeTrail(0x00f2ff);
+          sam = { mesh: iMesh, trail: iTrail };
+          k.sams[idx] = sam;
+        }
+        sam.mesh.position.set(si.pos.x, si.pos.y, si.pos.z);
+        pushTrail(sam.trail, si.pos.x, si.pos.y, si.pos.z);
+      });
+      
+      // Cleanup extra interceptors
+      if (k.sams.length > st.interceptors.length) {
+        k.sams.slice(st.interceptors.length).forEach(s => {
+          scene.remove(s.mesh); scene.remove(s.trail.line);
+        });
+        k.sams = k.sams.slice(0, st.interceptors.length);
+      }
+      k._lastSync = Date.now();
+    });
+
+    // Prune kinetics immediately if they are no longer in the master's sync packet
+    for (let i = kinetics.length - 1; i >= 0; i--) {
+        const k = kinetics[i];
+        if (k.isMirror) {
+            const stillExists = e.data.threats.some(t => t.id === k.id);
+            if (!stillExists) {
+                scene.remove(k.mesh);
+                if (k.trail) scene.remove(k.trail.line);
+                k.sams.forEach(s => { 
+                    scene.remove(s.mesh); 
+                    if (s.trail) scene.remove(s.trail.line);
+                });
+                kinetics.splice(i, 1);
+            }
+        }
+    }
+
+    if (mirrorFocus) {
+      const blend = 0.14;
+      camera.position.x += (mirrorFocus.x - camera.position.x) * blend;
+      camera.position.y += (mirrorFocus.y - camera.position.y) * blend;
+      camera.position.z += (mirrorFocus.z - camera.position.z) * blend;
+      orbit.target.x += (mirrorFocus.x - orbit.target.x) * blend;
+      orbit.target.y += (0 - orbit.target.y) * blend;
+      orbit.target.z += (mirrorFocus.z - orbit.target.z) * blend;
+      orbit.update();
+    }
   }
 };
+
+// Robust background pruning for mirror artifacts (even when no messages arrive)
+setInterval(() => {
+    const now = Date.now();
+    for (let i = kinetics.length - 1; i >= 0; i--) {
+        const k = kinetics[i];
+        if (k.isMirror && (now - (k._lastSync || 0)) > 2000) {
+            scene.remove(k.mesh);
+            if (k.trail) scene.remove(k.trail.line);
+            k.sams.forEach(s => { 
+                scene.remove(s.mesh); 
+                if (s.trail) scene.remove(s.trail.line);
+            });
+            kinetics.splice(i, 1);
+        }
+    }
+}, 1000);
+
 
 log('BOREAL KINETIC 3D READY — SELECT THEATER AND FIRE DEMO', 'i');
 </script>
