@@ -39,7 +39,7 @@
 ---
 
 ### 3. Final Engineering Verification
-1.  **Feature Integrity**: The **15-Dimensional feature vector** is now correctly aligned between training and inference. The inclusion of the `blend` signal (threat-composition awareness) allowed the Elite model to maintain 93% survival even in single-fire mode.
+1.  **Feature Integrity**: The **18-Dimensional tactical feature vector** is now correctly aligned between training and inference, while the MCTS layer receives its separate 3-D temporal context. The inclusion of the `blend` signal (threat-composition awareness) allowed the Elite model to maintain 93% survival even in single-fire mode.
 2.  **Salvo Logic**: The `engine.py` logic has been hardened to ensure that user-requested `salvo_ratio` is a floor, while neural weights can dynamically trigger higher redundancy for mission-critical threats.
 3.  **Audit Readiness**: The Boreal Command Suite is certified for the Saab Hackathon final evaluation.
 

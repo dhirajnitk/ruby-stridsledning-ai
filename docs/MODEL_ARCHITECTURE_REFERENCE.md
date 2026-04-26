@@ -3,13 +3,13 @@
 > UNCLASSIFIED · EXERCISE · PROTOTYPE S28  
 > Last updated: 2026-04-24
 
-This document covers the full input/output specification for all 8 tactical models in the system, how the 15-D feature vector is constructed, how the 11-D output maps to actual weapon assignments, and the 9 bugs found and fixed across the codebase.
+This document covers the full input/output specification for all 8 tactical models in the system, how the 18-D tactical feature vector is constructed, how the 11-D output maps to actual weapon assignments, and how the separate 3-D MCTS temporal context is used for strategic scoring.
 
 ---
 
-## 1. The 15-D Theater Feature Vector
+## 1. The 18-D Tactical Feature Vector
 
-All tactical models share the same fixed-width input: **one 15-element float vector per scenario** computed by `extract_rl_features()` in `src/core/engine.py`.
+All tactical models share the same fixed-width input: **one 18-element float vector per scenario** computed by `extract_rl_features()` in `src/core/engine.py`.
 
 This is a **theater-level snapshot** — not per-base or per-threat. Every number is derived from the current battlefield state, aggregated across all threats and all bases.
 
@@ -87,13 +87,13 @@ The greedy solver then picks the highest-utility `(base, effector → threat)` t
 | File | `models/elite_v3_5.pth` |
 | Class | `TransformerResNet` (core/inference.py) |
 | Training class | `EliteTransformer` (neural_trainer.py) |
-| Input | `(Batch, 15)` |
+| Input | `(Batch, 18)` |
 | Output | `(Batch, 11)` policy only — single tensor |
 | Architecture | Linear(15→128) → ReLU → `unsqueeze(1)` → MultiheadAttention(128, 4 heads) → ResBlock(128) → `squeeze(1)` → Linear(128→11) → Sigmoid |
 | Parameters | ~98 K |
 | Benchmark | 88.02 % tactical Pk, 100 % strategic success |
 
-**Training label space** (neural_trainer.py): `EliteTransformer(15, out_dim=231)` — 21 bases × 11 effectors. After training, the 231-D assignment matrix collapses to the 11-D effector weight signal used for inference.
+**Training label space** (neural_trainer.py): `EliteTransformer(18, out_dim=231)` — 21 bases × 11 effectors. After training, the 231-D assignment matrix collapses to the 11-D effector weight signal used for inference.
 
 ---
 
@@ -104,7 +104,7 @@ The greedy solver then picks the highest-utility `(base, effector → threat)` t
 | File | `models/supreme_v3_1.pth` (also `boreal_chronos_gru.pth`) |
 | Inference class | `ChronosGRU` (core/inference.py) |
 | Training class | `ChronosGRU` (neural_trainer.py) |
-| Input | `(Batch, 1, 15)` — single time-step sequence |
+| Input | `(Batch, 1, 18)` — single time-step sequence |
 | Output | `(Batch, 11)` policy only |
 | Architecture | GRU(15→128, 2 layers) → `h[-1]` → Linear(128→11) → Sigmoid |
 | Parameters | ~85 K |
@@ -120,7 +120,7 @@ The greedy solver then picks the highest-utility `(base, effector → threat)` t
 |----------|-------|
 | File | `models/supreme_v2.pth` |
 | Inference class | `StandardResNet(15, 11, width=64)` (core/inference.py) |
-| Input | `(Batch, 15)` |
+| Input | `(Batch, 18)` |
 | Output | `(Batch, 11)` |
 | Architecture | Linear(15→64) → ReLU → ResBlock(64) → Linear(64→11) → Sigmoid |
 | Parameters | ~12 K |
@@ -134,7 +134,7 @@ The greedy solver then picks the highest-utility `(base, effector → threat)` t
 |----------|-------|
 | File | `models/titan.pth` |
 | Class | `BorealTitanEngine` (ppo_titan_transformer.py) |
-| Input | `(Batch, 15)` — lifted to `(Batch, 1, 512)` via projection |
+| Input | `(Batch, 18)` — lifted to `(Batch, 1, 512)` via projection |
 | Output | `(policy (Batch, 11), value (Batch, 1))` tuple |
 | Architecture | Linear(15→512) → 6 × TitanBlock (self-attn + MLP + LayerNorm) → global pool → actor_head(512→256→11 Sigmoid) + critic_head(512→1024→512→1) |
 | Parameters | ~14 M |
@@ -151,7 +151,7 @@ The greedy solver then picks the highest-utility `(base, effector → threat)` t
 | File | `models/hybrid_rl.pth` |
 | Inference class | `StandardResNet(15, 11, width=128)` (core/inference.py) |
 | Benchmark class | `BorealValueNetwork(15)` (ppo_agent.py) — critic only |
-| Input | `(Batch, 15)` |
+| Input | `(Batch, 18)` |
 | Output | `(Batch, 11)` policy (for inference) / `(Batch, 1)` value (for benchmark) |
 | Architecture (critic) | Linear(15→128) → ResBlock(128) → Linear(128→1) |
 | Notes | "Hybrid" means the RL training jointly optimised a value critic and a greedy policy. Benchmark reads only the critic path. |
@@ -211,7 +211,7 @@ Same as Heuristic but with `pkWeight=0.95`, `costWeight=0.020`, `maxPerBase=4`. 
 **Full pipeline:**
 
 ```
-Scenario  ─► extract_rl_features() ─► 15-D vector
+Scenario  ─► extract_rl_features() ─► 18-D tactical vector
                                           │
                            z-score normalise (policy_network_params.json)
                                           │
@@ -261,7 +261,7 @@ Output: (affinity_matrix, value)  — BCEWithLogitsLoss trains it to 1-hot assig
 
 Weights are saved to `models/ppo_direct_network.pth`.
 
-This model is complementary to the theater-level 15-D models: it produces direct per-unit assignments rather than effector priority weights.
+This model is complementary to the theater-level 18-D tactical models: it produces direct per-unit assignments rather than effector priority weights.
 
 ---
 
@@ -335,9 +335,9 @@ This model is complementary to the theater-level 15-D models: it produces direct
 | | |
 |-|-|
 | **File** | `src/rl_data_collector.py` |
-| **Symptom** | Training data always had zeros for `fighters`, `sams`, `drones` (features 5-7); produced 10-element vectors incompatible with 15-D models |
+| **Symptom** | Training data always had zeros for `fighters`, `sams`, `drones` (features 5-7); produced 10-element vectors incompatible with 18-D models |
 | **Root cause** | `extract_features()` used keys `"fighter"`, `"sam"`, `"drone"` which don't exist in any base inventory; and returned only 10 features, missing `west_threats`, `east_threats`, `ammo_stress`, `dist_norm`, `val_norm` |
-| **Fix** | Rewrote to match `core/engine.py::extract_rl_features()` exactly: correct keys (`meteor`, `patriot-pac3`, `saab-nimbrix`), 15 features, same formula |
+| **Fix** | Rewrote to match `core/engine.py::extract_rl_features()` exactly: correct keys (`meteor`, `patriot-pac3`, `saab-nimbrix`), 18 features, same formula |
 
 ### B9 — Tuple return from `evaluate_threats_advanced` treated as dict (rl_data_collector.py)
 
@@ -377,7 +377,7 @@ This model is complementary to the theater-level 15-D models: it produces direct
 |------|--------|
 | `src/ppo_agent.py` | Added value_head to BorealDirectEngine; added ActorCriticDirect + extract_direct_features |
 | `src/core/inference.py` | Fixed architecture mapping; added GeneralistMLP; fixed tuple handling in predict() |
-| `src/rl_data_collector.py` | Rewrote extract_features to 15-D; fixed inventory keys; fixed tuple return |
+| `src/rl_data_collector.py` | Rewrote extract_features to 18-D; fixed inventory keys; fixed tuple return |
 | `src/benchmark_boreal.py` | Fixed broken imports; fixed .train()→.eval(); fixed import paths |
 | `src/ppo_chronos_gru.py` | **Created** — tactical BorealChronosGRU(15→11) returning (policy, value) |
 

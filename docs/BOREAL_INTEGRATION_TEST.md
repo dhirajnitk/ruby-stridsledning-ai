@@ -7,7 +7,7 @@
 
 ## Overview
 
-This document records the design, execution, and findings of the end-to-end Boreal theater integration test. The test validates the full tactical decision stack against real CSV coordinates from `data/input/Boreal_passage_coordinates.csv`, exercising base loading, 15-D feature extraction, range-gate validation, WTA assignment, 50-iteration MCTS, and 200-sample Monte Carlo survival estimation.
+This document records the design, execution, and findings of the end-to-end Boreal theater integration test. The test validates the full tactical decision stack against real CSV coordinates from `data/input/Boreal_passage_coordinates.csv`, exercising base loading, 18-D tactical feature extraction, 3-D MCTS temporal context, range-gate validation, WTA assignment, 50-iteration MCTS, and 200-sample Monte Carlo survival estimation.
 
 Run from project root:
 ```bash
@@ -99,7 +99,7 @@ Decoys beyond 15 km from any base are excluded from the WTA plan by `evaluate_th
 
 ---
 
-## Section 4 — 15-D Feature Vector Analysis
+## Section 4 — 18-D Tactical Feature Vector Analysis
 
 Feature vector computed by `extract_rl_features(state, threats, weather="clear", primary="balanced", blend=0.5)`.
 
@@ -226,7 +226,7 @@ This represents a real theater gap: a cruise missile flying a non-direct approac
 | Coyote range gate fires at 13 km from NVB | ✅ D-05 at 13 km |
 | No-assignment for out-of-range threats | ✅ G-01 correctly unassigned |
 | Decoys outside 15 km filtered from WTA plan | ✅ DC-1 through DC-5 |
-| 15-D feature vector: capital detected, ammo stress computed | ✅ All scenarios |
+| 18-D tactical feature vector: capital detected, ammo stress computed | ✅ All scenarios |
 | MCTS score positive for clean intercept scenario | ✅ Scenario A: +62.5 |
 | JSON report written to data/results/ | ✅ boreal_integration_test.json |
 | Weather modifier reduces survival rate non-linearly | ✅ clear 41.5% → fog 8.0% |

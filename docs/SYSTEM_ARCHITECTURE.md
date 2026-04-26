@@ -43,7 +43,8 @@
 │  │  live_view.html  │  │ dataset_viewer   │  │  strategic_3d.html        │ │
 │  │  V6: scoreboard  │  │ CHRONOS 60 radar │  │  Cesium CZML replay       │ │
 │  │  telemetry strip │  │ chart · 200 scen │  │  scenario_hostile.czml    │ │
-│  │  event banners   │  │ · 15-D features  │  │  scenario_commercial.czml │ │
+│  │  event banners   │  │ · 18-D tactical  │  │  scenario_commercial.czml │ │
+│  │                  │  │   + 3-D MCTS ctx │  │                           │ │
 │  │  auto-wave mode  │  │                  │  │                           │ │
 │  └──────────────────┘  └──────────────────┘  └───────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -54,10 +55,16 @@
 │                                                                             │
 │  POST /evaluate_advanced                                                    │
 │  ├─ Accepts: threats[], bases[], weather, doctrine, use_rl                 │
+│  ├─ core/engine.py → extract_rl_features()                                 │
+│  │    → 18-D tactical vector for PPO / neural inference                    │
+│  ├─ core/engine.py → extract_mcts_temporal_context()                       │
+│  │    → 3-D strategic context: total_assigned, assigned_ratio,             │
+│  │       high_threat_unassigned                                             │
 │  ├─ core/engine.py → TacticalEngine.get_optimal_assignments()              │
 │  │    → _calculate_utility() [MARV/MIRV/Dogfight aware since v4.0]        │
 │  ├─ core/engine.py → StrategicMCTS._single_rollout()                      │
-│  │    → MIRV expansion, MARV Pk penalty, dogfight resolution               │
+│  │    → MIRV expansion, MARV Pk penalty, dogfight resolution,              │
+│  │       temporal commitment pressure                                       │
 │  └─ Returns: tactical_assignments[], strategic_score, human_sitrep         │
 │                                                                             │
 │  WS /ws/logs — streams real-time engine telemetry to CoT feed              │
@@ -203,6 +210,11 @@ Response:
   "active_doctrine": "balanced"
 }
 ```
+
+> Note: PPO / neural inference still consumes the 18-D tactical vector. The
+> MCTS layer receives an additional 3-D temporal context separately, so the
+> strategic scorer can react to commitment state without changing checkpoint
+> compatibility.
 
 ### GET `/get_dataset_sample?dataset=chronos_60_maneuver.npz`
 ```json

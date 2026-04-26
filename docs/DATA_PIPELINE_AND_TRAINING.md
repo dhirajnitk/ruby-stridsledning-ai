@@ -29,8 +29,9 @@ This document covers the complete end-to-end data lifecycle: how scenarios are g
 │                               │                                     │
 │  Stage 3: Feature Extraction                                        │
 │  ┌────────────────────────────▼───────────────────────────────────┐ │
-│  │  extract_rl_features() → 15-D theater snapshot                 │ │
+│  │  extract_rl_features() → 18-D tactical snapshot               │ │
 │  │  (z-score normalised using policy_network_params.json)         │ │
+│  │  extract_mcts_temporal_context() → 3-D strategic context      │ │
 │  └────────────────────────────┬───────────────────────────────────┘ │
 │                               │                                     │
 │  Stage 4: Corpus Packaging                                          │
@@ -136,7 +137,7 @@ rel_y = (c['lat'] - 59.33) * 111.0 + 400  # km offset from Stockholm latitude
 
 ### 3.3 Three Data Formats
 
-**`--format snapshot`** (default): One 15-D feature vector per scenario. Used for all strategic/policy models.
+**`--format snapshot`** (default): One 18-D tactical feature vector per scenario. Used for PPO / policy models; MCTS receives its separate 3-D temporal context during evaluation.
 
 **`--format temporal`**: Sequence of 10 feature vectors, one per simulated time-step. Threats advance 1 km per step. Used for Chronos GRU training.
 
@@ -354,9 +355,9 @@ The prompt includes: threat count, strategic health, breach risk, posture, and a
 | Campaign batches (data/input/) | 1,000 | — | — | No labels (inference only) |
 | ground_truth_scenarios.json | 1,000 | raw threats | MCTS-50 score | Monte Carlo |
 | blind test set | 100 | raw threats | — | Unbiased eval only |
-| rl_training_data.csv | varies | 15-D vector | MCTS score | Tabular supervised |
-| eval_shared_gold.npz | 5,000 | 15-D vector | score + weights | MCTS-100 |
-| rl_train_20k.npz | 20,000 | 15-D vector | score + weights | MCTS-100 |
-| ppo_train_100k.npz | 100,000 | 15-D vector | score + weights | MCTS-200 |
+| rl_training_data.csv | varies | 18-D tactical vector | MCTS score | Tabular supervised |
+| eval_shared_gold.npz | 5,000 | 18-D tactical vector | score + weights | MCTS-100 |
+| rl_train_20k.npz | 20,000 | 18-D tactical vector | score + weights | MCTS-100 |
+| ppo_train_100k.npz | 100,000 | 18-D tactical vector | score + weights | MCTS-200 |
 | boreal_object_level_gold.npz | varies | 50 × 20 × 11 | PN intercept (0/1) | PN Oracle |
-| boreal_temporal_gold.npz | varies | N × 10 × 15 | score + weights | MCTS-100 |
+| boreal_temporal_gold.npz | varies | N × 10 × 18 | score + weights | MCTS-100 |

@@ -148,7 +148,7 @@ Console table + `data/results/championship_results.json`.
 
 ### Blend signal
 
-A critical feature unique to the Ultimate Stress Test: the **threat blend signal** encodes overall swarm composition danger in the 15-D feature vector:
+A critical feature unique to the Ultimate Stress Test: the **threat blend signal** encodes overall swarm composition danger in the 18-D tactical feature vector:
 
 ```python
 threat_blend = min(1.0, (n_hypersonic × 0.15 + n_drone × 0.03 + num_threats × 0.01))

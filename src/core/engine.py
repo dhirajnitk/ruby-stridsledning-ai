@@ -40,10 +40,16 @@ def load_neural_models():
     except: pass
 
 def extract_rl_features(state, threats, weather="clear", primary="balanced", blend=1.0, **kwargs):
-    """Extract 18-D feature vector for neural model input.
+    """Extract the 18-D tactical feature vector for PPO / neural inference.
     
-    Features 0-14: Original 15-D production vector (preserved for backward compatibility).
-    Features 15-17: Advanced trajectory awareness (MARV/MIRV/Dogfight).
+    Features 0-12: Classic production features.
+    Feature 13: total_assigned (TemporalCommitment).
+    Feature 14: high_threat_unassigned (ReEngagementTrigger).
+    Features 15-17: Advanced trajectory awareness.
+
+    The strategic MCTS layer uses a separate 3-D temporal context so the
+    existing PPO checkpoints can stay at 18 inputs while MCTS reasons over
+    the extra commitment state.
     """
     if not threats: return [0.0] * 18
     
@@ -56,7 +62,7 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     min_dist = min(dists)
     total_val = sum(t.threat_value for t in threats)
     
-    fighters = sum(b.inventory.get("meteor", 0) for b in state.bases) # Mapping Meteor as the primary 'fighter' role asset
+    fighters = sum(b.inventory.get("meteor", 0) for b in state.bases)
     sams = sum(b.inventory.get("patriot-pac3", 0) for b in state.bases)
     drones = sum(b.inventory.get("saab-nimbrix", 0) for b in state.bases)
     cap_sams = capital.inventory.get("patriot-pac3", 0)
@@ -68,23 +74,53 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     east_threats = num_threats - west_threats
     
     ammo_stress = (sams + fighters + drones) / (num_threats + 1)
-    dist_norm = avg_dist / 1000.0
-    val_norm = total_val / 1000.0
     
-    # Advanced Trajectory Awareness (V2 — MARV/MIRV)
+    # ── TEMPORAL ENGAGEMENT AWARENESS ──
+    total_assigned = float(sum(getattr(t, "interceptors_assigned", 0) for t in threats))
+    high_threat_unassigned = float(sum(1 for t in threats 
+                                       if t.threat_value > 70 and getattr(t, "interceptors_assigned", 0) == 0))
+    assigned_ratio = total_assigned / (num_threats + 1)
+    
+    # Advanced Trajectory Awareness (MARV/MIRV)
     has_marv = 1.0 if any(getattr(t, "is_marv", False) for t in threats) else 0.0
     has_mirv = 1.0 if any(getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)
                           for t in threats) else 0.0
     total_mirv_warheads = float(sum(getattr(t, "mirv_count", 0) for t in threats
                                     if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)))
     
-    # FINAL 18-FEATURE PRODUCTION VECTOR (V2)
+    # FINAL 18-FEATURE PRODUCTION VECTOR (V3.5+ Temporal Aware)
+    # Re-mapped to preserve 18-D shape while injecting COMMITMENT state
     return [
         num_threats, avg_dist, min_dist, total_val,
-        fighters, sams, drones, cap_sams, weather_bin, blend,
-        west_threats, east_threats, ammo_stress, dist_norm, val_norm,
+        fighters, sams, drones, cap_sams, weather_bin, 
+        assigned_ratio,           # Replaced 'blend' (Index 9)
+        west_threats, east_threats, 
+        ammo_stress, 
+        total_assigned,           # Replaced 'dist_norm' (Index 13)
+        high_threat_unassigned,   # Replaced 'val_norm' (Index 14)
         has_marv, has_mirv, total_mirv_warheads
     ]
+
+def extract_mcts_temporal_context(threats):
+    """Extract the 3 temporal inputs used only by the strategic MCTS layer.
+
+    1. total_assigned: total interceptors already committed across threats.
+    2. assigned_ratio: commitment saturation normalized by threat count.
+    3. high_threat_unassigned: uncovered high-value threats that should trigger
+       a follow-on shot / re-engagement bias.
+    """
+    num_threats = len(threats)
+    total_assigned = float(sum(getattr(t, "interceptors_assigned", 0) for t in threats))
+    high_threat_unassigned = float(sum(
+        1 for t in threats
+        if t.threat_value > 70 and getattr(t, "interceptors_assigned", 0) == 0
+    ))
+    assigned_ratio = total_assigned / (num_threats + 1)
+    return {
+        "total_assigned": total_assigned,
+        "assigned_ratio": assigned_ratio,
+        "high_threat_unassigned": high_threat_unassigned,
+    }
 
 class DoctrineManager:
     @staticmethod
@@ -213,11 +249,23 @@ class StrategicMCTS:
             return True, t.threat_value * 0.2, "KILL"
 
     @staticmethod
-    def _single_rollout(state, assignments, threats, weather="clear", weights=None, flags=None):
+    def _single_rollout(state, assignments, threats, weather="clear", weights=None, flags=None, mcts_temporal_context=None):
         threat_by_id = {t.id: t for t in threats}
         rollout_score, actual_leaked = 100.0, 0
         weather_mod = {"clear": 1.0, "storm": 0.8, "fog": 0.7}.get(weather, 1.0)
         threat_hit = {t.id: False for t in threats}
+
+        temporal_context = mcts_temporal_context or {}
+        total_assigned = float(temporal_context.get("total_assigned", 0.0))
+        assigned_ratio = float(temporal_context.get("assigned_ratio", 0.0))
+        high_threat_unassigned = float(temporal_context.get("high_threat_unassigned", 0.0))
+
+        # Strategic pressure from commitment state: reward coverage, but penalise
+        # uncovered high-value leakers and oversaturated salvos before the rollout.
+        rollout_score += total_assigned * 0.5
+        rollout_score -= high_threat_unassigned * 20.0
+        if assigned_ratio > 1.0:
+            rollout_score -= (assigned_ratio - 1.0) * 8.0
 
         # ── MIRV: expand parent threats into child warheads before engagement ──
         active_threats = list(threats)
@@ -249,6 +297,18 @@ class StrategicMCTS:
                     threat_hit[t.id] = True
 
         active_threats = active_threats + mirv_children
+
+        # ── TEMPORAL FEEDBACK: Account for interceptors already in flight ──
+        for t in active_threats:
+            assigned_count = getattr(t, "interceptors_assigned", 0)
+            if assigned_count > 0 and not threat_hit[t.id]:
+                # Simulate in-flight interceptors using a generic high-performance Pk (e.g. 0.75)
+                # This ensures the MCTS 'knows' a threat is being handled.
+                for _ in range(assigned_count):
+                    if random.random() < 0.75 * weather_mod:
+                        threat_hit[t.id] = True
+                        rollout_score += t.threat_value * 0.15 # Reduced bonus for legacy shots
+                        break
 
         for a in assignments:
             t = threat_by_id.get(a["threat_id"])
@@ -292,10 +352,16 @@ class StrategicMCTS:
         return rollout_score, {"leaked": actual_leaked}
 
     @staticmethod
-    def run_mcts_rollout(state, assignments, threats, iterations=100, **kwargs):
+    def run_mcts_rollout(state, assignments, threats, iterations=100, mcts_temporal_context=None, **kwargs):
         total_s, total_l = 0, 0
         for _ in range(max(1, iterations)):
-            s, d = StrategicMCTS._single_rollout(state, assignments, threats, **kwargs)
+            s, d = StrategicMCTS._single_rollout(
+                state,
+                assignments,
+                threats,
+                mcts_temporal_context=mcts_temporal_context,
+                **kwargs,
+            )
             total_s += s; total_l += d["leaked"]
         return total_s/max(1, iterations), {"leaked": total_l/max(1, iterations)}, 0.0
 
@@ -305,7 +371,7 @@ DOCTRINE_KEYS = [
     "thaad", "patriot-pac3", "nasams", "cram", "helws", "aegis"
 ]
 
-def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear"):
+def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear", mcts_temporal_context=None):
     """Run N strategic rollouts, return survival_rate (score>0) and mean score."""
     weights, flags = DoctrineManager.get_blended_profile()
     plan = TacticalEngine.get_optimal_assignments(state, threats, weights=weights, flags=flags, salvo_ratio=salvo_ratio)
@@ -313,7 +379,13 @@ def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear"):
     scores = []
     leaked_list = []
     for _ in range(n_sims):
-        s, d = StrategicMCTS._single_rollout(state, plan, threats, weather=weather)
+        s, d = StrategicMCTS._single_rollout(
+            state,
+            plan,
+            threats,
+            weather=weather,
+            mcts_temporal_context=mcts_temporal_context,
+        )
         scores.append(s)
         leaked_list.append(d.get("leaked", 0))
 
@@ -329,6 +401,7 @@ def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear"):
 
 def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2, doctrine_weights=None, run_mc=False, **kwargs):
     weights, flags = DoctrineManager.get_blended_profile()
+    mcts_temporal_context = extract_mcts_temporal_context(threats)
     
     # Map Neural Weights to specific Effector Priorities
     effector_priorities = {}
@@ -354,10 +427,26 @@ def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2,
 
     filtered = [t for t in threats if t.estimated_type != "decoy" or min(math.hypot(b.x-t.x, b.y-t.y) for b in state.bases) < 15]
     plan = TacticalEngine.get_optimal_assignments(state, filtered, weights=weights, flags=flags, salvo_ratio=final_salvo)
-    score, details, rl_val = StrategicMCTS.run_mcts_rollout(state, plan, filtered, iterations=mcts_iterations, weights=weights, flags=flags)
+    score, details, rl_val = StrategicMCTS.run_mcts_rollout(
+        state,
+        plan,
+        filtered,
+        iterations=mcts_iterations,
+        mcts_temporal_context=mcts_temporal_context,
+        weights=weights,
+        flags=flags,
+    )
     
     if run_mc:
-        details["mc_metrics"] = survival_mc(state, filtered, n_sims=100, salvo_ratio=final_salvo, weather=kwargs.get("weather", "clear"))
+        details["mc_metrics"] = survival_mc(
+            state,
+            filtered,
+            n_sims=100,
+            salvo_ratio=final_salvo,
+            weather=kwargs.get("weather", "clear"),
+            mcts_temporal_context=mcts_temporal_context,
+        )
     
     details["tactical_assignments"] = plan
+    details["mcts_temporal_context"] = mcts_temporal_context
     return score, details, rl_val

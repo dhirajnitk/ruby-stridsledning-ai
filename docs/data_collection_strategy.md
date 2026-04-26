@@ -12,7 +12,7 @@ The Boreal AI has evolved through two distinct eras of data collection. Our "Meg
 *   **The Impact**: 20% of every training sample is populated with **Real-World Clutter.** The AI must autonomously perform "Signal Triage"—ignoring neutral civilian tracks while maintaining a sub-microsecond lock on hostile hypersonic swarms.
 
 ### B. Strategic DNA: Perception Engineering
-Instead of "seeing" raw X/Y coordinates, our AI perceives the theater through **15-dimensional Strategic DNA.** This feature space includes:
+Instead of "seeing" raw X/Y coordinates, our AI perceives the theater through **18-dimensional Tactical DNA** for PPO plus a separate **3-dimensional MCTS temporal context**. The tactical feature space includes:
 *   **Logistics Stress Ratios**: Dynamic ammo-to-threat mapping across all 4 defense bases.
 *   **Sector Saturation**: Heatmap distribution of threats across West, Center, and East sectors.
 *   **Strategic Triage**: Prioritization of tracks heading for **Capital X** vs. peripheral decoys.
@@ -97,7 +97,7 @@ To "Label" this complex temporal data, we utilize the **Boreal Supreme PN Oracle
 | **Volume** | 100,000 Samples | Ensure coverage of "Long-Tail" saturation events. |
 | **Clutter Source** | OpenSky Baltic Dataset | Real-world noise rejection training. |
 | **Labeling** | MCTS-500 (Supreme) | High-fidelity ground truth for strategic intent. |
-| **Feature Space** | 15-Dim Strategic DNA | Semantic awareness of logistics and geography. |
+| **Feature Space** | 18-Dim Tactical DNA + 3-D MCTS context | Tactical awareness for PPO, temporal commitment for strategic rollouts. |
 
 ---
 
