@@ -1,283 +1,222 @@
 ﻿1
-00:00:00,000 --> 00:00:03,000
+00:00:00,000 --> 00:00:04,000
 SAAB CORTEX-1 AI DEFENSE SYSTEM
-End-to-end capability demonstration
+Full-stack C2 demonstration
 Boreal Passage & Sweden AOR theaters
 
 2
-00:00:02,500 --> 00:00:07,000
-ACT 1 — SYSTEM PORTAL
-Multi-theater C2 entry hub
-Hovering: CORTEX C2 · KINETIC 3D · TACTICAL DISPLAY
+00:00:04,000 --> 00:00:08,500
+ACT 1 — CORTEX COMMAND PORTAL
+Multi-theater C2 hub
+Hovering: CORTEX C2 · KINETIC 3D · TACTICAL DISPLAY · SWARM · LIVE
 
 3
-00:00:07,000 --> 00:00:11,000
+00:00:08,500 --> 00:00:13,500
 ACT 2 — CORTEX C2 STRATEGIC CONSOLE
-Strategic audit interface — live backend online
+Strategic audit interface — live backend HTTP 200
 Theater: BOREAL PASSAGE
 
 4
-00:00:11,000 --> 00:00:15,500
-Engine model loaded: ELITE V3.5
-Scenario selected: SWARM ATTACK
-Doctrine cycling: FORTRESS → AGGRESSIVE → BALANCED
+00:00:13,500 --> 00:00:17,500
+Engine model: ELITE V3.5 selected
+Scenario loading: SWARM ATTACK
+Threat inventory populating...
 
 5
-00:00:15,500 --> 00:00:20,500
-[ENGINE] Dispatching /evaluate_advanced to ELITE V3.5...
-Input: 30 theater assets across 12 Boreal bases
-Doctrine: BALANCED · Blend ratio: 70%
+00:00:17,500 --> 00:00:21,500
+Swarm scenario active — 12 MARV + cruise vectors
+Doctrine cycling: FORTRESS → AGGRESSIVE → BALANCED
+Blend ratio: 70%
 
 6
-00:00:20,500 --> 00:00:24,500
-[ENGINE RESULT] Strategic consequence score: 200.18
-Tactical assignments generated: 30
-All forward bases covered — THEATER NOMINAL
+00:00:21,500 --> 00:00:25,000
+[ENGINE] /run_audit → ELITE V3.5 · BALANCED doctrine
+Dispatching Monte Carlo (200 runs)...
 
 7
-00:00:24,000 --> 00:00:28,500
-MARV-1, MARV-2, MARV-3 inbound from north
-Quadratic Bezier curves · 14% perpendicular control-point
-Sinusoidal terminal jink grows in last 40% of approach
+00:00:25,000 --> 00:00:29,500
+[RESULT] Strategic consequence score: +200.18
+Tactical assignments: 30
+All forward bases covered — THEATER NOMINAL
 
 8
-00:00:28,000 --> 00:00:33,000
-PAC-3 MSE intercept arc confirmed
-Steep upward Bezier: base to predicted impact point
-Intercept fraction 0.72 — engagement envelope nominal
+00:00:29,500 --> 00:00:33,500
+C2 panel scroll — COT feed and assignment grid visible
+Panning across effector inventory and doctrine weights
 
 9
-00:00:32,500 --> 00:00:37,000
-[LIVE] MARV-1 to CALLHAVEN intercept cycle
-Explosion flash · 35px ring · 2.2s pause
-Cascade: MARV-2 to SOLANO · MARV-3 to MERIDIA
+00:00:33,500 --> 00:00:38,000
+Boreal Strategic Dashboard
+ELITE model selected — doctrine cycle Fortress → Balanced
+Map view loading MARV animation...
 
 10
-00:00:37,000 --> 00:00:41,500
-Dashboard ENGAGE deep-links:
-RED ENGAGE MARV-1 to kinetic_chase.html?base=10&threat=marv
-SWARM DEFENSE to swarm_physics.html (mass saturation)
+00:00:38,000 --> 00:00:45,000
+MARV-1 / MARV-2 / MARV-3 quadratic Bezier arcs from north
+14% perpendicular control-point
+Sinusoidal terminal jink grows in last 40% of approach
 
 11
-00:00:41,000 --> 00:00:45,500
-Theater toggle: BOREAL to SWEDEN AOR to BOREAL
-Map reloads confirm sensor overlay integrity
+00:00:45,000 --> 00:00:49,500
+PAC-3 MSE intercept arcs confirmed — steep upward Bezier
+Intercept fraction 0.72 — explosion flash 35px ring
+2.2s pause between cascade events
 
 12
-00:00:45,000 --> 00:00:50,500
-ACT 3 — SWEDEN AOR STRATEGIC COMMAND
-Theater: Stockholm-centered coordinate frame
-MARV-alpha, MARV-beta, MARV-gamma approaching from Baltic east
+00:00:49,500 --> 00:00:54,000
+ENGAGE deep-links:
+MARV-1 → CALLHAVEN · MARV-2 → SOLANO · MARV-3 → MERIDIA
+Swarm defense deep-link active
 
 13
-00:00:50,000 --> 00:00:55,500
-Sweden MARV tracks enter from east (x=1000px)
-Three distinct ingress angles — broad-front attack profile
-11 Swedish military installations as defended assets
+00:00:54,000 --> 00:00:58,000
+Dashboard Live MC audit dispatched
+[ENGINE] scoring in real time...
 
 14
-00:00:55,000 --> 00:01:00,000
-ACT 4 — KINETIC CHASE — PRO-NAV PHYSICS ENGINE
-MARV-1 to CALLHAVEN · base=10 · dir=north · autorun=1
-dt=0.1s · t_speed=3000 m/s (Mach 8.8) · max_g=42G
+00:00:58,000 --> 00:01:06,500
+Theater toggle: BOREAL → SWEDEN AOR preview → back to BOREAL
+Map reloads confirm sensor overlay integrity across both theaters
 
 15
-00:00:59,500 --> 00:01:05,000
-[PRO-NAV] Sinusoidal jink · magnitude 750 m/s · period 3.8s
-Guidance constant N=4.0 — curved pursuit arc visible
-MIRV also available: faster oscillation 2.2s · 520 m/s
+00:01:06,500 --> 00:01:12,500
+ACT 3 — SWEDEN AOR STRATEGIC COMMAND
+Stockholm-centered coordinate frame
+11 Swedish military installations online
 
 16
-00:01:04,500 --> 00:01:10,000
-Canvas zoomed 1.35x — full curvature visible
-Orange MARV path jinking left/right under terminal manoeuvre
-HUD: INTERCEPTED · miss_distance · base coords · approach dir
+00:01:12,500 --> 00:01:15,500
+Sweden AOR map pan — Baltic ingress vectors confirmed
+MARV-alpha / MARV-beta / MARV-gamma approaching from east
 
 17
-00:01:10,000 --> 00:01:15,000
-ACT 5 — SWARM PHYSICS — MASS SATURATION ATTACK
-3 simultaneous MARVs: MARV-1 to CALLHAVEN · MARV-2 to SOLANO · MARV-3 to MERIDIA
-Web Worker 20Hz physics: jinkMag 80-150 m/s per warhead
+00:01:15,500 --> 00:01:19,500
+ACT 4 — KINETIC CHASE — PRO-NAV PHYSICS ENGINE
+MARV-1 → CALLHAVEN · base=10 · dir=north · autorun=1
+dt=0.1s · threat speed 3000 m/s (Mach 8.8) · max_g=42G
 
 18
-00:01:14,500 --> 00:01:20,000
-[SWARM] Auto-launched 1.2s after load — no manual trigger needed
-PAC-3 oblique head-on geometry — crosses in front of MARV
-Fuse: 3000m · post-move proximity check active
+00:01:19,500 --> 00:01:25,000
+[PRO-NAV] Sinusoidal jink · magnitude 750 m/s · period 3.8s
+Guidance constant N=4.0 — curved pursuit arc visible
+MARV weaving left-right under terminal manoeuvre
 
 19
-00:01:19,500 --> 00:01:24,500
-Cyan PAC-3 arcs vs orange MARV paths — all 3 interceptors locked
-Diverging pursuit curves — Boreal doctrine: 2x salvo per threat
-Engagement zoom: canvas 1.4x — intercept geometry visible
+00:01:25,000 --> 00:01:27,000
+Canvas 1.35x zoom — S-curve curvature confirmed
+HUD: INTERCEPTED · miss distance · approach geometry nominal
 
 20
-00:01:24,500 --> 00:01:29,000
-ACT 6 — BOREAL KINETIC 3D SIMULATOR
-Three.js r128 intercept engine — theater: BOREAL
-Default mode: AUTO ENGAGE
+00:01:27,000 --> 00:01:30,000
+ACT 5 — SWARM PHYSICS — MASS SATURATION ATTACK
+3 simultaneous MARVs auto-launched after 1.2s
+MARV-1 → CALLHAVEN · MARV-2 → SOLANO · MARV-3 → MERIDIA
 
 21
-00:01:28,500 --> 00:01:33,500
-[SIM] MARV fired — sinusoidal terminal jink active
-jinkDecay = 1-ct*1.3 — jink persists to 77% of child flight
-SAM Pro-Nav curves to chase laterally displaced target
+00:01:30,000 --> 00:01:33,000
+[PAC-3 MSE] Oblique head-on intercept geometry
+Fuse: 3000m — post-move proximity check active
+Web Worker 20Hz physics: jinkMag 80-150 m/s per warhead
 
 22
-00:01:33,000 --> 00:01:38,000
-[SIM] SATURATION WAVE — btn-wave triggered
+00:01:33,000 --> 00:01:35,500
+Cyan PAC-3 arcs vs orange MARV paths — all 3 interceptors locked
+Canvas 1.4x zoom — intercept geometry fully visible
+
+23
+00:01:36,000 --> 00:01:42,000
+ACT 6 — BOREAL KINETIC 3D SIMULATOR
+Three.js r128 intercept engine
+Weapon: MARV · Outcome: INTERCEPT · Theater: BOREAL
+
+24
+00:01:42,000 --> 00:01:50,500
+[SIM] MARV-1 fired — sinusoidal terminal jink active
+jinkDecay = 1-ct*1.3 — jink persists to 77% of flight
+SAM Pro-Nav curves to chase laterally displaced target
+
+25
+00:01:50,500 --> 00:01:53,500
+MARV-1 intercept confirmed — detonation flash
+MARV-2 second shot dispatched
+
+26
+00:01:53,500 --> 00:01:56,000
+[SIM] Saturation wave triggered — btn-wave
 Multiple simultaneous MARV launches — mass attack profile
 All intercepts resolved — theater nominal
 
-23
-00:01:38,000 --> 00:01:42,500
-ACT 7 — BOREAL TACTICAL DISPLAY
-Radar canvas: 1000x780px · SCALE 0.6 (1667 km theater)
-Model: ELITE V3.5 · Doctrine: FORTRESS
-
-24
-00:01:42,000 --> 00:01:46,000
-PHASE A — AUTONOMOUS ENGAGEMENT
-4 bomber threats spawned at eastern staging zone
-Sinusoidal curved approach trajectories active
-
-25
-00:01:45,500 --> 00:01:49,500
-SA HEALTH PANEL LIVE:
-  Active Threats: 4  ·  Staging: 0
-  Mode: AUTO ENGAGE  ·  Health bar: CRITICAL
-
-26
-00:01:49,000 --> 00:01:53,500
-[ENGINE] /evaluate_advanced — ELITE V3.5 · FORTRESS
-Kill scheduler fires: t+300ms to t+700ms per threat
-Canvas HUD: KILLS counter increments 0 to 4
-
 27
-00:01:53,000 --> 00:01:57,000
-SA HEALTH PANEL UPDATE:
-  Active Threats: 0  ·  Intercepts: 4
-  Health bar: SECTOR SECURE (green)
+00:01:57,000 --> 00:02:06,000
+ACT 7 — BOREAL TACTICAL DISPLAY
+Radar canvas 1000x780px · SCALE 0.6 (1667 km theater)
+Model: ELITE V3.5
 
 28
-00:01:56,500 --> 00:02:00,500
-PHASE B — HUMAN-IN-THE-LOOP OVERRIDE
-Commander checks: MANUAL OVERRIDE
-SA mode badge: AUTO ENGAGE → MANUAL OVERRIDE
+00:02:06,000 --> 00:02:15,000
+PHASE A — AUTONOMOUS ENGAGEMENT
+4 bomber threats spawned at eastern staging zone
+SA mode: AUTO ENGAGE · Health bar: CRITICAL
 
 29
-00:02:00,000 --> 00:02:04,500
-3 additional bomber threats spawned
-Staging zone: eastern Highridge approach
-SA health bar drops — threat count rising
+00:02:15,000 --> 00:02:24,000
+[ENGINE] /evaluate_advanced — ELITE V3.5 · FORTRESS
+Kill schedule fires: kills counter 0 → 4
+SA health bar → SECTOR SECURE
 
 30
-00:02:04,000 --> 00:02:08,500
-[ENGINE] /evaluate_advanced dispatched in OVERRIDE mode
-AI returns SITREP + recommended intercept plan
-Override flag prevents automatic kill scheduling
+00:02:24,000 --> 00:02:36,000
+PHASE B — HUMAN-IN-THE-LOOP OVERRIDE
+Commander checks MANUAL OVERRIDE
+SA mode badge: AUTO ENGAGE → MANUAL OVERRIDE
 
 31
-00:02:08,000 --> 00:02:13,000
+00:02:36,000 --> 00:02:40,500
 CHRONOSTASIS ACTIVE
-Strategic Override Triggered: Simulation Frozen
+Strategic Override Triggered — Simulation Frozen
 Commander reviewing AI intercept recommendation
 
 32
-00:02:12,500 --> 00:02:17,000
-Freeze overlay: 8px red pulsing border
-AI SITREP advice displayed to commander
-All autonomous kill timers: SUSPENDED
-
-33
-00:02:16,500 --> 00:02:21,000
+00:02:40,500 --> 00:02:44,500
 [COMMANDER] COMMENCE ENGAGEMENT authorized
 fireWeapons() called with manual override
-Fallback: all active threats engaged from closest base
+3x explosions cascade on radar canvas
+
+33
+00:02:44,500 --> 00:02:49,500
+PHASE C — SATURATION AMBUSH
+Doctrine: AGGRESSIVE · btn-blind: 8 ghost threats
+SA health: CRITICAL — ENGAGE
 
 34
-00:02:20,500 --> 00:02:25,000
-3x 50-frame explosions cascade on radar canvas
-Orange+white flash: 120px radius per intercept
-SA health: Threats 0 · Intercepts +3 · Bar: GREEN
+00:02:49,500 --> 00:02:53,000
+[ENGINE] AGGRESSIVE doctrine — 8x cascade explosions
+Kill counter +8 · SA health bar → SECTOR SECURE
 
 35
-00:02:24,500 --> 00:02:28,500
-Override disabled — system returns to AUTO ENGAGE
-SA mode badge: MANUAL OVERRIDE → AUTO ENGAGE
-PHASE B COMPLETE — HITL cycle demonstrated
+00:02:53,000 --> 00:03:00,000
+ACT 8 — SWEDEN AOR TACTICAL
+Stockholm-centered frame · 11 installations · AGGRESSIVE doctrine
+ELITE V3.5 · 4 Baltic threats spawned
 
 36
-00:02:28,000 --> 00:02:32,500
-PHASE C — SATURATION AMBUSH
-Doctrine switched to: AGGRESSIVE
-btn-blind: 8 ghost threats spawned in tight formation
+00:03:00,000 --> 00:03:04,500
+[ENGINE] /evaluate_advanced — ELITE V3.5 · AGGRESSIVE
+Score: -77.12 vs Boreal -380
+Higher defense efficiency under denser installation coverage
 
 37
-00:02:32,000 --> 00:02:36,000
-SA HEALTH — CRITICAL STATE:
-  Active Threats: 8  ·  Staging: 0
-  Health bar: RED — CRITICAL — ENGAGE
-
-38
-00:02:35,500 --> 00:02:40,000
-[ENGINE] /evaluate_advanced — AGGRESSIVE doctrine
-8x cascade explosions on radar canvas
-Kill counter: +8 · SA health bar → SECTOR SECURE
-
-39
-00:02:39,500 --> 00:02:43,500
-ACT 8 — SWEDEN AOR TACTICAL
-Theater: Stockholm-centered coordinate frame
-Y-axis negation active (north-positive mapping)
-
-40
-00:02:43,000 --> 00:02:47,500
-4 threats approaching Stockholm from Baltic sea
-Doctrine: AGGRESSIVE · Model: ELITE V3.5
-11 Swedish military installations online
-
-41
-00:02:47,000 --> 00:02:52,000
-[ENGINE] /evaluate_advanced — ELITE V3.5 · AGGRESSIVE
-Result: strategic consequence score = -77.12
-Assignments returned — SAM intercepts scheduled
-
-42
-00:02:51,500 --> 00:02:57,000
-Engine note: score -77 vs Boreal -380 — Sweden AOR
-shows higher defense efficiency under AGGRESSIVE
-doctrine with denser installation coverage
-
-43
-00:02:56,500 --> 00:03:01,000
+00:03:04,500 --> 00:03:09,000
 ACT 9 — LIVE VIEW
 Real-time telemetry log stream
 Boreal theater event feed: kills · assignments · doctrine events
 
-44
-00:03:00,500 --> 00:03:05,000
-DEMO COMPLETE — Portal return
-All systems nominal across both theaters
-Video runtime: ~3 min 05 sec
+38
+00:03:09,000 --> 00:03:13,000
+Portal return — all systems nominal across both theaters
 
-45
-00:03:04,000 --> 00:03:10,000
-PERFORMANCE SUMMARY
-─────────────────────────────────────────
-CORTEX C2 Boreal BALANCED:      +200.18  ✓
-Pro-Nav Kinetic Chase:           INTERCEPTED  ✓
-Swarm Physics 3x MARV:          ALL LOCKED   ✓
-Boreal Tactical Phase A:         Kills: 4     ✓
-Sweden Tactical AGGRESSIVE:      -77.12       ✓
-
-46
-00:03:09,000 --> 00:03:17,000
-SYSTEM CAPABILITIES DEMONSTRATED
-• Neural confidence scoring (ELITE V3.5)
-• MARV Bezier map curves + PAC-3 arc animation
-• Pro-Nav kinetic chase (MARV / MIRV / BALLISTIC)
-• Swarm physics: 3x MARV oblique PAC-3 intercept
-• HITL override with CHRONOSTASIS freeze
-• Manual engagement authorization workflow
-• Multi-theater awareness (Boreal + Sweden AOR)
+39
+00:03:13,000 --> 00:03:16,000
+DEMO COMPLETE
+SAAB CORTEX-1 AI DEFENSE SYSTEM
+Full-stack end-to-end capability demonstrated
