@@ -73,7 +73,7 @@ if getattr(t, "is_marv", False):
         utility += (pk_eff * 400.0)  # ← lower utility reflects reduced confidence
 ```
 
-> **Key insight:** The engine doesn't just degrade Pk — it **boosts priority for early engagement**. This forces the greedy solver to allocate long-range interceptors (THAAD/PAC-3) **before** the MARV enters its jink zone.
+> **Key insight:** The engine doesn't just degrade Pk — it **boosts priority for early engagement**. This "Urgency Boost" forces the greedy solver to allocate long-range interceptors (THAAD/PAC-3) **before** the MARV enters its jink zone.
 
 **Layer 3 — Monte Carlo Rollout** (`core/engine.py:247-252`)
 
@@ -125,14 +125,26 @@ A single missile bus carrying **N warheads** (typically 3) that separate at a co
 **Phase 1 — Pre-Release (Bus Kill)**
 
 ```python
-# engine.py:121-126
+# engine.py:131-138
 if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False):
     if dist > release_km:
         # Pre-release: killing bus kills all warheads — HIGHEST PRIORITY
-        utility += 800.0 * mirv_n   # e.g., 800 × 3 = 2,400 utility
+        utility += 800.0 * mirv_n   # e.g., 800 × 5 = 4,000 utility
 ```
 
-This **massive utility boost** (2,400 for a 3-warhead bus) mathematically forces the greedy solver to allocate the best long-range interceptor (THAAD at 200km range) to destroy the bus before separation.
+### The "Threat Multiplier"
+The `800.0 * mirv_n` bonus acts as a **dynamic threat multiplier**. A bus with 5 warheads is weighted **5x more heavily** than a standard missile, ensuring that the assignment algorithm (Hungarian) always prioritizes the "Bus Kill" above all other tactical activity.
+
+### Automatic Salvo Escalation (Aggressive Posture)
+To ensure robust defense, the engine automatically shifts to an **Aggressive Posture** when a MIRV bus is detected in the swarm:
+
+```python
+# engine.py:344-346
+if any(getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False) for t in threats):
+    neural_salvo_ratio = max(neural_salvo_ratio, 2.0)
+```
+
+This ensures the system commits **multiple interceptors (2.0 ratio)** to the bus simultaneously, providing redundancy to guarantee a kill before separation occurs.
 
 **Phase 2 — Post-Release (Individual Warheads)**
 
@@ -247,25 +259,14 @@ The feature vector has been **expanded from 15-D to 18-D** (`extract_rl_features
  has_marv, has_mirv, total_mirv_warheads]   ← NEW (features 15-17)
 ```
 
-| Feature | Index | Description |
-|---------|-------|-------------|
-| `has_marv` | 15 | Binary flag: 1.0 if any MARV threat is present |
-| `has_mirv` | 16 | Binary flag: 1.0 if any unreleased MIRV bus is present |
-| `total_mirv_warheads` | 17 | Total unreleased MIRV warheads across all buses |
+### How the 18-D Vector Drives Weapon Selection
+The update from 15-D to 18-D provides the AI with specific "trajectory vision" that informs effector prioritization:
 
-### How the System Stays Robust
-
-The architecture is deliberately **separation-of-concerns**:
-
-```
-Neural Network (11-D output)     →  "These threats are important"
-        ↓ (priority weights)
-Geometry Engine (utility calc)   →  "MARV needs early shot, MIRV bus needs THAAD"
-        ↓ (greedy assignment)
-Monte Carlo Rollout (Pk sim)     →  "This assignment survives 85% of simulations"
-```
-
-The NN's job is **triage** (which threats matter most). The geometry engine's job is **physics** (which weapons can actually reach and kill). The MC rollout's job is **validation** (does this plan actually work under stochastic conditions?).
+| Index | Feature | Tactical Impact on Weapon Selection |
+| :--- | :--- | :--- |
+| **15** | `has_marv` | Signals **Urgency Shift**. The AI learns to fire long-range assets (SAMP/T, Patriot) immediately while the MARV is in its stable midcourse phase. |
+| **16** | `has_mirv` | Signals **Efficiency Opportunity**. If a bus is detected, the AI shifts doctrine to prioritize this single target above all others to prevent warhead separation. |
+| **17** | `total_mirv_warheads` | Signals **Weighting Scale**. A bus with 5 warheads is treated as 5x more dangerous, forcing the AI to commit multiple salvos (Salvo Ratio 2.0+). |
 
 > With the 18-D vector, the NN can now **directly learn** patterns like "commit THAAD early when MIRV is detected" and "prioritize long-range Meteor when dogfighters are present."
 
@@ -273,13 +274,14 @@ The NN's job is **triage** (which threats matter most). The geometry engine's jo
 
 ## 6. Training Pipeline for MARV/MIRV
 
-### Step 1: Generate Training Data
-```powershell
-python src/generate_marv_mirv_data.py
-```
-Produces:
-- `data/training/strategic_mega_corpus/marv_mirv_train.npz` (2,000 samples × 18-D)
-- `data/training/strategic_mega_corpus/marv_mirv_eval.npz` (500 samples × 18-D)
+### The "Tactical Problem Generator" (`src/generate_marv_mirv_data.py`)
+Instead of random points, the generator simulates realistic flight behaviors:
+- **MARV:** Spawns ballistic threats that remain nominal until the `trigger_range` (60–120 km), then begin terminal maneuvers.
+- **MIRV:** Spawns a "Bus" that splits into 2–5 independent warheads at `release_range`.
+- **Dogfighters:** Spawns aircraft with aggressive WVR engagement probabilities.
+
+### The MCTS Oracle Loop
+Every generated scenario is passed through a high-intensity Monte Carlo Tree Search. The Oracle determines the mathematically optimal weapon allocation (e.g., "Fire two Patriots at the MIRV bus now to save 5 targets later"). These optimal decisions become the labels the AI learns.
 
 Threat distribution: ~30% MARV/MIRV/Dogfight, ~70% standard threats.
 

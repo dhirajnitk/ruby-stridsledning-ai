@@ -23,6 +23,7 @@ from fastapi.responses import StreamingResponse
 # 1. CORE MODELS & LOGIC
 from core.models import Effector, Base, Threat, GameState, EFFECTORS, load_battlefield_state
 from core.engine import evaluate_threats_advanced
+from simulate_interception import simulate_chase
 
 # 2. CONSTANTS & CONFIG
 # BUG-FIX B-BE-1: CSV path was hardcoded to Boreal even in Sweden mode.
@@ -116,6 +117,7 @@ class TacticalRequest(BaseModel):
     use_rl: bool = True
     use_ppo: bool = False
     run_mc: bool = False
+    model_id: str = "elite"
 
 class ProxyLLMRequest(BaseModel):
     model: str
@@ -290,7 +292,7 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
         return {
             "tactical_assignments": [], 
             "strategic_consequence_score": 1000.0, # Full health
-            "human_sitrep": "Monitoring Boreal sector... All systems green.",
+            "human_sitrep": f"Monitoring {ACTIVE_THEATER['name']} sector... All systems green.",
             "active_doctrine": {
                 "primary": request.doctrine_primary,
                 "secondary": doc_sec or "none",
@@ -301,21 +303,60 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
         }
     
     # --- STRATEGIC EVALUATION (Global Stream) ---
-    # evaluate_threats_advanced returns (score, details, rl_val) tuple.
-    # Pass only documented positional/keyword args — previous code incorrectly
-    # passed GLOBAL_LOG_QUEUE as salvo_ratio causing a TypeError (500 error).
+    doctrine_weights = None
+    rl_val = 0.0
+    
+    if request.use_rl and request.model_id != "heuristic":
+        model_map = {
+            "elite": "elite_v3_5",
+            "supreme3": "supreme_v3_1",
+            "supreme2": "supreme_v2",
+            "titan": "titan",
+            "hybrid": "hybrid_rl",
+            "genE10": "generalist_e10"
+        }
+        actual_model = model_map.get(request.model_id, "elite_v3_5")
+        try:
+            from core.inference import BorealInference
+            from core.engine import extract_rl_features
+            inference_engine = BorealInference(model_name=actual_model)
+            features = extract_rl_features(game_state, active_threats)
+            
+            # Predict
+            norm_features = (np.array(features) - inference_engine.mean) / (inference_engine.scale + 1e-6)
+            with torch.no_grad():
+                t_feat = torch.tensor(norm_features, dtype=torch.float32).unsqueeze(0).to(inference_engine.device)
+                out = inference_engine.model(t_feat)
+                if isinstance(out, tuple):
+                    doctrine_weights = out[0].cpu().numpy()[0]
+                    # Convert value to ~800 scale for UI Confidence
+                    rl_val = float(out[1].item()) * 1000.0
+                else:
+                    doctrine_weights = out.cpu().numpy()[0]
+                    # Heuristic Confidence for non-value models
+                    rl_val = max(300.0, 950.0 - (len(active_threats) * 40))
+        except Exception as e:
+            print(f"[ERROR] Failed to run Neural Inference: {e}")
+            doctrine_weights = None
+            rl_val = 0.0
+
     result_tuple = await asyncio.to_thread(
         evaluate_threats_advanced,
         game_state,
         active_threats,
         50,    # mcts_iterations
         2.0,   # salvo_ratio
-        None,  # doctrine_weights
+        doctrine_weights,  # Pass the computed doctrine_weights!
         run_mc=request.run_mc,
         weather=request.weather,
         doctrine_primary=request.doctrine_primary,
     )
-    score, details, rl_val = result_tuple
+    score, details, _ = result_tuple
+    
+    # If heuristic mode or RL failed, fallback to score as confidence
+    if rl_val == 0.0:
+        rl_val = max(100.0, score - 50.0)
+
     raw_decision = {
         "tactical_assignments": details.get("tactical_assignments", []),
         "strategic_consequence_score": float(score),
@@ -454,6 +495,40 @@ async def get_dataset_sample(dataset: str = "chronos_60_maneuver.npz"):
         }
     except Exception as e:
         return {"error": str(e)}
+
+# 7.5 KINETIC PHYSICS SIMULATION API
+@app.get("/api/simulate-kinetic-chase")
+async def get_kinetic_chase(
+    scenario: str = "ballistic",
+    tx: float = None, ty: float = None,
+    destx: float = None, desty: float = None,
+    mx: float = None, my: float = None,
+    is_marv: bool = False,
+    threat_type: str = "marv",
+    raw: bool = False
+):
+    try:
+        # If specific coordinates are provided, use them. Otherwise, fall back to scenario.
+        if tx is not None:
+            t_hist, m_hist, intercepted, miss_dist = simulate_chase(tx=tx, ty=ty, destx=destx, desty=desty, mx=mx, my=my, is_marv=is_marv, threat_type=threat_type, raw=raw)
+        else:
+            t_hist, m_hist, intercepted, miss_dist = simulate_chase(is_marv=(scenario != "ballistic"), threat_type=threat_type)
+        
+        # Convert numpy arrays to lists of dicts for JSON
+        t_path = [{"x": float(p[0]), "y": float(p[1])} for p in t_hist]
+        m_path = [{"x": float(p[0]), "y": float(p[1])} for p in m_hist]
+        
+        return {
+            "status": "success",
+            "scenario": scenario,
+            "intercepted": bool(intercepted),
+            "miss_distance": float(miss_dist),
+            "target_trajectory": t_path,
+            "missile_trajectory": m_path
+        }
+    except Exception as e:
+        print(f"[ERROR] Kinetic chase failed: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 # 8. STATIC ASSET SERVING (Phase 4)
 from fastapi.staticfiles import StaticFiles

@@ -646,6 +646,8 @@ body{
     <div class="tactical-wrap">
       <div class="tactical-label" id="tac-label">TACTICAL DISPLAY · BOREAL-N</div>
       <button class="tactical-open-btn" onclick="window.open('kinetic_3d.html?theater=boreal','_blank')">↗ 3D KINETIC</button>
+      <button class="tactical-open-btn" style="right: 100px; border-color: rgba(248,81,73,0.5); color: var(--red);" onclick="window.open('kinetic_chase.html','_blank')">↗ PRO-NAV CHASE</button>
+      <button class="tactical-open-btn" style="right: 210px; border-color: rgba(227,179,65,0.5); color: var(--ylw);" onclick="window.open('swarm_physics.html','_blank')">↗ SWARM WORKER</button>
       <svg id="tactical-svg" viewBox="0 0 860 560" preserveAspectRatio="xMidYMid meet">
         <defs>
           <marker id="arr" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto">
@@ -2185,6 +2187,21 @@ function renderTactical(sc, coa1) {
     tri.setAttribute('fill',col);
     tri.setAttribute('opacity', t.decoy ? '0.4' : '0.9');
     g.appendChild(tri);
+    
+    // Add click to deep dive into real kinematics
+    g.style.cursor = 'pointer';
+    g.onclick = () => {
+      // Find where threat is aiming
+      const ALL_BASES = [...THEATER_BASES, ...SWEDEN_BASES];
+      const targetBase = ALL_BASES.find(b => b.id === t.target) || {x: 430, y: 300};
+      
+      // Find where effector is launching from
+      const effBaseId = assignMap[t.id];
+      const effBase = ALL_BASES.find(b => b.id === effBaseId) || {x: 430, y: 700};
+      
+      const qs = `?tx=${t.spawnX}&ty=${t.spawnY}&destx=${targetBase.x}&desty=${targetBase.y}&mx=${effBase.x}&my=${effBase.y}&is_marv=${t.marv ? 'True' : 'False'}`;
+      window.open(`kinetic_chase.html${qs}`, '_blank');
+    };
 
     // ID label for non-decoy
     if (!t.decoy) {

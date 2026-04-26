@@ -131,3 +131,4 @@ The current screenshot set is fully sequential and maps 1:1 to the prompt clip o
 - `scenario_08`: `clip01_sweden_theater_idle.png` through `clip04_gotland_complete.png`
 - `scenario_09`: `clip01_strategic3d_load.png` through `clip06_dataset_viewer_loaded.png`
 - `scenario_10`: `clip01_final_stand_wave.png` through `clip04_final_stand_complete.png`
+in

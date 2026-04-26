@@ -3,9 +3,9 @@ import json
 import torch
 import numpy as np
 import glob
-from engine import evaluate_threats_advanced, extract_rl_features
-from inference import BorealInference
-from models import load_battlefield_state, CSV_FILE_PATH, Threat
+from core.engine import evaluate_threats_advanced, extract_rl_features
+from core.inference import BorealInference
+from core.models import load_battlefield_state, CSV_FILE_PATH, Threat
 
 MODELS = [
     "elite_v3_5", "generalist_e10", "hybrid_rl", 

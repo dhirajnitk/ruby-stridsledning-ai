@@ -70,21 +70,26 @@ const THEATER_DATA = (MODE === 'sweden') ? [
 // --- EFFECTOR DEFINITIONS (Audited per NATO/Sweden Doctrine) ---
 const EFFECTORS = {
   sweden: {
-    'LV-103': { name: 'Patriot PAC-3 MSE',    range: 120000, type: 'KINETIC',  color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.65, BALLISTIC: 0.7, CRUISE: 0.95, FIGHTER: 0.95, LOITER: 0.8 } },
-    'E98':    { name: 'IRIS-T SLS',           range: 12000,  type: 'KINETIC',  color: '#00ff88', cost: 40,  pk: { HYPERSONIC: 0.1, BALLISTIC: 0.2, CRUISE: 0.8,  FIGHTER: 0.8, LOITER: 0.9 } },
-    'NIMBRIX': { name: 'Saab Nimbrix (C-UAS)', range: 5000,   type: 'KINETIC',  color: '#ffff00', cost: 3,   pk: { DRONE: 0.98, LOITER: 0.95, CRUISE: 0.1 } },
-    'LIDS-EW': { name: 'LIDS EW Jammer',      range: 8000,   type: 'LASER',    color: '#ff00ff', cost: 1,   pk: { DRONE: 0.85, LOITER: 0.70 } },
-    'METEOR': { name: 'Meteor BVRAAM',        range: 150000, type: 'AIR-AIR',  color: '#ffffff', cost: 200, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.3, CRUISE: 0.85, FIGHTER: 0.98, LOITER: 0.2 } }
+    // LV-103 (PAC-3 MSE) is the ONLY system capable of engaging MARVs in Swedish inventory
+    // E98 (IRIS-T SLS) is short-range air defense — cannot engage ballistic MARVs
+    'LV-103': { name: 'Patriot PAC-3 MSE',    range: 120000, type: 'KINETIC',  color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.65, BALLISTIC: 0.7, MARV: 0.75, MIRV: 0.70, CRUISE: 0.95, FIGHTER: 0.95, LOITER: 0.8 } },
+    'E98':    { name: 'IRIS-T SLS',           range: 12000,  type: 'KINETIC',  color: '#00ff88', cost: 40,  pk: { HYPERSONIC: 0.1, BALLISTIC: 0.2, MARV: 0.04, MIRV: 0.04, CRUISE: 0.8,  FIGHTER: 0.8, LOITER: 0.9 } },
+    'NIMBRIX': { name: 'Saab Nimbrix (C-UAS)', range: 5000,   type: 'KINETIC',  color: '#ffff00', cost: 3,   pk: { DRONE: 0.98, LOITER: 0.95, CRUISE: 0.1,  MARV: 0.0, MIRV: 0.0 } },
+    'LIDS-EW': { name: 'LIDS EW Jammer',      range: 8000,   type: 'LASER',    color: '#ff00ff', cost: 1,   pk: { DRONE: 0.85, LOITER: 0.70,              MARV: 0.0, MIRV: 0.0 } },
+    'METEOR': { name: 'Meteor BVRAAM',        range: 150000, type: 'AIR-AIR',  color: '#ffffff', cost: 200, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.3, MARV: 0.15, MIRV: 0.10, CRUISE: 0.85, FIGHTER: 0.98, LOITER: 0.2 } }
   },
   boreal: {
-    'THAAD':  { name: 'THAAD (Upper-Tier)',     range: 200000, type: 'KINETIC',  color: '#00f2ff', cost: 800, pk: { HYPERSONIC: 0.8, BALLISTIC: 0.98, CRUISE: 0.4, FIGHTER: 0.3, LOITER: 0.1 } },
-    'PAC3':   { name: 'Patriot PAC-3 MSE',     range: 120000, type: 'KINETIC',  color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.7, BALLISTIC: 0.95, CRUISE: 0.95, FIGHTER: 0.9, LOITER: 0.8 } },
-    'NASAMS': { name: 'NASAMS (AMRAAM)',         range: 40000,  type: 'KINETIC',  color: '#00ff88', cost: 100, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.5,  CRUISE: 0.88, FIGHTER: 0.9, LOITER: 0.6 } },
-    'HELWS':  { name: 'HELWS Laser Weapon',      range: 5000,   type: 'LASER',    color: '#ffff00', cost: 5,   pk: { LOITER: 0.9,  DRONE: 0.95, CRUISE: 0.2 } },
-    'CRAM':   { name: 'C-RAM Phalanx',           range: 1500,   type: 'KINETIC',  color: '#ff8800', cost: 10,  pk: { CRUISE: 0.7,  LOITER: 0.8, DRONE: 0.9 } },
-    'COYOTE2': { name: 'RTX Coyote Block 2+',  range: 15000,  type: 'KINETIC',  color: '#00ffaa', cost: 5,   pk: { DRONE: 0.95, LOITER: 0.95, CRUISE: 0.3 } },
-    'MEROPS': { name: 'Merops Interceptor',    range: 3000,   type: 'KINETIC',  color: '#ffcc00', cost: 2,   pk: { DRONE: 0.95, LOITER: 0.90 } },
-    'COYOTE3': { name: 'Coyote B3 (Non-Kin)',  range: 10000,  type: 'LASER',    color: '#ff00ff', cost: 1,   pk: { DRONE: 0.90, LOITER: 0.80 } }
+    // THAAD & PAC3 are the ONLY systems capable of engaging MARVs/MIRVs
+    // NASAMS/NASAMS has minimal Pk vs maneuvering RVs — wrong altitude/speed class
+    // CRAM/HELWS/COYOTE have ZERO capability vs ballistic MARVs
+    'THAAD':  { name: 'THAAD (Upper-Tier)',    range: 200000, type: 'KINETIC',  color: '#00f2ff', cost: 800, pk: { HYPERSONIC: 0.8, BALLISTIC: 0.98, MARV: 0.80, MIRV: 0.75, CRUISE: 0.4, FIGHTER: 0.3, LOITER: 0.1 } },
+    'PAC3':   { name: 'Patriot PAC-3 MSE',    range: 120000, type: 'KINETIC',  color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.7, BALLISTIC: 0.95, MARV: 0.75, MIRV: 0.70, CRUISE: 0.95, FIGHTER: 0.9, LOITER: 0.8 } },
+    'NASAMS': { name: 'NASAMS (AMRAAM)',        range: 40000,  type: 'KINETIC',  color: '#00ff88', cost: 100, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.5,  MARV: 0.12, MIRV: 0.10, CRUISE: 0.88, FIGHTER: 0.9, LOITER: 0.6 } },
+    'HELWS':  { name: 'HELWS Laser Weapon',     range: 5000,   type: 'LASER',    color: '#ffff00', cost: 5,   pk: { LOITER: 0.9,  DRONE: 0.95, CRUISE: 0.2, MARV: 0.0, MIRV: 0.0 } },
+    'CRAM':   { name: 'C-RAM Phalanx',          range: 1500,   type: 'KINETIC',  color: '#ff8800', cost: 10,  pk: { CRUISE: 0.7,  LOITER: 0.8, DRONE: 0.9,  MARV: 0.0, MIRV: 0.0 } },
+    'COYOTE2': { name: 'RTX Coyote Block 2+', range: 15000,  type: 'KINETIC',  color: '#00ffaa', cost: 5,   pk: { DRONE: 0.95, LOITER: 0.95, CRUISE: 0.3, MARV: 0.0, MIRV: 0.0 } },
+    'MEROPS': { name: 'Merops Interceptor',   range: 3000,   type: 'KINETIC',  color: '#ffcc00', cost: 2,   pk: { DRONE: 0.95, LOITER: 0.90,             MARV: 0.0, MIRV: 0.0 } },
+    'COYOTE3': { name: 'Coyote B3 (Non-Kin)', range: 10000,  type: 'LASER',    color: '#ff00ff', cost: 1,   pk: { DRONE: 0.90, LOITER: 0.80,             MARV: 0.0, MIRV: 0.0 } }
   }
 };
 
@@ -114,9 +119,10 @@ const WEAPONS = {
   LOITER:     { speed:300,  color3:'#ff00ff', hex3:0xff00ff, r2d:4,  label:'LOITERING MUNITION',type:'LOITER'    },
   BALLISTIC:  { speed:1400, color3:'#ff5500', hex3:0xff5500, r2d:6,  label:'BALLISTIC MISSILE', type:'BALLISTIC'  },
   // ── Advanced trajectory types ─────────────────────────────────────────────
-  MARV:       { speed:1200, color3:'#ff8800', hex3:0xff8800, r2d:5,  label:'MARV (Maneuvering RV)', type:'BALLISTIC',
+  // MARV/MIRV use their own threat type so Pk tables can differentiate from standard BALLISTIC
+  MARV:       { speed:1200, color3:'#ff8800', hex3:0xff8800, r2d:5,  label:'MARV (Maneuvering RV)', type:'MARV',
                 isMarv:true,  marvTriggerKm:100, marvJinkFrac:0.4 },
-  MIRV:       { speed:1100, color3:'#ff3300', hex3:0xff3300, r2d:7,  label:'MIRV BUS',          type:'BALLISTIC',
+  MIRV:       { speed:1100, color3:'#ff3300', hex3:0xff3300, r2d:7,  label:'MIRV BUS',          type:'MIRV',
                 isMirv:true,  mirvCount:3, mirvReleaseFrac:0.45 },
   FIGHTER_DOG:{ speed:1800, color3:'#00ccff', hex3:0x00ccff, r2d:5,  label:'FIGHTER (Dogfight)', type:'FIGHTER',
                 isDogfight:true, dogWinProb:0.30, canRtb:true },
@@ -400,6 +406,207 @@ function renderMap() {
 
     baseIconsG.appendChild(g);
   });
+  renderThreatVectors();
+}
+
+// ── JS-driven MARV threat track animation with PAC-3 intercept events ───────
+// Replaces declarative SVG animateMotion so we can show actual intercept:
+//  • MARV travels along track → PAC-3 rises from the base → explosion at 75% → repeat
+//  • Clicking MARV label opens kinetic_chase.html pre-loaded with that engagement
+// ── Quadratic bezier helper ──────────────────────────────────────────────────
+function _qbez(t, x1, y1, cx, cy, x2, y2) {
+  const mt = 1 - t;
+  return { x: mt*mt*x1 + 2*mt*t*cx + t*t*x2,
+           y: mt*mt*y1 + 2*mt*t*cy + t*t*y2 };
+}
+
+function renderThreatVectors() {
+  if (!threatLayerG) return;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  Array.from(threatLayerG.querySelectorAll('.threat-track')).forEach(el => el.remove());
+  if (window._marvAnimId) cancelAnimationFrame(window._marvAnimId);
+
+  // intercept fraction = where PAC-3 kills the MARV (0–1 along track)
+  const INTERCEPT_FRAC = 0.72;
+
+  let tracks;
+  if (MODE === 'sweden') {
+    tracks = [
+      { x1:1000, y1:270, x2:545, y2:530, bx:545, by:530, label:'MARV-α', dur:5.5, delay:0,   kIdx:null },
+      { x1:1000, y1:460, x2:472, y2:699, bx:472, by:699, label:'MARV-β', dur:6.5, delay:2,   kIdx:null },
+      { x1:1000, y1:150, x2:553, y2:619, bx:553, by:619, label:'MARV-γ', dur:7.5, delay:3.8, kIdx:null },
+    ];
+  } else {
+    tracks = [
+      { x1:185, y1:10,  x2: 58, y2:690, bx: 58, by:690, label:'MARV-1', dur:5.5, delay:0,   kIdx:10 },
+      { x1:430, y1: 5,  x2:346, y2:742, bx:346, by:742, label:'MARV-2', dur:6.5, delay:2.2, kIdx:11 },
+      { x1:765, y1:10,  x2:735, y2:725, bx:735, by:725, label:'MARV-3', dur:7.5, delay:4.0, kIdx:9  },
+    ];
+  }
+
+  const PAUSE = 2.2;
+
+  tracks.forEach(tr => {
+    tr.ix = tr.x1 + (tr.x2 - tr.x1) * INTERCEPT_FRAC;
+    tr.iy = tr.y1 + (tr.y2 - tr.y1) * INTERCEPT_FRAC;
+    tr.period = tr.dur + PAUSE;
+
+    // ── Bezier control points ────────────────────────────────────────────
+    // MARV track: offset the midpoint perpendicular to track direction (ballistic arc)
+    const trkDx = tr.ix - tr.x1, trkDy = tr.iy - tr.y1;
+    const trkLen = Math.hypot(trkDx, trkDy) || 1;
+    // Perpendicular unit vector (CCW)
+    const perpX = -trkDy / trkLen, perpY = trkDx / trkLen;
+    const CURVE_FRAC = 0.14;  // 14% of track length as lateral bulge
+    tr.cpx = (tr.x1 + tr.ix) / 2 + perpX * trkLen * CURVE_FRAC;
+    tr.cpy = (tr.y1 + tr.iy) / 2 + perpY * trkLen * CURVE_FRAC;
+
+    // PAC-3 arc: rises steeply from city then arcs toward intercept
+    //   → control point above the midpoint (up in SVG = smaller y)
+    const pacDx = tr.ix - tr.bx, pacDy = tr.iy - tr.by;
+    const pacLen = Math.hypot(pacDx, pacDy) || 1;
+    tr.pacCpx = (tr.bx + tr.ix) / 2 - pacDy * 0.3;    // slight lateral
+    tr.pacCpy = (tr.by + tr.iy) / 2 - pacLen * 0.55;  // big upward arc
+
+    // ── Perpendicular direction for terminal MARV jink ───────────────────
+    tr.jinkPX = -trkDy / trkLen;
+    tr.jinkPY =  trkDx / trkLen;
+
+    const g = document.createElementNS(svgNS, 'g');
+    g.setAttribute('class', 'threat-track');
+
+    // Dashed bezier track line (full path preview)
+    const trackPath = document.createElementNS(svgNS, 'path');
+    trackPath.setAttribute('d', `M${tr.x1},${tr.y1} Q${tr.cpx},${tr.cpy} ${tr.ix},${tr.iy}`);
+    trackPath.setAttribute('stroke', '#ff3e3e');
+    trackPath.setAttribute('stroke-width', '1');
+    trackPath.setAttribute('stroke-dasharray', '8 5');
+    trackPath.setAttribute('fill', 'none');
+    trackPath.setAttribute('opacity', '0.28');
+    g.appendChild(trackPath);
+
+    // PAC-3 interceptor dot (cyan)
+    const pac3 = document.createElementNS(svgNS, 'circle');
+    pac3.setAttribute('r', '3');
+    pac3.setAttribute('fill', '#00f2ff');
+    pac3.setAttribute('opacity', '0');
+    g.appendChild(pac3);
+    tr.pac3El = pac3;
+
+    // MARV dot (red/orange)
+    const marv = document.createElementNS(svgNS, 'circle');
+    marv.setAttribute('r', '4.5');
+    marv.setAttribute('fill', '#ff6600');
+    marv.setAttribute('opacity', '0');
+    g.appendChild(marv);
+    tr.marvEl = marv;
+
+    // Explosion flash
+    const expl = document.createElementNS(svgNS, 'circle');
+    expl.setAttribute('cx', tr.ix); expl.setAttribute('cy', tr.iy);
+    expl.setAttribute('r', '0'); expl.setAttribute('fill', '#ffcc00'); expl.setAttribute('opacity', '0');
+    g.appendChild(expl); tr.explEl = expl;
+
+    // Explosion ring
+    const ring = document.createElementNS(svgNS, 'circle');
+    ring.setAttribute('cx', tr.ix); ring.setAttribute('cy', tr.iy);
+    ring.setAttribute('r', '0'); ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', '#ff8800'); ring.setAttribute('stroke-width', '1.5');
+    ring.setAttribute('opacity', '0');
+    g.appendChild(ring); tr.ringEl = ring;
+
+    // Clickable MARV label
+    const kHref = `kinetic_chase.html?base=${tr.kIdx !== null ? tr.kIdx : tr.label}&threat=marv&dir=north&autorun=1`;
+    const anchor = document.createElementNS(svgNS, 'a');
+    anchor.setAttributeNS('http://www.w3.org/1999/xlink', 'href', kHref);
+    anchor.setAttribute('target', '_blank');
+    const earlyPos = _qbez(0.1, tr.x1, tr.y1, tr.cpx, tr.cpy, tr.ix, tr.iy);
+    const lbl = document.createElementNS(svgNS, 'text');
+    lbl.setAttribute('x', earlyPos.x + 7); lbl.setAttribute('y', earlyPos.y - 4);
+    lbl.setAttribute('fill', '#ff6600'); lbl.setAttribute('font-size', '7');
+    lbl.setAttribute('font-family', 'Orbitron, monospace'); lbl.setAttribute('opacity', '0.9');
+    lbl.textContent = `${tr.label} ↗`;
+    anchor.appendChild(lbl); g.appendChild(anchor);
+
+    threatLayerG.appendChild(g);
+  });
+
+  const startEpoch = performance.now();
+
+  function animTick() {
+    const now = performance.now();
+    const globalElapsed = (now - startEpoch) / 1000;
+
+    tracks.forEach(tr => {
+      const cycleT = (globalElapsed - tr.delay) % tr.period;
+      if (globalElapsed < tr.delay || cycleT < 0) {
+        tr.marvEl.setAttribute('opacity', '0');
+        tr.pac3El.setAttribute('opacity', '0');
+        tr.explEl.setAttribute('r', '0'); tr.explEl.setAttribute('opacity', '0');
+        tr.ringEl.setAttribute('r', '0'); tr.ringEl.setAttribute('opacity', '0');
+        return;
+      }
+
+      const travelDur  = tr.dur * INTERCEPT_FRAC;
+      const pac3StartT = travelDur * 0.28;
+      const pac3Dur    = travelDur * 0.72;
+      const explDur    = 0.55;
+
+      if (cycleT < travelDur) {
+        const t = cycleT / travelDur;
+
+        // ── MARV: follows bezier curve + sinusoidal terminal jink ────────
+        const bp = _qbez(t, tr.x1, tr.y1, tr.cpx, tr.cpy, tr.ix, tr.iy);
+        // Terminal jink grows in last 40% of the approach (MARV evades)
+        let jx = 0, jy = 0;
+        if (t > 0.60) {
+          const jt  = (t - 0.60) / 0.40;           // 0→1 in terminal phase
+          const jAmp = 11 * jt;                     // grows to 11px lateral
+          const jinkHz = 2.8;
+          const sineVal = Math.sin(jinkHz * cycleT);
+          jx = tr.jinkPX * jAmp * sineVal;
+          jy = tr.jinkPY * jAmp * sineVal;
+        }
+        tr.marvEl.setAttribute('cx', bp.x + jx);
+        tr.marvEl.setAttribute('cy', bp.y + jy);
+        tr.marvEl.setAttribute('opacity', '1');
+
+        // ── PAC-3: arcs upward from base, curves to intercept ────────────
+        if (cycleT >= pac3StartT) {
+          const p = Math.min((cycleT - pac3StartT) / pac3Dur, 1.0);
+          const pp = _qbez(p, tr.bx, tr.by, tr.pacCpx, tr.pacCpy, tr.ix, tr.iy);
+          tr.pac3El.setAttribute('cx', pp.x);
+          tr.pac3El.setAttribute('cy', pp.y);
+          tr.pac3El.setAttribute('opacity', '1');
+        } else {
+          tr.pac3El.setAttribute('opacity', '0');
+        }
+
+        tr.explEl.setAttribute('r', '0'); tr.explEl.setAttribute('opacity', '0');
+        tr.ringEl.setAttribute('r', '0'); tr.ringEl.setAttribute('opacity', '0');
+
+      } else if (cycleT < travelDur + explDur) {
+        const et = (cycleT - travelDur) / explDur;
+        const er = et * 16;
+        const op = Math.max(0, 1.0 - et);
+        tr.marvEl.setAttribute('opacity', '0');
+        tr.pac3El.setAttribute('opacity', '0');
+        tr.explEl.setAttribute('r', er);
+        tr.explEl.setAttribute('opacity', String(op * 0.95));
+        tr.ringEl.setAttribute('r', er * 2.2);
+        tr.ringEl.setAttribute('opacity', String(op * 0.65));
+
+      } else {
+        tr.marvEl.setAttribute('opacity', '0');
+        tr.pac3El.setAttribute('opacity', '0');
+        tr.explEl.setAttribute('r', '0'); tr.explEl.setAttribute('opacity', '0');
+        tr.ringEl.setAttribute('r', '0'); tr.ringEl.setAttribute('opacity', '0');
+      }
+    });
+
+    window._marvAnimId = requestAnimationFrame(animTick);
+  }
+  window._marvAnimId = requestAnimationFrame(animTick);
 }
 
 function blastSvg(wx, wy, col) {
@@ -631,6 +838,19 @@ class Threat {
     this.circle2D = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this.circle2D.setAttribute('r', this.wdef.r2d);
     this.circle2D.setAttribute('fill', this.wdef.color3);
+    this.circle2D.style.cursor = 'pointer';
+    
+    // Deep link into kinetic chase physics with live geometry
+    this.circle2D.onclick = () => {
+      // Find assigned base if it exists, else default to Arktholm (x=251, y=57 in Boreal)
+      const effBaseId = this.interceptors.length > 0 ? Object.keys(BASES).find(k => BASES[k].name === this.interceptors[0].eff.name) || 'ARK' : 'ARK';
+      const effBase = BASES[effBaseId] || BASES['ARK'];
+      
+      const isMarv = this.wdef.isMarv ? 'True' : 'False';
+      const qs = `?tx=${this.pos.x/1666}&ty=${this.pos.z/1666}&destx=${this.targetNode.x}&desty=${this.targetNode.y}&mx=${effBase.x}&my=${effBase.y}&is_marv=${isMarv}`;
+      window.open(`kinetic_chase.html${qs}`, '_blank');
+    };
+    
     threatLayerG?.appendChild(this.circle2D);
 
     if (scene && !balticMap) {
@@ -1327,6 +1547,7 @@ function launchStandaloneWave() {
     addCoT(`THREAT ${i+1}: ${WEAPONS[wkey].label} → ${tgt.name}`, 'alert');
     return t;
   });
+  if (typeof camera !== 'undefined' && typeof orbitControls !== 'undefined') {
     const cx = MODE === 'sweden' ? 0 : to3X(456);
     const cz = MODE === 'sweden' ? 0 : to3Z(391);
     camera.position.set(cx, 900000, cz + 700000);

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kinetic Physics Simulator | Proportional Navigation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#090c0e; --s1:#0f1419; --s2:#131920; --s3:#1a2130;
+    --tx1:#c9d1d9; --tx2:#8b949e; --tx3:#484f58;
+    --blu:#58a6ff; --red:#f85149; --grn:#3fb950; --ylw:#e3b341;
+    --bd:rgba(255,255,255,0.1);
+  }
+  body {
+    background: var(--bg); color: var(--tx1);
+    font-family: 'Inter', sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 { font-weight: 600; margin-bottom: 5px; }
+  p { color: var(--tx2); margin-bottom: 12px; text-align: center; max-width: 720px;}
+
+  /* ── LIVE PANEL ─────────────────────────────────────────── */
+  .live-panel {
+    width: 720px; background: var(--s1); border: 1px solid rgba(88,166,255,0.3);
+    border-radius: 8px; padding: 16px 20px; margin-bottom: 14px;
+  }
+  .live-panel-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    color: var(--blu); text-transform: uppercase; margin-bottom: 12px;
+    border-bottom: 1px solid rgba(88,166,255,0.2); padding-bottom: 8px;
+  }
+  .live-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+  .live-field { display: flex; flex-direction: column; gap: 4px; }
+  .live-field label {
+    font-size: 9px; letter-spacing: 1.5px; color: var(--tx2); text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .live-field select, .live-field input[type="range"] {
+    background: var(--s2); border: 1px solid var(--bd); color: var(--tx1);
+    padding: 6px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+    min-width: 180px;
+  }
+  .live-field input[type="range"] { padding: 4px 0; min-width: 160px; cursor: pointer; }
+  .range-val { font-size: 11px; color: var(--ylw); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── STATIC SCENARIOS ─────────────────────────────────── */
+  .controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sect-label {
+    font-size: 9px; letter-spacing: 2px; color: var(--tx3); text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace; margin-bottom: 6px;
+  }
+  button {
+    background: var(--s2); border: 1px solid var(--bd); color: var(--tx1);
+    padding: 9px 18px; border-radius: 4px; cursor: pointer; font-weight: 500;
+    font-size: 12px; transition: all 0.2s;
+  }
+  button:hover { background: var(--s3); border-color: var(--blu); color: var(--blu); }
+  button.live-btn {
+    background: rgba(88,166,255,0.08); border-color: rgba(88,166,255,0.45);
+    color: var(--blu); font-weight: 700; letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  button.live-btn:hover { background: rgba(88,166,255,0.18); border-color: var(--blu); }
+  button.live-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── CANVAS + HUD ─────────────────────────────────────── */
+  .canvas-container {
+    position: relative; width: 720px; height: 600px;
+    border: 1px solid var(--bd); background: var(--s1);
+    border-radius: 8px; overflow: hidden;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+  .hud {
+    position: absolute; top: 15px; left: 15px;
+    background: rgba(0,0,0,0.75); padding: 12px 14px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--tx1); pointer-events: none; border: 1px solid var(--bd);
+    min-width: 200px;
+  }
+  .hud-stat { margin-bottom: 5px; }
+  .hud-stat span { color: var(--blu); }
+  .hud-divider { border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0; }
+  .hud-vect { font-size: 10px; color: var(--tx2); margin-bottom: 3px; }
+
+  /* ── LEGEND ─────────────────────────────────────────── */
+  .legend {
+    position: absolute; bottom: 14px; right: 14px;
+    background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--tx2); pointer-events: none;
+  }
+  .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>Kinetic Intercept: SAM vs MARV</h1>
+<p>Proportional Navigation physics simulator. Use <strong style="color:var(--blu)">Live Engagement</strong> to drive the simulation from real theater base coordinates, or pick a preset scenario below.</p>
+
+<!-- ── LIVE ENGAGEMENT PANEL ───────────────────────────────── -->
+<div class="live-panel">
+  <div class="live-panel-title">🎯 Live Engagement — Theater Vectors</div>
+  <div class="live-row">
+    <div class="live-field">
+      <label>Defending Base (Interceptor)</label>
+      <select id="base-select"><option value="">— Loading bases…</option></select>
+    </div>
+    <div class="live-field">
+      <label>Threat Type</label>
+      <select id="threat-type">
+        <option value="ballistic">BALLISTIC — Standard trajectory</option>
+        <option value="marv">MARV — Terminal jinking</option>
+        <option value="mirv">MIRV — Multi-warhead jinking</option>
+      </select>
+    </div>
+    <div class="live-field">
+      <label>Threat Approach Angle</label>
+      <select id="approach-dir">
+        <option value="east">East (→ West, standard)</option>
+        <option value="north">North (→ South)</option>
+        <option value="northeast">Northeast (diagonal)</option>
+        <option value="southeast">Southeast (diagonal)</option>
+      </select>
+    </div>
+  </div>
+  <div class="live-row">
+    <div class="live-field">
+      <label>Threat Stand-off Range</label>
+      <input type="range" id="threat-range" min="80" max="400" value="180" step="10" oninput="document.getElementById('range-val').textContent=this.value+'km'">
+      <span class="range-val" id="range-val">180km</span>
+    </div>
+    <div class="live-field" style="margin-left:auto;">
+      <label>&nbsp;</label>
+      <button class="live-btn" id="btn-live-sim" onclick="runLiveSimulation()" disabled>▶ SIMULATE LIVE INTERCEPT</button>
+    </div>
+  </div>
+  <div id="live-status" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx2);margin-top:4px;">Fetching theater state from backend…</div>
+</div>
+
+<!-- ── STATIC PRESET SCENARIOS ─────────────────────────────── -->
+<div class="sect-label">Preset Scenarios</div>
+<div class="controls">
+  <button onclick="runSimulation('ballistic')">Ballistic (Hit)</button>
+  <button onclick="runSimulation('marv_hit')">MARV (Hit)</button>
+  <button onclick="runSimulation('marv_miss')">MARV (Miss)</button>
+</div>
+
+<div class="canvas-container">
+  <canvas id="radarCanvas" width="720" height="600"></canvas>
+  <div class="hud" id="hud">
+    <div class="hud-stat">STATUS: <span id="s-status">STANDBY</span></div>
+    <div class="hud-stat">SCENARIO: <span id="s-target">--</span></div>
+    <div class="hud-stat">MISS DISTANCE: <span id="s-miss">--</span></div>
+    <div class="hud-divider"></div>
+    <div class="hud-vect" id="s-vect-t">TARGET: --</div>
+    <div class="hud-vect" id="s-vect-m">SAM: --</div>
+    <div class="hud-vect" id="s-vect-dist">RANGE: --</div>
+  </div>
+  <div class="legend">
+    <div class="legend-row"><div class="legend-dot" style="background:#f85149"></div> Threat trajectory</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#58a6ff"></div> SAM / Interceptor</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#3fb950"></div> SAM battery</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#e3b341"></div> Defended target</div>
+    <div class="legend-row"><div class="legend-dot" style="background:rgba(0,242,255,0.4); border:1px solid rgba(0,242,255,0.5);"></div> Theater bases</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('radarCanvas');
+const ctx = canvas.getContext('2d');
+const sStatus = document.getElementById('s-status');
+const sTarget = document.getElementById('s-target');
+const sMiss   = document.getElementById('s-miss');
+const sVectT  = document.getElementById('s-vect-t');
+const sVectM  = document.getElementById('s-vect-m');
+const sVectD  = document.getElementById('s-vect-dist');
+
+let animId;
+let _lastVect = null;
+let _bases = [];
+
+// ── Read URL params — dashboard can deep-link: ?base=10&threat=marv&dir=north&autorun=1 ──
+const _urlP = new URLSearchParams(window.location.search);
+
+async function loadBases() {
+  try {
+    const r = await fetch('http://localhost:8000/state');
+    const d = await r.json();
+    _bases = d.bases || [];
+    const sel = document.getElementById('base-select');
+    sel.innerHTML = '';
+    _bases.forEach((b, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${b.name}  (${b.x_km.toFixed(0)}km E, ${b.y_km.toFixed(0)}km N)`;
+      sel.appendChild(opt);
+    });
+    document.getElementById('btn-live-sim').disabled = false;
+
+    // Apply URL params if present (from dashboard MARV link)
+    const paramBase    = _urlP.get('base');
+    const paramThreat  = _urlP.get('threat');
+    const paramDir     = _urlP.get('dir');
+    const paramAutorun = _urlP.get('autorun');
+
+    if (paramBase !== null) {
+      // Accept numeric index or base-name prefix (e.g. "CAL", "SOL")
+      const idx = isNaN(parseInt(paramBase))
+        ? _bases.findIndex(b => b.name.toUpperCase().startsWith(paramBase.toUpperCase()))
+        : parseInt(paramBase);
+      if (idx >= 0) sel.value = idx;
+    }
+    if (paramThreat) {
+      const tSel = document.getElementById('threat-type');
+      tSel.value = ['marv', 'mirv', 'ballistic'].includes(paramThreat) ? paramThreat : 'ballistic';
+    }
+    if (paramDir) {
+      const dSel = document.getElementById('approach-dir');
+      const validDirs = ['east', 'north', 'northeast', 'southeast'];
+      if (validDirs.includes(paramDir)) dSel.value = paramDir;
+    }
+
+    document.getElementById('live-status').textContent =
+      `✓ ${_bases.length} bases loaded from theater — select base and threat profile above.`;
+    document.getElementById('live-status').style.color = 'var(--grn)';
+
+    // Auto-run if triggered from dashboard
+    if (paramAutorun === '1') {
+      document.getElementById('live-status').textContent = 'Auto-running engagement from Strategic Map…';
+      // Scroll canvas into view so the full engagement is visible without manual scrolling
+      setTimeout(() => {
+        const cc = document.querySelector('.canvas-container');
+        if (cc) cc.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 200);
+      setTimeout(() => runLiveSimulation(), 400);
+    }
+  } catch(e) {
+    document.getElementById('live-status').textContent = '✗ Backend offline — start python src/agent_backend.py then reload.';
+    document.getElementById('live-status').style.color = 'var(--red)';
+  }
+}
+
+// ── APPROACH VECTOR: compute threat start position given a base and approach direction ──
+function computeLiveVectors(base, rangKm, direction) {
+  // Base as origin (meters)
+  const bx = base.x_km * 1000;
+  const by = base.y_km * 1000;
+  const rangeM = rangKm * 1000;
+
+  // Threat starts rangeM away in the chosen direction, aims at the base
+  const dirMap = {
+    east:      [ rangeM, 0],
+    north:     [0,  rangeM],
+    northeast: [ rangeM * 0.707,  rangeM * 0.707],
+    southeast: [ rangeM * 0.707, -rangeM * 0.707],
+  };
+  const [dx, dy] = dirMap[direction] || dirMap.east;
+
+  // SAM battery flanks the defended base perpendicular to threat axis.
+  // Without this offset the threat flies directly at the SAM (head-on),
+  // LOS rate λ̇ ≈ 0, Pro-Nav fires no lateral command → straight lines.
+  // With a perpendicular offset the crossing geometry creates large λ̇ → curved pursuit.
+  const perpFrac = 0.45;           // SAM flanks at 45% of threat range — creates dramatic crossing geometry
+  const dLen = Math.hypot(dx, dy);
+  const px = (-dy / dLen) * dLen * perpFrac; // perpendicular to threat direction (CCW)
+  const py = ( dx / dLen) * dLen * perpFrac;
+
+  return {
+    tx: bx + dx,    ty: by + dy,    // threat start (far standoff)
+    destx: bx,      desty: by,      // threat aims at the defended base
+    mx: bx + px,    my: by + py,    // SAM battery flanks the base laterally
+    // After raw re-centring on (mx,my), the defended base sits at (-px,-py)
+    defBaseDx: -px, defBaseDy: -py,
+  };
+}
+
+async function runLiveSimulation() {
+  const baseIdx = parseInt(document.getElementById('base-select').value);
+  const base = _bases[baseIdx];
+  if (!base) return;
+
+  const threatType = document.getElementById('threat-type').value;
+  const isMarv   = threatType === 'marv' || threatType === 'mirv';
+  const direction = document.getElementById('approach-dir').value;
+  const rangKm   = parseInt(document.getElementById('threat-range').value);
+  const vects    = computeLiveVectors(base, rangKm, direction);
+
+  // Store for HUD display and post-animation reset
+  _lastVect = {
+    tPos: { x: vects.tx/1000, y: vects.ty/1000 },
+    bPos: { x: base.x_km, y: base.y_km },
+    rangKm,
+    defBaseDx: vects.defBaseDx,  // re-centred defended base position (metres)
+    defBaseDy: vects.defBaseDy,
+  };
+
+  document.getElementById('live-status').textContent =
+    `Simulating ${threatType.toUpperCase()} from ${direction} at ${rangKm}km — target: ${base.name}`;
+  document.getElementById('live-status').style.color = 'var(--ylw)';
+
+  if (animId) cancelAnimationFrame(animId);
+  drawGrid(base, vects, rangKm);
+
+  sStatus.innerText  = 'COMPUTING…';
+  sStatus.style.color = 'var(--ylw)';
+  sTarget.innerText  = `LIVE · ${threatType.toUpperCase()} → ${base.name}`;
+  sTarget.style.color = isMarv ? 'var(--red)' : 'var(--tx1)';
+  sMiss.innerText    = '--';
+  sVectT.textContent = `TARGET: ${(vects.tx/1000).toFixed(0)}km E, ${(vects.ty/1000).toFixed(0)}km N`;
+  sVectM.textContent = `SAM: ${base.x_km.toFixed(0)}km E, ${base.y_km.toFixed(0)}km N`;
+  sVectD.textContent = `STANDOFF: ${rangKm}km`;
+
+  try {
+    const url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=live` +
+      `&tx=${vects.tx}&ty=${vects.ty}&destx=${vects.destx}&desty=${vects.desty}` +
+      `&mx=${vects.mx}&my=${vects.my}&is_marv=${isMarv}&threat_type=${threatType}&raw=true`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'success') { sStatus.innerText = 'ERROR'; return; }
+    sStatus.innerText = 'PLAYBACK';
+    sStatus.style.color = 'var(--blu)';
+    document.getElementById('live-status').textContent =
+      `✓ Pro-Nav simulation complete — ${data.intercepted ? '🟢 INTERCEPTED' : '🔴 EVADED'} — miss dist ${data.miss_distance.toFixed(0)}m`;
+    document.getElementById('live-status').style.color = data.intercepted ? 'var(--grn)' : 'var(--red)';
+    const defBase = _lastVect ? { x: _lastVect.defBaseDx, y: _lastVect.defBaseDy } : null;
+    animateChase(data.target_trajectory, data.missile_trajectory, data.intercepted, data.miss_distance, true, defBase, _bases, baseIdx);
+  } catch(e) {
+    sStatus.innerText = 'API ERROR';
+    document.getElementById('live-status').textContent = `✗ ${e.message}`;
+    document.getElementById('live-status').style.color = 'var(--red)';
+  }
+}
+
+// ── GRID DRAW (optionally draw base marker) ─────────────────────────────────
+function drawGrid(base, vects, rangKm) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let i=0; i<canvas.width; i+=50) {
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
+  }
+  for(let i=0; i<canvas.height; i+=50) {
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke();
+  }
+  // Default base marker at bottom centre
+  if (!base) {
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height-20, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(63,185,80,0.15)';
+    ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height-20, 28, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+// ── PRESET SCENARIO RUNNER ─────────────────────────────────────────────────
+// Default geometry: MARV from (-25km, 100km) heading to (15km, 0) — SAM at (0,0)
+// This is crossing geometry: PAC-3 needs to turn ~30° → visible curve when raw=true zooms in
+const PRESET_DEFBASE = { x: 15000, y: 0 }; // defended base position (metres, raw-centred on SAM)
+
+async function runSimulation(scenario, customParams = null) {
+  if (animId) cancelAnimationFrame(animId);
+  drawGrid();
+  _lastVect = null;
+
+  sStatus.innerText = 'COMPUTING…';
+  sStatus.style.color = 'var(--ylw)';
+  sTarget.innerText = scenario.toUpperCase().replace('_', ' ');
+  sTarget.style.color = scenario === 'ballistic' ? 'var(--tx1)' : (scenario === 'marv_hit' ? 'var(--ylw)' : 'var(--red)');
+  sMiss.innerText = '--';
+  sVectT.textContent = 'TARGET: preset — MARV from north (100km standoff)';
+  sVectM.textContent = 'SAM: origin (perpendicular offset geometry)';
+  sVectD.textContent = 'RANGE: 100km';
+
+  try {
+    // raw=true: backend returns trajectories already re-centred on SAM origin
+    // This zooms the canvas view to the engagement geometry, making Pro-Nav curvature visible
+    let url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=${scenario}&raw=true`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'success') { sStatus.innerText = 'ERROR'; return; }
+    sStatus.innerText = 'PLAYBACK';
+    sStatus.style.color = 'var(--blu)';
+    // Pass PRESET_DEFBASE so the defended city diamond is drawn at the correct location
+    animateChase(data.target_trajectory, data.missile_trajectory, data.intercepted, data.miss_distance, true, PRESET_DEFBASE, [], 0);
+  } catch(e) {
+    sStatus.innerText = 'API ERROR';
+  }
+}
+
+// ── ANIMATION ────────────────────────────────────────────────────────────────
+function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, samBaseIdx) {
+  let frame = 0;
+  const totalFrames = Math.max(tPath.length, mPath.length);
+
+  // Dynamic bounding box — use engagement paths + SAM origin ONLY.
+  // Do NOT include defBase: it sits at y≈0 far below the intercept zone and
+  // pulls the viewport to the canvas bottom, pushing the interception off-screen.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const allPts = [...tPath, ...mPath, {x:0,y:0}];
+  // Add other theater bases for geographic context (clamp to 600km radius from engagement)
+  const samBase = (allBases && samBaseIdx !== undefined) ? allBases[samBaseIdx] : null;
+  const otherBasePts = [];
+  if (samBase && allBases && defBase) {
+    allBases.forEach((b, i) => {
+      if (i === samBaseIdx) return;
+      const rx = (b.x_km - samBase.x_km) * 1000 + defBase.x;
+      const ry = (b.y_km - samBase.y_km) * 1000 + defBase.y;
+      if (Math.hypot(rx, ry) < 600000) { // only within 600km
+        otherBasePts.push({x: rx, y: ry, name: b.name});
+      }
+    });
+  }
+  allPts.forEach(p => {
+    if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
+    if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
+  });
+  // Enforce minimum aspect ratio so lateral curvature isn't squashed:
+  // vertical span must be at least 30% of horizontal span
+  const engSpanX = maxX - minX, engSpanY = maxY - minY;
+  if (engSpanX > 0 && engSpanY < engSpanX * 0.30) {
+    const extraY = (engSpanX * 0.30 - engSpanY) / 2;
+    minY -= extraY; maxY += extraY;
+  }
+  // Also enforce minimum X span = 20% of Y span so sinusoidal jinks are visible
+  // (prevents the lateral deviation being compressed to sub-pixel width)
+  if (engSpanY > 0 && engSpanX < engSpanY * 0.20) {
+    const extraX = (engSpanY * 0.20 - engSpanX) / 2;
+    minX -= extraX; maxX += extraX;
+  }
+  const padX = Math.max(10000, (maxX-minX)*0.18);
+  const padY = Math.max(10000, (maxY-minY)*0.22);  // extra bottom room so SAM + intercept both visible
+  minX -= padX; maxX += padX; minY -= padY; maxY += padY;
+  const rangeX = maxX - minX, rangeY = maxY - minY;
+
+  const W = canvas.width, H = canvas.height;
+  const mapX = x => ((x - minX) / rangeX) * W;
+  const mapY = y => H - (((y - minY) / rangeY) * H);
+
+  // Draw geographic theater context + SAM battery + defended base
+  function drawBaseMarker() {
+    // ── 1. Other theater bases (dim context dots) ─────────────────────────
+    otherBasePts.forEach(b => {
+      const bpx = mapX(b.x), bpy = mapY(b.y);
+      if (bpx < -10 || bpx > W+10 || bpy < -10 || bpy > H+10) return; // off-canvas
+      ctx.fillStyle = 'rgba(0,242,255,0.08)';
+      ctx.beginPath(); ctx.arc(bpx, bpy, 8, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,242,255,0.25)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(bpx, bpy, 8, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = 'rgba(0,242,255,0.35)'; ctx.font = '7px JetBrains Mono,monospace';
+      ctx.fillText(b.name.split(' ')[0].substring(0,6).toUpperCase(), bpx + 10, bpy + 3);
+    });
+
+    // ── 2. SAM battery (physics origin, always 0,0 after re-centring) ────
+    const sx = mapX(0), sy = mapY(0);
+    // Outer radar ring
+    ctx.strokeStyle = 'rgba(63,185,80,0.15)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.arc(sx, sy, 55, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    // SAM circle
+    ctx.fillStyle = 'rgba(63,185,80,0.15)';
+    ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(63,185,80,0.8)'; ctx.font = 'bold 8px JetBrains Mono,monospace';
+    ctx.fillText('SAM', sx + 15, sy - 5);
+    if (samBase) {
+      ctx.fillStyle = 'rgba(63,185,80,0.5)'; ctx.font = '7px JetBrains Mono,monospace';
+      ctx.fillText(samBase.name.split(' ')[0].toUpperCase(), sx + 15, sy + 7);
+    }
+
+    // ── 3. Defended asset (yellow diamond) ───────────────────────────────
+    if (defBase) {
+      const dx = mapX(defBase.x), dy = mapY(defBase.y);
+      const s = 10;
+      ctx.fillStyle = 'rgba(227,179,65,0.18)';
+      ctx.beginPath(); ctx.moveTo(dx, dy-s); ctx.lineTo(dx+s, dy); ctx.lineTo(dx, dy+s); ctx.lineTo(dx-s, dy); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(dx, dy-s); ctx.lineTo(dx+s, dy); ctx.lineTo(dx, dy+s); ctx.lineTo(dx-s, dy); ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = '#e3b341'; ctx.font = 'bold 8px JetBrains Mono,monospace';
+      ctx.fillText('TARGET', dx + 13, dy + 3);
+    }
+  }
+
+  function step() {
+    if (frame >= totalFrames) {
+      sStatus.innerText = hit ? 'INTERCEPTED' : 'EVADED';
+      sStatus.style.color = hit ? 'var(--grn)' : 'var(--red)';
+      sMiss.innerText = `${missDist.toFixed(1)} m`;
+      // Reset range display to show initial standoff range (not final closing distance)
+      if (_lastVect) { sVectD.textContent = `STANDOFF: ${_lastVect.rangKm}km`; }
+      else { sVectD.textContent = 'RANGE: preset'; }
+      if (hit) {
+        const lastT = tPath[tPath.length-1];
+        ctx.fillStyle = 'rgba(255,100,50,0.55)';
+        ctx.beginPath(); ctx.arc(mapX(lastT.x), mapY(lastT.y), 26, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.arc(mapX(lastT.x), mapY(lastT.y), 10, 0, Math.PI*2); ctx.fill();
+      }
+      return;
+    }
+
+    // Clear and draw grid
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for(let i=0; i<W; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,H); ctx.stroke(); }
+    for(let i=0; i<H; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+
+    drawBaseMarker();
+
+    const maxT = Math.min(frame, tPath.length-1);
+    const maxM = Math.min(frame, mPath.length-1);
+
+    // LOS line
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mapX(tPath[maxT].x), mapY(tPath[maxT].y));
+    ctx.lineTo(mapX(mPath[maxM].x), mapY(mPath[maxM].y));
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Target trail
+    ctx.strokeStyle = 'rgba(248,81,73,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i=0; i<=maxT; i++) {
+      if(i===0) ctx.moveTo(mapX(tPath[i].x), mapY(tPath[i].y));
+      else ctx.lineTo(mapX(tPath[i].x), mapY(tPath[i].y));
+    }
+    ctx.stroke();
+
+    // Missile trail
+    ctx.strokeStyle = 'rgba(88,166,255,0.7)'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i=0; i<=maxM; i++) {
+      if(i===0) ctx.moveTo(mapX(mPath[i].x), mapY(mPath[i].y));
+      else ctx.lineTo(mapX(mPath[i].x), mapY(mPath[i].y));
+    }
+    ctx.stroke();
+
+    // Heads
+    if (frame < tPath.length) {
+      ctx.fillStyle = '#f85149';
+      ctx.beginPath(); ctx.arc(mapX(tPath[frame].x), mapY(tPath[frame].y), 4, 0, Math.PI*2); ctx.fill();
+    }
+    if (frame < mPath.length) {
+      ctx.fillStyle = '#58a6ff';
+      ctx.beginPath(); ctx.arc(mapX(mPath[frame].x), mapY(mPath[frame].y), 3.5, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Live HUD vector update every 10 frames
+    if (_lastVect && frame % 10 === 0 && frame < tPath.length) {
+      const tp = tPath[frame];
+      const mp = mPath[Math.min(frame, mPath.length-1)];
+      const dist = Math.hypot(tp.x-mp.x, tp.y-mp.y);
+      sVectD.textContent = `CLOSING: ${(dist/1000).toFixed(1)}km`;
+    }
+
+    frame += 1;  // step every trajectory point — shows full Pro-Nav curvature
+    animId = requestAnimationFrame(step);
+  }
+  step();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+drawGrid();
+loadBases();
+
+// Auto-run if launched from main dashboard deep-link with URL params
+window.onload = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tx = urlParams.get('tx');
+  if (tx !== null) {
+    const customParams = {
+      tx, ty: urlParams.get('ty'),
+      destx: urlParams.get('destx'), desty: urlParams.get('desty'),
+      mx: urlParams.get('mx'), my: urlParams.get('my'),
+      is_marv: urlParams.get('is_marv')
+    };
+    runSimulation('custom', customParams);
+  } else {
+    const scenario = urlParams.get('scenario');
+    if (scenario) runSimulation(scenario);
+  }
+};
+</script>
+</body>
+</html>

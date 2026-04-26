@@ -12,17 +12,22 @@ class ResBlock(nn.Module):
     def forward(self, x): return torch.relu(self.fc2(torch.relu(self.fc1(x))) + x)
 
 class TransformerResNet(nn.Module):
-    """Elite V3.5 / default: 18 → 128 (embed+attn+res) → 11"""
+    """Elite V3.5 / default: 18 features treated as sequence → 11"""
     def __init__(self, in_dim=18, out_dim=11):
         super().__init__()
-        self.embed = nn.Linear(in_dim, 128)
-        self.attn = nn.MultiheadAttention(128, 4, batch_first=True)
-        self.res = ResBlock(128); self.head = nn.Linear(128, out_dim)
+        self.feature_embed = nn.Parameter(torch.randn(1, in_dim, 64))
+        self.attn = nn.MultiheadAttention(64, 4, batch_first=True)
+        self.pool = nn.AdaptiveAvgPool1d(1)
+        self.head = nn.Sequential(
+            nn.Linear(64, 128), nn.ReLU(),
+            nn.Linear(128, out_dim)
+        )
     def forward(self, x):
-        x = torch.relu(self.embed(x)).unsqueeze(1)
-        x, _ = self.attn(x, x, x)
-        x = self.res(x.squeeze(1))
-        return torch.sigmoid(self.head(x))
+        x_val = x.unsqueeze(-1)
+        x_emb = self.feature_embed * x_val
+        x_attn, _ = self.attn(x_emb, x_emb, x_emb)
+        x_pool = self.pool(x_attn.transpose(1, 2)).squeeze(-1)
+        return torch.sigmoid(self.head(x_pool))
 
 class ChronosGRU(nn.Module):
     """Supreme V3.1: 18 → GRU(128, 2-layer) → 11"""

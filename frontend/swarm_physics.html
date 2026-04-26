@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Swarm Kinematics | CORTEX-C2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#090c0e; --s1:#0f1419; --s2:#131920; 
+    --tx1:#c9d1d9; --tx2:#8b949e; --tx3:#484f58;
+    --blu:#58a6ff; --red:#f85149; --grn:#3fb950; --ylw:#e3b341;
+    --bd:rgba(255,255,255,0.1);
+  }
+  body {
+    background: var(--bg); color: var(--tx1);
+    font-family: 'Inter', sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 { font-weight: 600; margin-bottom: 5px; }
+  p { color: var(--tx2); margin-bottom: 20px; text-align: center; max-width: 700px; line-height:1.5;}
+  .controls { display: flex; gap: 15px; margin-bottom: 20px; }
+  button {
+    background: var(--s2); border: 1px solid var(--bd); color: var(--tx1);
+    padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 700;
+    transition: all 0.2s; letter-spacing: 1px;
+  }
+  button:hover { background: var(--s1); border-color: var(--blu); color: var(--blu); }
+  button.danger:hover { border-color: var(--red); color: var(--red); }
+  
+  .canvas-container {
+    position: relative; width: 800px; height: 600px;
+    border: 1px solid var(--bd); background: var(--s1);
+    border-radius: 8px; overflow: hidden;
+  }
+  canvas { width: 100%; height: 100%; }
+  
+  .hud {
+    position: absolute; top: 15px; left: 15px;
+    background: rgba(0,0,0,0.7); padding: 10px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--tx1); pointer-events: none; border: 1px solid var(--bd);
+  }
+  .hud-stat { margin-bottom: 4px; }
+  .hud-stat span { color: var(--ylw); }
+</style>
+</head>
+<body>
+
+<h1>Mass Swarm Defenses (Web Worker Physics)</h1>
+<p>CORTEX-C2 auto-engages incoming threats per Boreal doctrine: PAC-3 MSE intercepts MARVs using oblique head-on Pro-Nav geometry; NASAMS handles cruise and ballistic. MARVs jink to evade — only PAC-3 / THAAD have sufficient Pk.</p>
+
+<div class="controls">
+  <button onclick="resetSimulation()">&#8635; RESET / RE-SIMULATE</button>
+  <span style="color:var(--tx2);font-size:11px;font-family:'JetBrains Mono',monospace;margin-left:14px;">
+    AUTO-ENGAGE — CORTEX-C2 fires PAC-3 &amp; NASAMS per Boreal doctrine
+  </span>
+</div>
+
+<div class="canvas-container">
+  <canvas id="radarCanvas" width="800" height="600"></canvas>
+  <div class="hud" id="hud">
+    <div class="hud-stat">ACTIVE THREATS: <span id="s-targets">0</span></div>
+    <div class="hud-stat">SAMs IN FLIGHT: <span id="s-missiles">0</span></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('radarCanvas');
+const ctx = canvas.getContext('2d');
+const sTargets = document.getElementById('s-targets');
+const sMissiles = document.getElementById('s-missiles');
+
+let targets = [];
+let missiles = [];
+let explosions = [];
+
+// Initialize Web Worker
+const worker = new Worker('physics_worker.js');
+
+worker.onmessage = function(e) {
+    if (e.data.type === 'STATE_UPDATE') {
+        targets = e.data.payload.targets;
+        missiles = e.data.payload.missiles;
+        explosions = e.data.payload.explosions;
+        sTargets.innerText = targets.length;
+        sMissiles.innerText = missiles.length;
+        renderFrame();
+    }
+};
+
+function launchSwarm() {
+    // ── Mirror the EXACT same 3 MARV tracks shown on the Boreal Strategic Map ──
+    // MARV-1 → Callhaven (CAL), MARV-2 → Solano (SOL), MARV-3 → Meridia (MER)
+    // Plus 3 standard CRUISE/BALLISTIC threats for comparison
+    // Coordinates: y=0 is the south (defended) line, y=120000 is northern threat origin
+    const TRACK_DEFS = [
+        // MARV tracks (from dashboard SVG animate paths)
+        { id:'MARV-1', isMarv:true,  destX:-20000, x:-18000, label:'→ CALLHAVEN',   color:'#e3b341' },
+        { id:'MARV-2', isMarv:true,  destX:   0,   x:   2000, label:'→ SOLANO',      color:'#e3b341' },
+        { id:'MARV-3', isMarv:true,  destX: 20000, x:  22000, label:'→ MERIDIA',     color:'#e3b341' },
+        // Standard threats for contrast
+        { id:'CRS-1',  isMarv:false, destX:-10000, x: -8000, label:'→ CALLHAVEN',   color:'#f85149' },
+        { id:'CRS-2',  isMarv:false, destX: 10000, x:  12000, label:'→ MERIDIA',    color:'#f85149' },
+        { id:'BAL-1',  isMarv:false, destX:   0,   x:  -3000, label:'→ SOLANO',     color:'#ff5500' },
+    ];
+    let newTargets = TRACK_DEFS.map(def => {
+        // Start at 45-65km so threats arrive in ~10s at 20Hz, giving plenty of time for PAC-3 chase
+        const y = 45000 + Math.random() * 20000;
+        const dirX = def.destX - def.x;
+        const dirY = 0 - y;
+        const heading = Math.atan2(dirY, dirX);
+        // MARVs at 1200-1600 m/s (supersonic but interceptable); standard threats slower
+        const speed = def.isMarv ? (1200 + Math.random() * 400) : (500 + Math.random() * 250);
+        return {
+            id: def.id,
+            label: def.label,
+            displayColor: def.color,
+            pos: { x: def.x, y },
+            vel: { x: speed * Math.cos(heading), y: speed * Math.sin(heading) },
+            heading,
+            active: true,
+            isMarv: def.isMarv,
+            triggerRange: 25000 + Math.random() * 10000,  // jink triggers at 25-35km
+            jinkMag: def.isMarv ? (80 + Math.random() * 70) : 0,   // realistic MARV jink ~80-150 m/s
+            jinkFreq: 1.2 + Math.random() * 1.0,
+            timeSinceJink: 0,
+            currentJink: {x:0, y:0}
+        };
+    });
+    
+    worker.postMessage({
+        type: 'START_SWARM',
+        payload: { targets: newTargets }
+    });
+}
+
+function fireSalvo() {
+    if(targets.length === 0) return;
+
+    // PAC-3 batteries co-located with each defended city (short reaction time, maximum coverage)
+    // DOCTRINE: MARV-1 threatens Callhaven → Callhaven battery fires; etc.
+    const CITY_BTYS = { 'MARV-1': -20000, 'MARV-2': 0, 'MARV-3': 20000 };
+    const FALLBACK_BTYS = [-20000, 0, 20000];
+
+    let newMissiles = [];
+    for (let t of targets) {
+        if (t.isMarv) {
+            // Shoot-shoot: 2 × PAC-3 MSE from the city battery defending this MARV's target
+            // Initial heading aimed at current MARV position → oblique/head-on intercept geometry
+            const bx = CITY_BTYS[t.id] !== undefined ? CITY_BTYS[t.id] : 0;
+            for (let i = 0; i < 2; i++) {
+                // Second shot with slight jitter so both don't fly identical trajectories
+                const lx = bx + (i === 1 ? (Math.random()-0.5)*4000 : (Math.random()-0.5)*1000);
+                // Aim toward MARV's current position for oblique head-on intercept
+                const hd = Math.atan2(t.pos.y - 0, t.pos.x - lx);
+                newMissiles.push({
+                    id: 'PAC3-' + Date.now() + Math.random(),
+                    targetId: t.id,
+                    label: 'PAC-3 MSE',
+                    samClass: 'pac3',
+                    pos:  { x: lx, y: 0 },
+                    vel:  { x: 1800 * Math.cos(hd), y: 1800 * Math.sin(hd) },
+                    speed: 1800,
+                    topSpeed: 3200,
+                    accel: 120,
+                    heading: hd,
+                    active: true,
+                    N: 5.0,
+                    maxG: 50.0  // PAC-3 MSE rated up to 50G
+                });
+            }
+        } else {
+            // NASAMS from nearest city battery, also aimed at target
+            const bx = FALLBACK_BTYS[Math.floor(Math.random() * FALLBACK_BTYS.length)];
+            const lx = bx + (Math.random()-0.5)*3000;
+            const hd = Math.atan2(t.pos.y - 0, t.pos.x - lx);
+            newMissiles.push({
+                id: 'NASAMS-' + Date.now() + Math.random(),
+                targetId: t.id,
+                label: 'NASAMS',
+                samClass: 'nasams',
+                pos:  { x: lx, y: 0 },
+                vel:  { x: 1200 * Math.cos(hd), y: 1200 * Math.sin(hd) },
+                speed: 1200,
+                topSpeed: 2500,
+                accel: 80,
+                heading: hd,
+                active: true,
+                N: 4.0,
+                maxG: 25.0
+            });
+        }
+    }
+
+    worker.postMessage({ type: 'FIRE_SALVO', payload: { missiles: newMissiles } });
+}
+
+// Rendering
+// mapX: x=-60km→0px, x=+60km→800px
+// mapY: scale to 80km vertical range (not 140km) so engagement fills canvas; 40px bottom margin
+const mapX = (x) => 400 + (x / 60000) * 390;
+const mapY = (y) => 560 - (y / 80000) * 540;
+
+function renderFrame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for(let i=0; i<=800; i+=50) {
+        ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,600); ctx.stroke();
+    }
+    for(let i=0; i<=600; i+=50) {
+        ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(800,i); ctx.stroke();
+    }
+    
+    // Draw LOS lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    for(let m of missiles) {
+        let t = targets.find(tar => tar.id === m.targetId);
+        if(t) {
+            ctx.moveTo(mapX(m.pos.x), mapY(m.pos.y));
+            ctx.lineTo(mapX(t.pos.x), mapY(t.pos.y));
+        }
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Draw targets — label each one by ID + route
+    for(let t of targets) {
+        ctx.fillStyle = t.displayColor || (t.isMarv ? '#e3b341' : '#f85149');
+        ctx.beginPath(); ctx.arc(mapX(t.pos.x), mapY(t.pos.y), t.isMarv ? 5 : 4, 0, Math.PI*2); ctx.fill();
+        // Glow ring for MARVs
+        if (t.isMarv) {
+            ctx.strokeStyle = 'rgba(227,179,65,0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(mapX(t.pos.x), mapY(t.pos.y), 9, 0, Math.PI*2); ctx.stroke();
+        }
+        ctx.fillStyle = t.displayColor || (t.isMarv ? '#e3b341' : '#f85149');
+        ctx.font = '8px JetBrains Mono, monospace';
+        ctx.fillText((t.id || '') + (t.label ? ' ' + t.label : ''), mapX(t.pos.x) + 8, mapY(t.pos.y) - 4);
+    }
+    
+    // Draw missiles — PAC3 = bright cyan, NASAMS = green
+    for(let m of missiles) {
+        ctx.fillStyle = m.samClass === 'pac3' ? '#00f2ff' : '#3fb950';
+        ctx.beginPath(); ctx.arc(mapX(m.pos.x), mapY(m.pos.y), 3, 0, Math.PI*2); ctx.fill();
+    }
+    
+    // Draw explosions
+    for(let e of explosions) {
+        if (e.type === 'hit') {
+            ctx.fillStyle = `rgba(255, 100, 50, ${1 - e.radius/e.maxRadius})`;
+            ctx.beginPath(); ctx.arc(mapX(e.x), mapY(e.y), (e.radius/1000) * 15, 0, Math.PI*2); ctx.fill();
+        } else {
+            // Miss explosion (fizzles out)
+            ctx.strokeStyle = `rgba(139, 148, 158, ${1 - e.radius/e.maxRadius})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(mapX(e.x), mapY(e.y), (e.radius/1000) * 10, 0, Math.PI*2); ctx.stroke();
+        }
+    }
+    
+    // Draw defended bases (Boreal theater: CAL, SOL, MER at y=0 line)
+    const DEFENDED = [
+        { x: -20000, name: 'CALLHAVEN' },
+        { x:       0, name: 'SOLANO'   },
+        { x:  20000, name: 'MERIDIA'   },
+    ];
+    const SAM_BTYS = [
+        { x: -30000, name: 'NVB (PAC-3)' },
+        { x:       0, name: 'ARK (PAC-3/THAAD)' },
+        { x:  30000, name: 'HRC (PAC-3)' },
+    ];
+    // Combined city + SAM battery sites (co-located: battery defends the city it sits in)
+    // Shows: city name above (yellow), PAC-3 ring, SAM label below (green)
+    const SITES = [
+        { city: 'CALLHAVEN', sam: 'PAC-3 MSE', x: -20000 },
+        { city: 'SOLANO',    sam: 'PAC-3 / THAAD', x: 0 },
+        { city: 'MERIDIA',   sam: 'PAC-3 MSE', x: 20000 },
+    ];
+    const BY = mapY(0);
+    SITES.forEach(site => {
+        const sx = mapX(site.x);
+        // SAM battery radar ring
+        ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.arc(sx, BY, 20, 0, Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(63,185,80,0.08)';
+        ctx.beginPath(); ctx.arc(sx, BY, 20, 0, Math.PI*2); ctx.fill();
+        // City diamond
+        const s = 7;
+        ctx.fillStyle = 'rgba(227,179,65,0.25)';
+        ctx.beginPath(); ctx.moveTo(sx,BY-s); ctx.lineTo(sx+s,BY); ctx.lineTo(sx,BY+s); ctx.lineTo(sx-s,BY); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(sx,BY-s); ctx.lineTo(sx+s,BY); ctx.lineTo(sx,BY+s); ctx.lineTo(sx-s,BY); ctx.closePath(); ctx.stroke();
+        // City name above
+        ctx.fillStyle = '#e3b341'; ctx.font = 'bold 8px JetBrains Mono, monospace';
+        ctx.textAlign = 'center'; ctx.fillText(site.city, sx, BY - 26);
+        // SAM label below
+        ctx.fillStyle = '#3fb950'; ctx.font = '7px JetBrains Mono, monospace';
+        ctx.fillText(site.sam, sx, BY + 30);
+        ctx.textAlign = 'left';
+    });
+
+    // Legend (bottom-left to avoid right-edge clipping)
+    const lx = 8, ly = 470;
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.fillRect(lx - 4, ly - 14, 210, 86);
+    ctx.font = '8px JetBrains Mono, monospace';
+    [
+        { col: '#e3b341', txt: '● MARV (maneuvering RV) — jinking' },
+        { col: '#f85149', txt: '● CRUISE / BALLISTIC threat' },
+        { col: '#00f2ff', txt: '● PAC-3 MSE (vs MARV only)' },
+        { col: '#3fb950', txt: '● NASAMS (vs cruise/ballistic only)' },
+        { col: '#e3b341', txt: '◆ Defended city / SAM battery' },
+    ].forEach((item, i) => {
+        ctx.fillStyle = item.col;
+        ctx.fillText(item.txt, lx, ly + i * 14);
+    });
+}
+
+// Auto-engage sequence — weapons/effectors pre-loaded from CORTEX Boreal doctrine
+// No manual button required: swarm launches then PAC-3/NASAMS auto-fire 3s later
+function resetSimulation() { location.reload(); }
+
+renderFrame();
+
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        launchSwarm();
+        setTimeout(() => fireSalvo(), 3000);  // PAC-3 fires 3s after detection
+    }, 1200);
+});
+</script>
+</body>
+</html>

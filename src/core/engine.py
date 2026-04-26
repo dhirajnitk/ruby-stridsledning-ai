@@ -341,6 +341,10 @@ def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2,
                 if key in ["patriot-pac3", "meteor"] and val > 0.8:
                     neural_salvo_ratio = 1.9
     
+    # Force Aggressive Posture if MIRV detected in the swarm
+    if any(getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False) for t in threats):
+        neural_salvo_ratio = max(neural_salvo_ratio, 2.0)
+    
     weights["effector_priorities"] = effector_priorities
     # BUG FIX: Ensure the requested salvo_ratio is respected.
     final_salvo = max(float(salvo_ratio), neural_salvo_ratio)
