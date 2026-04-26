@@ -5,8 +5,14 @@ import time
 import os
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Tuple
-import torch
 import numpy as np
+
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+    print("[SYSTEM] PyTorch DLL not found — Neural Models disabled. Using Heuristic Triage.")
 
 # --- DOMAIN MODELS ---
 from .models import Effector, Threat, Base, GameState
@@ -74,12 +80,8 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     east_threats = num_threats - west_threats
     
     ammo_stress = (sams + fighters + drones) / (num_threats + 1)
-    
-    # ── TEMPORAL ENGAGEMENT AWARENESS ──
-    total_assigned = float(sum(getattr(t, "interceptors_assigned", 0) for t in threats))
-    high_threat_unassigned = float(sum(1 for t in threats 
-                                       if t.threat_value > 70 and getattr(t, "interceptors_assigned", 0) == 0))
-    assigned_ratio = total_assigned / (num_threats + 1)
+    dist_norm = avg_dist / 1000.0
+    val_norm = total_val / 1000.0
     
     # Advanced Trajectory Awareness (MARV/MIRV)
     has_marv = 1.0 if any(getattr(t, "is_marv", False) for t in threats) else 0.0
@@ -88,16 +90,11 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     total_mirv_warheads = float(sum(getattr(t, "mirv_count", 0) for t in threats
                                     if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)))
     
-    # FINAL 18-FEATURE PRODUCTION VECTOR (V3.5+ Temporal Aware)
-    # Re-mapped to preserve 18-D shape while injecting COMMITMENT state
+    # FINAL 18-FEATURE PRODUCTION VECTOR (Preserving Training Distribution)
     return [
         num_threats, avg_dist, min_dist, total_val,
-        fighters, sams, drones, cap_sams, weather_bin, 
-        assigned_ratio,           # Replaced 'blend' (Index 9)
-        west_threats, east_threats, 
-        ammo_stress, 
-        total_assigned,           # Replaced 'dist_norm' (Index 13)
-        high_threat_unassigned,   # Replaced 'val_norm' (Index 14)
+        fighters, sams, drones, cap_sams, weather_bin, blend,
+        west_threats, east_threats, ammo_stress, dist_norm, val_norm,
         has_marv, has_mirv, total_mirv_warheads
     ]
 
@@ -400,6 +397,18 @@ def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear", mcts
     }
 
 def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2, doctrine_weights=None, run_mc=False, **kwargs):
+    # ── 4. NEURAL INFERENCE (Elite V3.5) ──
+    # Dynamically adjust doctrine based on Neural Brain if requested and environment allows
+    if kwargs.get("use_rl", False) and HAS_TORCH:
+        try:
+            from .inference import run_elite_inference
+            filtered_for_nn = [t for t in threats if t.estimated_type != "decoy"]
+            feats = extract_rl_features(state, filtered_for_nn)
+            nn_doctrine, _ = run_elite_inference(feats)
+            doctrine_weights = nn_doctrine
+        except Exception as e:
+            print(f"[WARNING] Neural Inference failed: {e}. Falling back to Heuristic weights.")
+
     weights, flags = DoctrineManager.get_blended_profile()
     mcts_temporal_context = extract_mcts_temporal_context(threats)
     

@@ -287,6 +287,14 @@
                         <option value="random">Random Assignment 🎲</option>
                     </select>
                     <div id="arch-badge" style="background:var(--accent-blue); border:2px solid #fff; color:#000; font-size:0.5rem; padding:4px 10px; border-radius:4px; letter-spacing:1px; font-weight:900; box-shadow: 0 0 15px rgba(0,242,255,0.4);">CLASS-AWARE LOGIC</div>
+                    
+                    <!-- Dynamic Weather Selector -->
+                    <select id="sel-weather" style="background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,255,0.3); color:#00f2ff; font-family:'Orbitron',sans-serif; font-size:0.5rem; padding:4px 8px; border-radius:4px; outline:none; cursor:pointer;">
+                        <option value="clear">☀️ CLEAR</option>
+                        <option value="storm">⛈️ STORM (Pk -20%)</option>
+                        <option value="fog">🌫️ FOG (Pk -30%)</option>
+                    </select>
+
                     <span id="neural-autonomy-badge">&#x26A1; NEURAL AUTONOMY</span>
                 </div>
             </div>
@@ -302,7 +310,7 @@
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="viz_engine.js"></script>
+    <script src="viz_engine.js?v=20260427d"></script>
     <script>
     // ── Dashboard init: theater mode, backend status badge ──────────────────────
     (function() {
@@ -424,11 +432,14 @@
             inventory: _mcInv
           })) },
           threats: activeThreats.map(t => ({
-            id: t.id, x: t.targetNode.x * _mcKmFactor, y: t.targetNode.y * _mcKmFactor,
+            id: t.id, 
+            x: (t.pos.x / 1666) * _mcKmFactor, 
+            y: (t.pos.z / 1666) * _mcKmFactor,
             speed_kmh: t.wdef.speed,
             estimated_type: typeMap[t.wdef.type] || 'cruise-missile',
             threat_value: 70
           })),
+          weather: document.getElementById('sel-weather')?.value || 'clear',
           doctrine_primary: window._ACTIVE_DOCTRINE || 'balanced',
           run_mc: true,
           use_rl: true
@@ -638,6 +649,18 @@
       });
     }
 
+    const btnLaunch = document.getElementById('btn-launch');
+    if (btnLaunch) {
+      btnLaunch.addEventListener('click', () => {
+        window.dispatchEvent(new Event('saab-launch'));
+      });
+    }
+
+    const btnReset = document.getElementById('btn-reset');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => location.reload());
+    }
+
     // 3D Kinetic Sim button
     const btn3d = document.getElementById('btn-kinetic-3d');
     if (btn3d) {
@@ -672,6 +695,22 @@
             if (window.setModel) window.setModel(e.target.value);
         });
     }
+    </script>
+
+    <script>
+      (function() {
+        const launchBtn = document.getElementById('btn-launch');
+        if (launchBtn) {
+          launchBtn.addEventListener('click', () => {
+            try { localStorage.setItem('saab_launch_request', '1'); } catch (_) {}
+          });
+        }
+
+        const resetBtn = document.getElementById('btn-reset');
+        if (resetBtn) {
+          resetBtn.addEventListener('click', () => location.reload());
+        }
+      })();
     </script>
 </body>
 </html>

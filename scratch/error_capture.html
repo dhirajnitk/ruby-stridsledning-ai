@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>error capture</title></head>
+<body>
+<script>
+  window.addEventListener('error', function(e) {
+    try { localStorage.setItem('saab_error_capture', JSON.stringify({ message: e.message, source: e.filename, line: e.lineno, column: e.colno })); } catch (_) {}
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    try { localStorage.setItem('saab_error_capture', JSON.stringify({ message: String(e.reason && e.reason.message ? e.reason.message : e.reason), source: 'rejection' })); } catch (_) {}
+  });
+  location.href = 'http://localhost:3001/dashboard.html?capture=1';
+</script>
+</body>
+</html>

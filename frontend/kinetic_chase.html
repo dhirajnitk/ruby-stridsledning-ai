@@ -601,6 +601,10 @@ let _syncAnimId = null;
 let currentView = { minX: null, maxX: null, minY: null, maxY: null };
 
 const SAAB_CH = new BroadcastChannel('saab_kinetic_v8');
+
+// REQUEST INITIAL SYNC: On load, ask the dashboard for the current state.
+SAAB_CH.postMessage({ type: 'STATE_REQUEST' });
+
 SAAB_CH.onmessage = e => {
     if (e.data?.type === 'STATE_SYNC') {
         _syncActive = true;
@@ -609,6 +613,14 @@ SAAB_CH.onmessage = e => {
         if (!_syncAnimId) syncLoop(); // Start render loop if not running
     }
 };
+
+try {
+  const cachedSync = localStorage.getItem('saab_last_state_sync');
+  if (cachedSync) {
+    const parsed = JSON.parse(cachedSync);
+    SAAB_CH.onmessage({ data: parsed });
+  }
+} catch (_) {}
 
 function syncLoop() {
     renderSyncedState();

@@ -173,7 +173,8 @@ scene.fog=new THREE.Fog(0x010a12,2000000,8000000);
 
 const W=window.innerWidth, H=window.innerHeight;
 const camera=new THREE.PerspectiveCamera(55,W/H,1000,12000000);
-camera.position.set(0,600000,1200000);
+// CENTERED VIEWPOINT: Positioned to see the whole Boreal theater (0-1.6M X, 0-1.3M Z)
+camera.position.set(800000, 1000000, 1800000);
 
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(W,H);
@@ -208,10 +209,20 @@ scene.add(gridH);
 // ── BASE MARKERS ──────────────────────────────────────────────
 // Theater center coordinates (SVG units) for camera positioning
 const THEATER_CENTERS = {
-  // Sweden: Y is negated → north at negative Z. Camera south (positive Z) looking at Stockholm (0,0).
-  sweden: { x: 0,   z: 0,   camX: 0,      camY: 600000, camZ: 1400000, tgtX: 0,      tgtZ: -200000 },
-  boreal: { x: 456, z: 391, camX: 850000, camY: 750000, camZ: 1950000, tgtX: 850000, tgtZ: 750000  }
+  // Sweden: Center of country around Stockholm (0,0). Camera looking North-West.
+  sweden: { camX: 0, camY: 800000, camZ: 1600000, tgtX: 0, tgtZ: 0 },
+  // Boreal: Theater spans 0-1.6M X and 0-1.3M Z. Centering camera on middle.
+  boreal: { camX: 800000, camY: 850000, camZ: 2000000, tgtX: 800000, tgtZ: 650000 }
 };
+
+function setTheater(mode) {
+    if (!THEATERS[mode]) return;
+    currentTheater = mode;
+    const sel = document.getElementById('sel-theater');
+    if (sel) sel.value = mode;
+    sceneLabels.forEach(l => l.div.remove()); sceneLabels.length = 0;
+    buildBases(mode);
+}
 
 let baseMarkers=[];
 let mirrorFocus = null;
@@ -255,8 +266,19 @@ function buildBases(theater){
   orbit.update();
 }
 
-function setMirrorFocus(tx, ty, tz) {
-  mirrorFocus = { x: tx, y: ty, z: tz };
+function setMirrorFocus(tx, ty, tz, targetX, targetZ) {
+  mirrorFocus = { x: tx, y: ty, z: tz, tx: targetX, tz: targetZ };
+}
+
+function resetMirrorFocus() {
+  const tc = THEATER_CENTERS[currentTheater] || THEATER_CENTERS.sweden;
+  mirrorFocus = { x: tc.camX, y: tc.camY, z: tc.camZ, tx: tc.tgtX, tz: tc.tgtZ };
+  // If we are already close to the overview, clear it so user can orbit freely
+  setTimeout(() => {
+    if (mirrorFocus && Math.abs(camera.position.y - tc.camY) < 1000) {
+        mirrorFocus = null;
+    }
+  }, 2000);
 }
 
 // ── DOM LABELS ────────────────────────────────────────────────
@@ -895,6 +917,19 @@ function animate(){
     baseMarkers.forEach((m,i)=>{if(i%2===0)m.rotation.y+=0.005;});
   }
   updateLabels();
+
+  // Camera smoothing for mirror focus
+  if (mirrorFocus) {
+    const blend = 0.08; // slightly slower for better cinematic feel
+    camera.position.x += (mirrorFocus.x - camera.position.x) * blend;
+    camera.position.y += (mirrorFocus.y - camera.position.y) * blend;
+    camera.position.z += (mirrorFocus.z - camera.position.z) * blend;
+    orbit.target.x += (mirrorFocus.tx - orbit.target.x) * blend;
+    orbit.target.y += (0 - orbit.target.y) * blend;
+    orbit.target.z += (mirrorFocus.tz - orbit.target.z) * blend;
+    orbit.update();
+  }
+
   renderer.render(scene,camera);
 }
 animate();
@@ -934,6 +969,12 @@ window.addEventListener('resize',()=>{
 });
 
 const SAAB_CH = new BroadcastChannel('saab_kinetic_v8');
+// REQUEST INITIAL SYNC: On load, ask the dashboard for the current state.
+// Small delay to ensure dashboard is ready to respond.
+setTimeout(() => {
+    SAAB_CH.postMessage({ type: 'STATE_REQUEST' });
+}, 500);
+
 SAAB_CH.onmessage = e => {
   if (e.data?.type === 'INVENTORY_SYNC') {
     sFired = e.data.totalSAM;
@@ -963,7 +1004,15 @@ SAAB_CH.onmessage = e => {
 
     if (Array.isArray(e.data.threats) && e.data.threats.length > 0) {
       const lead = e.data.threats[0];
-      setMirrorFocus(lead.x || 0, Math.max(180000, (lead.y || 0) + 220000), (lead.z || 0) + 160000);
+      setMirrorFocus(
+        lead.x || 0, 
+        Math.max(180000, (lead.y || 0) + 220000), 
+        (lead.z || 0) + 160000,
+        lead.x || 0,
+        lead.z || 0
+      );
+    } else {
+      resetMirrorFocus();
     }
     
     // ── SYNCED FOLLOW-THE-LEADER MODE ────────────────────────────
@@ -1029,18 +1078,15 @@ SAAB_CH.onmessage = e => {
         }
     }
 
-    if (mirrorFocus) {
-      const blend = 0.14;
-      camera.position.x += (mirrorFocus.x - camera.position.x) * blend;
-      camera.position.y += (mirrorFocus.y - camera.position.y) * blend;
-      camera.position.z += (mirrorFocus.z - camera.position.z) * blend;
-      orbit.target.x += (mirrorFocus.x - orbit.target.x) * blend;
-      orbit.target.y += (0 - orbit.target.y) * blend;
-      orbit.target.z += (mirrorFocus.z - orbit.target.z) * blend;
-      orbit.update();
-    }
   }
 };
+
+try {
+  const cachedInventory = localStorage.getItem('saab_last_inventory_sync');
+  if (cachedInventory) SAAB_CH.onmessage({ data: JSON.parse(cachedInventory) });
+  const cachedState = localStorage.getItem('saab_last_state_sync');
+  if (cachedState) SAAB_CH.onmessage({ data: JSON.parse(cachedState) });
+} catch (_) {}
 
 // Robust background pruning for mirror artifacts (even when no messages arrive)
 setInterval(() => {

@@ -1,7 +1,6 @@
 import math
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 
 # ---------------------------------------------------------
@@ -160,6 +159,7 @@ def simulate_chase(tx=None, ty=None, destx=None, desty=None, mx=None, my=None, i
     return np.array(t_history), np.array(m_history), intercepted, miss_distance
 
 def generate_visualization():
+    import matplotlib.pyplot as plt
     import random
     random.seed(42) 
     

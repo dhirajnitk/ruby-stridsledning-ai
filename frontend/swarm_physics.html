@@ -79,10 +79,51 @@ let explosions = [];
 const worker = new Worker('physics_worker.js');
 
 worker.onmessage = function(e) {
+    if (_mirrorMode) return; // Ignore worker in mirror mode
     if (e.data.type === 'STATE_UPDATE') {
         targets = e.data.payload.targets;
         missiles = e.data.payload.missiles;
         explosions = e.data.payload.explosions;
+        sTargets.innerText = targets.length;
+        sMissiles.innerText = missiles.length;
+        renderFrame();
+    }
+};
+
+// ── GLOBAL STATE SYNC (Follow-the-Dashboard) ───────────────────
+let _mirrorMode = false;
+let _syncData = null;
+const SAAB_CH = new BroadcastChannel('saab_kinetic_v8');
+
+// REQUEST INITIAL SYNC: On load, ask the dashboard for the current state
+SAAB_CH.postMessage({ type: 'STATE_REQUEST' });
+
+SAAB_CH.onmessage = e => {
+    if (e.data?.type === 'STATE_SYNC') {
+        if (!_mirrorMode) {
+            _mirrorMode = true;
+            console.log("SWARM: ENTERING MIRROR MODE FROM DASHBOARD");
+        }
+        _syncData = e.data;
+        
+        // Map dashboard state to swarm_physics format
+        targets = e.data.threats.map(t => ({
+            id: t.id,
+            pos: { x: (t.x - 850000) / 10, y: t.z / 10 }, // Scale and shift to fit swarm canvas
+            displayColor: '#e3b341',
+            isMarv: t.isMarv
+        }));
+        
+        missiles = [];
+        e.data.threats.forEach(t => {
+            t.interceptors.forEach(i => {
+                missiles.push({
+                    pos: { x: (i.pos.x - 850000) / 10, y: i.pos.z / 10 },
+                    samClass: 'pac3'
+                });
+            });
+        });
+        
         sTargets.innerText = targets.length;
         sMissiles.innerText = missiles.length;
         renderFrame();
