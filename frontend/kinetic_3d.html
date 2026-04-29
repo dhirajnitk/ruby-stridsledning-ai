@@ -25,6 +25,9 @@ button.green:hover{background:rgba(0,255,136,0.1)}
 #sync-hud{position:fixed;top:50px;left:16px;z-index:10;background:rgba(0,0,0,.7);border:1px solid rgba(0,255,136,.25);padding:10px 12px;border-radius:4px;min-width:220px}
 #sync-hud .sh{font-size:.45rem;color:#888;letter-spacing:1px;margin-bottom:4px}
 #sync-hud .sv{font-size:.72rem;font-weight:bold;color:#00ff88;line-height:1.4}
+#engagement-hud{position:fixed;top:162px;left:16px;z-index:10;background:rgba(0,0,0,.7);border:1px solid rgba(255,204,0,.25);padding:10px 12px;border-radius:4px;min-width:260px}
+#engagement-hud .sh{font-size:.45rem;color:#888;letter-spacing:1px;margin-bottom:4px}
+#engagement-hud .sv{font-size:.65rem;font-weight:bold;color:#ffcc00;line-height:1.45}
 #label-overlay{position:fixed;top:50px;left:16px;z-index:10;pointer-events:none}
 .lbl{position:absolute;font-size:.48rem;letter-spacing:1px;white-space:nowrap;text-shadow:0 0 6px currentColor;transform:translate(-50%,-50%)}
 .klbl{position:absolute;font-size:.5rem;letter-spacing:2px;white-space:nowrap;font-weight:bold;transform:translate(-50%,-200%);padding:2px 6px;border-radius:2px;pointer-events:none}
@@ -42,6 +45,11 @@ button.green:hover{background:rgba(0,255,136,0.1)}
 #freeze-btns button{padding:10px 24px;font-size:.65rem;letter-spacing:2px;cursor:pointer;border-radius:4px;font-family:'Courier New',monospace}
 #btn-approve-k{background:rgba(0,255,136,.15);border:1px solid #00ff88;color:#00ff88}
 #btn-reject-k{background:rgba(255,62,62,.12);border:1px solid #ff3e3e;color:#ff3e3e}
+#type-key{position:fixed;top:250px;right:16px;z-index:10;max-width:180px;background:rgba(0,0,0,.7);border:1px solid rgba(0,242,255,.2);padding:10px 12px;border-radius:4px}
+#type-key .sh{font-size:.45rem;color:#888;letter-spacing:1px;margin-bottom:4px}
+#type-key .tk{display:flex;flex-wrap:wrap;gap:4px 8px}
+#type-key .tp{display:inline-flex;align-items:center;gap:5px;font-size:.42rem;line-height:1.1;color:#9fdfff}
+#type-key .dp{width:6px;height:6px;border-radius:50%}
 </style>
 </head>
 <body>
@@ -94,6 +102,11 @@ button.green:hover{background:rgba(0,255,136,0.1)}
     <div class="sh">MIRROR SYNC</div>
     <div class="sv" id="sync-state">WAITING FOR DASHBOARD</div>
   </div>
+
+  <div id="engagement-hud">
+    <div class="sh">ENGAGEMENT</div>
+    <div class="sv" id="engagement-state">TARGET: -- | EFFECTOR: --</div>
+  </div>
 </div>
 
 <!-- FREEZE OVERLAY -->
@@ -112,6 +125,19 @@ button.green:hover{background:rgba(0,255,136,0.1)}
 </div>
 
 <div id="label-overlay"></div>
+<div id="type-key">
+  <div class="sh">TYPE KEY</div>
+  <div class="tk">
+    <div class="tp"><span class="dp" style="background:#ff3e3e"></span>CRUISE</div>
+    <div class="tp"><span class="dp" style="background:#ffcc00"></span>HYPERSONIC</div>
+    <div class="tp"><span class="dp" style="background:#ff00ff"></span>LOITER</div>
+    <div class="tp"><span class="dp" style="background:#ff5500"></span>BALLISTIC</div>
+    <div class="tp"><span class="dp" style="background:#ff8800"></span>MARV</div>
+    <div class="tp"><span class="dp" style="background:#ff3300"></span>MIRV</div>
+    <div class="tp"><span class="dp" style="background:#00ccff"></span>FIGHTER</div>
+    <div class="tp"><span class="dp" style="background:#00f2ff"></span>SAM</div>
+  </div>
+</div>
 <div id="log"><div id="log-feed"></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -152,16 +178,16 @@ const THEATERS = {
   ]
 };
 const WEAPONS={
-  CRUISE:    {speed:1.2,color:0xff3e3e,trail:'#ff3e3e',label:'CRUISE',alt:60000},
-  HYPERSONIC:{speed:4.0,color:0xffcc00,trail:'#ffcc00',label:'HYPERSONIC',alt:120000},
-  LOITER:    {speed:0.6,color:0xff00ff,trail:'#ff00ff',label:'LOITER',alt:30000},
-  BALLISTIC: {speed:2.5,color:0xff5500,trail:'#ff5500',label:'BALLISTIC',alt:180000},
+  CRUISE:    {speed:600,color:0xff3e3e,trail:'#ff3e3e',label:'CRUISE',alt:60000},
+  HYPERSONIC:{speed:2200,color:0xffcc00,trail:'#ffcc00',label:'HYPERSONIC',alt:120000},
+  LOITER:    {speed:300,color:0xff00ff,trail:'#ff00ff',label:'LOITER',alt:30000},
+  BALLISTIC: {speed:1400,color:0xff5500,trail:'#ff5500',label:'BALLISTIC',alt:180000},
   // ── Advanced trajectory types ──────────────────────────────────────────
-  MARV:      {speed:2.5,color:0xff8800,trail:'#ff8800',label:'MARV',alt:160000,
+  MARV:      {speed:1200,color:0xff8800,trail:'#ff8800',label:'MARV',alt:160000,
               isMarv:true,  marvTriggerKm:100, marvJinkFrac:0.45},
-  MIRV:      {speed:2.0,color:0xff3300,trail:'#ff3300',label:'MIRV-BUS',alt:180000,
+  MIRV:      {speed:1100,color:0xff3300,trail:'#ff3300',label:'MIRV-BUS',alt:180000,
               isMirv:true,  mirvCount:3, mirvReleaseFrac:0.45},
-  FIGHTER_DOG:{speed:1.8,color:0x00ccff,trail:'#00ccff',label:'FIGHTER',alt:40000,
+  FIGHTER_DOG:{speed:1800,color:0x00ccff,trail:'#00ccff',label:'FIGHTER',alt:40000,
               isDogfight:true, dogWinProb:0.30, canRtb:true},
 };
 
@@ -205,6 +231,87 @@ scene.add(dlight);
 const gridH=new THREE.GridHelper(2000000,40,0x003344,0x001122);
 gridH.position.y=0;
 scene.add(gridH);
+
+// ── ADVANCED 3D GEOMETRY FACTORIES ──────────────────────────
+function createGripenMesh(color) {
+  const group = new THREE.Group();
+  // Fuselage
+  const fuseGeo = new THREE.CylinderGeometry(1500, 3000, 20000, 6);
+  const fuse = new THREE.Mesh(fuseGeo, new THREE.MeshBasicMaterial({color, wireframe:true}));
+  fuse.rotation.x = Math.PI/2;
+  group.add(fuse);
+  // Main Wing (Double-Delta)
+  const wingShape = new THREE.Shape();
+  wingShape.moveTo(0, 0);
+  wingShape.lineTo(12000, -8000);
+  wingShape.lineTo(4000, -20000);
+  wingShape.lineTo(-4000, -20000);
+  wingShape.lineTo(-12000, -8000);
+  wingShape.lineTo(0, 0);
+  const wingGeo = new THREE.ShapeGeometry(wingShape);
+  const wing = new THREE.Mesh(wingGeo, new THREE.MeshBasicMaterial({color, side: THREE.DoubleSide, transparent:true, opacity:0.6}));
+  wing.rotation.x = -Math.PI/2;
+  wing.position.z = 8000;
+  group.add(wing);
+  // Tail Fin
+  const tailGeo = new THREE.BoxGeometry(1000, 6000, 4000);
+  const tail = new THREE.Mesh(tailGeo, new THREE.MeshBasicMaterial({color}));
+  tail.position.set(0, 4000, 10000);
+  group.add(tail);
+  // Engine Glow
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(2500, 8, 8), new THREE.MeshBasicMaterial({color: 0xffaa00}));
+  glow.position.z = 11000;
+  group.add(glow);
+  return group;
+}
+
+function createMissileMesh(color, hasWings=false) {
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(800, 1200, 12000, 6), new THREE.MeshBasicMaterial({color}));
+  body.rotation.x = Math.PI/2;
+  group.add(body);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(1200, 4000, 6), new THREE.MeshBasicMaterial({color}));
+  tip.rotation.x = Math.PI/2;
+  tip.position.z = -8000;
+  group.add(tip);
+  if(hasWings) {
+    const wings = new THREE.Mesh(new THREE.BoxGeometry(8000, 200, 3000), new THREE.MeshBasicMaterial({color}));
+    wings.position.z = 2000;
+    group.add(wings);
+  }
+  return group;
+}
+
+// ── ASSET MARKERS (Aviation Logistics) ─────────────────────────
+let assetMarkers=[];
+function buildAssets(theater){
+  assetMarkers.forEach(m=>{ scene.remove(m); });
+  assetMarkers=[];
+  
+  const starterAssets = [
+    {id:'G01', name:'GRIPEN-E-1', x:150, y:150, type:'fighter', isAirborne:false},
+    {id:'N01', name:'GRIPEN-SEA-1', x:100, y:400, type:'fighter', isAirborne:false}
+  ];
+
+  starterAssets.forEach(a=>{
+    const mesh = createGripenMesh(a.isAirborne?0x00f2ff:0x4488ff);
+    const zPos = theater === 'sweden' ? -a.y*SC : a.y*SC;
+    mesh.position.set(a.x*SC, a.isAirborne?40000:2000, zPos);
+    scene.add(mesh); assetMarkers.push(mesh);
+    
+    if(a.isAirborne) {
+        const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(150000, 800, 8, 64),
+            new THREE.MeshBasicMaterial({color:0x00f2ff, transparent:true, opacity:0.2})
+        );
+        ring.rotation.x = Math.PI/2;
+        ring.position.copy(mesh.position);
+        scene.add(ring); assetMarkers.push(ring);
+    }
+
+    addLabel(a.name, a.x*SC, zPos, a.isAirborne?0x00f2ff:0x4488ff);
+  });
+}
 
 // ── BASE MARKERS ──────────────────────────────────────────────
 // Theater center coordinates (SVG units) for camera positioning
@@ -268,6 +375,11 @@ function buildBases(theater){
 
 function setMirrorFocus(tx, ty, tz, targetX, targetZ) {
   mirrorFocus = { x: tx, y: ty, z: tz, tx: targetX, tz: targetZ };
+}
+
+function setEngagementState(text) {
+  const el = document.getElementById('engagement-state');
+  if (el) el.textContent = text;
 }
 
 function resetMirrorFocus() {
@@ -475,14 +587,25 @@ function updateKineticLabel(div, state, wx, wz) {
 const kinetics=[];
 let kId=0;
 
+function createDroneMesh(color) {
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2000, 1000, 8000), new THREE.MeshBasicMaterial({color}));
+  group.add(body);
+  const wing1 = new THREE.Mesh(new THREE.BoxGeometry(10000, 100, 2000), new THREE.MeshBasicMaterial({color}));
+  wing1.rotation.y = Math.PI/4;
+  group.add(wing1);
+  const wing2 = new THREE.Mesh(new THREE.BoxGeometry(10000, 100, 2000), new THREE.MeshBasicMaterial({color}));
+  wing2.rotation.y = -Math.PI/4;
+  group.add(wing2);
+  return group;
+}
+
 function launchKinetic(theater,weaponKey,outcome,isWave=false){
   const bases=THEATERS[theater];
   const tgt=bases[Math.floor(Math.random()*bases.length)];
   const wdef=WEAPONS[weaponKey];
-  // BUG-FIX: Sweden uses north-positive Y; negate to match corrected base positions.
   const zSign = theater === 'sweden' ? -1 : 1;
 
-  // Spawn from random edge
   const angle=Math.random()*Math.PI*2;
   const dist=800000+Math.random()*400000;
   const spawnX=tgt.x*SC+Math.cos(angle)*dist;
@@ -491,13 +614,20 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
 
   const tgtX=tgt.x*SC, tgtZ=zSign*tgt.y*SC;
 
-  // Missile mesh
-  const mGeo=new THREE.ConeGeometry(5000,20000,8);
-  const mMesh=new THREE.Mesh(mGeo,new THREE.MeshBasicMaterial({color:wdef.color,wireframe:false}));
+  // PREMIUM MESH SELECTION
+  let mMesh;
+  if(weaponKey === 'LOITER') {
+      mMesh = createDroneMesh(wdef.color);
+  } else if(weaponKey === 'CRUISE') {
+      mMesh = createMissileMesh(wdef.color, true);
+  } else {
+      mMesh = createMissileMesh(wdef.color, false);
+  }
   scene.add(mMesh);
   const trail=makeTrail(wdef.color);
 
-  const totalFrames=220;
+  const baseSpeedKmh=600;
+  const totalFrames=Math.max(90, Math.round(220 * (baseSpeedKmh / Math.max(wdef.speed || baseSpeedKmh, 1))));
   let frame=0;
 
   // ── Advanced trajectory state ─────────────────────────────────────────
@@ -523,6 +653,12 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
   const defBases=[];
   if(outcome==='intercept'){
     sortedBases.slice(0,2).forEach(b=>defBases.push(b));
+  }
+  const launchBase = defBases[0] || null;
+  if (launchBase) {
+    setEngagementState(`TARGET: ${tgt.name} | EFFECTOR: ${launchBase.name}`);
+  } else {
+    setEngagementState(`TARGET: ${tgt.name} | EFFECTOR: --`);
   }
   // BUG-K01 FIX: increment threat counter on every launch (not just on SAM fire)
   sThreats++; updateStats();
@@ -550,8 +686,7 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
 
   function spawnSAM(base,label){
     const dbx=base.x*SC, dbz=zSign*base.y*SC;
-    const iGeo=new THREE.ConeGeometry(4000,16000,6);
-    const iMesh=new THREE.Mesh(iGeo,new THREE.MeshBasicMaterial({color:0x00f2ff}));
+    const iMesh = createMissileMesh(0x00f2ff);
     scene.add(iMesh);
     const iTrail=makeTrail(0x00f2ff);
     iMesh.position.set(dbx,5000,dbz);
@@ -563,11 +698,39 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
   function disposeSAM(sam){
     if(!sam.active) return;
     sam.active=false;
-    scene.remove(sam.mesh); sam.mesh.geometry.dispose(); sam.mesh.material.dispose();
-    setTimeout(()=>{
-      scene.remove(sam.trail.line);
-      sam.trail.line.geometry.dispose(); sam.trail.line.material.dispose();
-    },3000);
+    safeDisposeObject(sam.mesh);
+    safeDisposeLine(sam.trail?.line, 3000);
+  }
+
+  function safeDisposeObject(obj) {
+    if (!obj) return;
+    scene.remove(obj);
+    if (typeof obj.traverse === 'function') {
+      obj.traverse(child => {
+        if (child.geometry && typeof child.geometry.dispose === 'function') child.geometry.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(mat => mat && typeof mat.dispose === 'function' && mat.dispose());
+          } else if (typeof child.material.dispose === 'function') {
+            child.material.dispose();
+          }
+        }
+      });
+      return;
+    }
+    if (obj.geometry && typeof obj.geometry.dispose === 'function') obj.geometry.dispose();
+    if (obj.material && typeof obj.material.dispose === 'function') obj.material.dispose();
+  }
+
+  function safeDisposeLine(line, delayMs = 0) {
+    if (!line) return;
+    const disposeLine = () => {
+      scene.remove(line);
+      if (line.geometry && typeof line.geometry.dispose === 'function') line.geometry.dispose();
+      if (line.material && typeof line.material.dispose === 'function') line.material.dispose();
+    };
+    if (delayMs > 0) setTimeout(disposeLine, delayMs);
+    else disposeLine();
   }
 
   const myId=kId++;
@@ -584,14 +747,14 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
   (async()=>{
     try{
       const typeMap={CRUISE:'cruise-missile',HYPERSONIC:'hypersonic-pgm',LOITER:'drone',BALLISTIC:'ballistic'};
-      const speedMap={CRUISE:800,HYPERSONIC:6000,LOITER:200,BALLISTIC:3000};
+      const speedMap={CRUISE:600,HYPERSONIC:2200,LOITER:300,BALLISTIC:1400,MARV:1200,MIRV:1100,FIGHTER:1800};
       const KM=1; // pass raw SVG units — engine uses theater-unit ranges
       // Include theater bases as state so engine range checks work
       const stateBasesPayload=bases.filter(b=>!b.hva).map(b=>({
         name:b.name, x:b.x*KM, y:b.y*KM,
         inventory:{'patriot-pac3':16,'nasams':8}
       }));
-      const r=await fetch('http://localhost:8000/evaluate_advanced',{
+      const r=await fetch('http://127.0.0.1:8000/evaluate_advanced',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -613,8 +776,17 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
         const sitrep=(firstContent||'').replace(/^[-—\s]+|[-—\s]+$/g,'').substring(0,80);
         const eff=(data.tactical_assignments?.[0]?.effector||'N/A').toUpperCase();
         const base=(data.tactical_assignments?.[0]?.base||'N/A');
+        const isGrounded = data.tactical_assignments?.[0]?.is_grounded;
+        const sDelay = data.tactical_assignments?.[0]?.scramble_delay || 0;
+
+        setEngagementState(`TARGET: ${tgt.name} | EFFECTOR: ${base} / ${eff}`);
+
         log(`CORTEX-1: ${sitrep||'ASSESSMENT RECEIVED'}`,'i');
-        log(`ENGINE → ${eff} from ${base} | STRATEGIC SCORE: ${score}`,'i');
+        if(isGrounded) {
+            log(`ENGINE → SCRAMBLE ${eff} from ${base} (DELAY: ${sDelay}s) | STRATEGIC SCORE: ${score}`,'w');
+        } else {
+            log(`ENGINE → ${eff} from ${base} | STRATEGIC SCORE: ${score}`,'i');
+        }
         
         if (data.mc_metrics) {
           const sEl = document.getElementById('s-surv');
@@ -730,8 +902,8 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
                   explode(cMesh.position,0xff3300,80);
                   log(`  MRV-${cI} IMPACT — DEFENSE BREACH`,'a');
                   sImpacts++; updateStats();
-                  scene.remove(cMesh); cMesh.geometry.dispose(); cMesh.material.dispose();
-                  setTimeout(()=>{ scene.remove(cTrail.line); cTrail.line.geometry.dispose(); cTrail.line.material.dispose(); },2000);
+                  safeDisposeObject(cMesh);
+                  safeDisposeLine(cTrail.line, 2000);
                 }
               }};
               kinetics.push(childK);
@@ -762,9 +934,10 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
           log(`✈ DOGFIGHT — FIGHTER DESTROYED IN MERGE`,'s');
           sKills++; waveActive=Math.max(0,waveActive-1); updateStats();
           explode(new THREE.Vector3(mx,my,mz),0x00ccff,100);
-          scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+          safeDisposeObject(mMesh);
           sams.forEach(sam=>disposeSAM(sam));
-          setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },3000);
+          safeDisposeLine(trail.line, 3000);
+          setTimeout(()=>{ statusDiv.remove(); },3000);
           return;
         }
       }
@@ -779,9 +952,10 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
         if(distFromSpawn>600000||frame>totalFrames){
           k.done=true;
           log('✈ RTB COMPLETE — FIGHTER EXITED THEATRE','i');
-          scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+          safeDisposeObject(mMesh);
           sams.forEach(sam=>disposeSAM(sam));
-          setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },2000);
+          safeDisposeLine(trail.line, 2000);
+          setTimeout(()=>{ statusDiv.remove(); },2000);
         }
         return; // skip SAM/kill logic while retreating
       }
@@ -869,9 +1043,10 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
         kr.rotation.x=-Math.PI/2; kr.position.copy(mid); scene.add(kr);
         let ks=1; const ki=setInterval(()=>{ ks+=0.2; kr.scale.set(ks,ks,1); kr.material.opacity-=0.06;
           if(kr.material.opacity<=0){clearInterval(ki);scene.remove(kr);} },30);
-        scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+        safeDisposeObject(mMesh);
         sams.forEach(sam=>disposeSAM(sam));
-        setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },3000);
+        safeDisposeLine(trail.line, 3000);
+        setTimeout(()=>{ statusDiv.remove(); },3000);
         log(`NEUTRALIZED ${wdef.label} — INTERCEPT CONFIRMED`,'s');
         sKills++; waveActive=Math.max(0,waveActive-1); updateStats();
         return;
@@ -887,15 +1062,31 @@ function launchKinetic(theater,weaponKey,outcome,isWave=false){
         ring.rotation.x=-Math.PI/2; ring.position.set(tgtX,500,tgtZ); scene.add(ring);
         let rScale=1; const rIntvl=setInterval(()=>{ rScale+=0.15; ring.scale.set(rScale,rScale,1); ring.material.opacity-=0.05;
           if(ring.material.opacity<=0){clearInterval(rIntvl);scene.remove(ring);} },30);
-        scene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose();
+        safeDisposeObject(mMesh);
         sams.forEach(sam=>disposeSAM(sam));
-        setTimeout(()=>{ scene.remove(trail.line); trail.line.geometry.dispose(); trail.line.material.dispose(); statusDiv.remove(); },3000);
+        safeDisposeLine(trail.line, 3000);
+        setTimeout(()=>{ statusDiv.remove(); },3000);
         log(`IMPACT AT ${tgt.name} — DEFENSE BREACH`,'a');
         sImpacts++; waveActive=Math.max(0,waveActive-1); updateStats();
       }
     }
   };
   kinetics.push(k);
+
+  // Keep standalone launches readable by centering the camera on the action.
+  const focusSource = launchBase
+    ? {
+        x: launchBase.x * SC,
+        z: zSign * launchBase.y * SC,
+      }
+    : { x: spawnX, z: spawnZ };
+  mirrorFocus = {
+    x: focusSource.x * 0.48 + tgtX * 0.52,
+    y: Math.max(220000, Math.hypot(focusSource.x - tgtX, focusSource.z - tgtZ) * 0.12 + 220000),
+    z: focusSource.z * 0.48 + tgtZ * 0.52,
+    tx: tgtX,
+    tz: tgtZ,
+  };
 }
 
 // ── ANIMATION LOOP ────────────────────────────────────────────
@@ -903,6 +1094,7 @@ const urlP = new URLSearchParams(window.location.search);
 let currentTheater = urlP.get('theater') || 'boreal';
 document.getElementById('sel-theater').value = currentTheater;
 buildBases(currentTheater);
+buildAssets(currentTheater);
 
 function animate(){
   requestAnimationFrame(animate);

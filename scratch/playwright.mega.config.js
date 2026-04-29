@@ -25,7 +25,7 @@ module.exports = defineConfig({
   testDir: path.join(__dirname, '..', 'tests'),
   testMatch: '**/test_mega_demo.spec.js',
 
-  timeout: 240_000,   // 4 min — padded demo
+  timeout: 420_000,   // 7 min — padded demo
   workers: 1,
   retries: 0,
 

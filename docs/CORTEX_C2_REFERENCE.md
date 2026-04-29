@@ -103,6 +103,7 @@ The multiplier is a weighted average of relevant sensors based on threat type:
 - **CRUISE**: Radar (40%) + Fusion (60%)
 - **LOITER**: IR/EO (60%) + Fusion (40%)
 - **FIGHTER**: Radar (70%) + Link-16 (30%)
+- **SWARM**: Temporal Pressure + Closing Velocity + Mag Depth (25-D Supreme V4 ONLY)
 
 ### 8. Decision Window (TTD)
 
@@ -237,6 +238,7 @@ Eight tactical models now have distinct scoring profiles in `MODEL_PROFILES` (JS
 | Model key | pkWeight | costWeight | maxPerBase | minPk | Label |
 |-----------|----------|------------|-----------|-------|-------|
 | `elite` | 1.20 | 0.010 | 8 | 0.28 | ELITE · Transformer/ResNet |
+| `supreme4` | 1.25 | 0.008 | 10 | 0.20 | SUPREME V4 · 25D PPO |
 | `supreme3` | 1.10 | 0.012 | 7 | 0.32 | SUPREME V3.1 · Chronos GRU |
 | `supreme2` | 1.00 | 0.015 | 6 | 0.30 | SUPREME V2 · LSTM |
 | `titan` | 0.90 | 0.025 | 5 | 0.40 | TITAN · Conservative LSTM |

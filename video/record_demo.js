@@ -5,8 +5,8 @@
  *  ACT 1.  CORTEX Command Portal
  *  ACT 2.  Boreal Strategic Command  ← NEW: model select, doctrine cycle, MARV bézier, MC audit
  *  ACT 3.  Sweden AOR Dashboard      ← NEW
- *  ACT 4.  Kinetic 3D Simulator      (MARV sinusoidal jink + wave)
- *  ACT 5.  Kinetic Chase Pro-Nav     ← NEW (MARV/MIRV S-curves)
+ *  ACT 4.  Kinetic 3D Simulator      (all weapon classes + HITL approve)
+ *  ACT 5.  Kinetic Chase Pro-Nav     ← NEW (MARV autorun deep-link)
  *  ACT 6.  Swarm Physics             ← NEW (3×MARV oblique PAC-3)
  *  ACT 7.  Boreal Tactical A/B/C     (auto engage · HITL CHRONOSTASIS · aggressive saturation)
  *  ACT 8.  Sweden AOR Tactical
@@ -97,7 +97,7 @@ async function spotlight(page, selector, holdMs = 1000) {
   // ACT 1 — CORTEX COMMAND PORTAL  (~8s)
   // ═══════════════════════════════════════════════════════════════════
   console.log('[1] Portal…');
-  await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/index.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
   for (const sel of [
     'a[href*="dashboard"]', 'a[href*="cortex_c2"]',
@@ -115,7 +115,7 @@ async function spotlight(page, selector, holdMs = 1000) {
   //   MARV bézier map animation · MC audit · theater toggle Boreal→Sweden→Boreal
   // ═══════════════════════════════════════════════════════════════════
   console.log('[2] Cortex C2 Strategic Console…');
-  await page.goto(`${BASE}/cortex_c2.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/cortex_c2.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
 
   // Select ELITE V3.5 model
@@ -161,7 +161,7 @@ async function spotlight(page, selector, holdMs = 1000) {
   // THEATER TOGGLE: Boreal Strategic Map → Sweden → back via dashboard
   // ═══════════════════════════════════════════════════════════════════
   console.log('[2b] Boreal dashboard → theater toggle → Sweden…');
-  await page.goto(`${BASE}/dashboard.html?mode=boreal`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/dashboard.html?mode=boreal`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1800);
   // Select ELITE + cycle doctrine on dashboard too
   await page.selectOption('#sel-model-core', 'elite').catch(() => {});
@@ -189,20 +189,20 @@ async function spotlight(page, selector, holdMs = 1000) {
 
   // Theater toggle: navigate to Sweden mode
   console.log('  → Theater toggle: Boreal → Sweden AOR…');
-  await page.goto(`${BASE}/dashboard.html?mode=sweden`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/dashboard.html?mode=sweden`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1500);
   await pan(page, 80, 120, 1350, 120, 22, 40);
   await zoomRegion(page, '#theater-map, svg, .map-wrap, #baltic-map', 1.35, 1500);
   await page.waitForTimeout(800);
   // Toggle back to Boreal
-  await page.goto(`${BASE}/dashboard.html?mode=boreal`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/dashboard.html?mode=boreal`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);
 
   // ═══════════════════════════════════════════════════════════════════
   // ACT 3 — SWEDEN AOR STRATEGIC COMMAND  (full scene ~7s)
   // ═══════════════════════════════════════════════════════════════════
   console.log('[3] Sweden AOR Strategic Command…');
-  await page.goto(`${BASE}/dashboard.html?mode=sweden`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/dashboard.html?mode=sweden`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1800);
   await pan(page, 80, 120, 1350, 120, 25, 40);
   await zoomRegion(page, '#theater-map, svg, .map-wrap, #baltic-map', 1.4, 1800);
@@ -212,8 +212,8 @@ async function spotlight(page, selector, holdMs = 1000) {
   // ═══════════════════════════════════════════════════════════════════
   // ACT 4 — KINETIC CHASE — PRO-NAV S-CURVES  (~15s)
   // ═══════════════════════════════════════════════════════════════════
-  console.log('[4] Kinetic Chase — Pro-Nav S-curves…');
-  await page.goto(`${BASE}/kinetic_chase.html?base=10&threat=marv&dir=north&autorun=1`, { waitUntil: 'networkidle' });
+  console.log('[4] Kinetic Chase — MARV autorun pro-nav…');
+  await page.goto(`${BASE}/frontend/kinetic_chase.html?base=10&threat=marv&dir=north&autorun=1`, { waitUntil: 'networkidle' });
   await page.evaluate(() => {
     const cc = document.querySelector('.canvas-container');
     if (cc) cc.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -244,11 +244,10 @@ async function spotlight(page, selector, holdMs = 1000) {
   // ACT 6 — BOREAL KINETIC 3D SIMULATOR  (~20s)
   // ═══════════════════════════════════════════════════════════════════
   console.log('[6] Kinetic 3D — Three.js theater…');
-  await page.goto(`${BASE}/kinetic_3d.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/kinetic_3d.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(2200);
-  await page.selectOption('#sel-weapon', 'MARV').catch(() => {});
-  await page.selectOption('#sel-outcome', 'intercept').catch(() => {});
   await page.selectOption('#sel-theater', 'boreal').catch(() => {});
+  await page.selectOption('#sel-outcome', 'intercept').catch(() => {});
   await page.waitForTimeout(400);
 
   const cx = W / 2, cy = H / 2;
@@ -256,13 +255,25 @@ async function spotlight(page, selector, holdMs = 1000) {
   await pan(page, cx - 200, cy, cx + 200, cy + 30, 40, 25); await page.mouse.up();
   await page.waitForTimeout(500);
 
-  console.log('  → MARV #1: sinusoidal jink + SAM Pro-Nav arc…');
-  await page.click('#btn-fire');
+  console.log('  → Full weapon family: CRUISE / HYPERSONIC / LOITER / BALLISTIC / MARV / MIRV / FIGHTER…');
+  for (const w of ['CRUISE', 'HYPERSONIC', 'LOITER', 'BALLISTIC', 'MARV', 'MIRV', 'FIGHTER_DOG']) {
+    await page.selectOption('#sel-weapon', w).catch(() => {});
+    await page.waitForTimeout(220);
+    await page.click('#btn-fire');
+    await page.waitForTimeout(w === 'LOITER' ? 1800 : 1400);
+  }
   await page.mouse.move(cx - 150, cy + 50); await page.mouse.down();
   await pan(page, cx - 150, cy + 50, cx + 80, cy - 20, 35, 35); await page.mouse.up();
-  await page.waitForTimeout(4500);
-  await page.click('#btn-fire');
   await page.waitForTimeout(2500);
+  await page.selectOption('#sel-mode', 'hitl').catch(() => {});
+  await page.selectOption('#sel-weapon', 'CRUISE').catch(() => {});
+  await page.waitForTimeout(300);
+  await page.click('#btn-fire');
+  await page.waitForTimeout(1700);
+  try { await page.click('#btn-approve-k', { timeout: 3000 }); } catch (_) {}
+  await page.waitForTimeout(1800);
+  await page.selectOption('#sel-mode', 'auto').catch(() => {});
+  await page.waitForTimeout(350);
   console.log('  → Saturation wave…');
   await page.click('#btn-wave');
   await pan(page, 200, 300, 1200, 500, 35, 30);
@@ -273,7 +284,7 @@ async function spotlight(page, selector, holdMs = 1000) {
   //   PHASE A: Autonomous  |  PHASE B: HITL + CHRONOSTASIS  |  PHASE C: Saturation
   // ═══════════════════════════════════════════════════════════════════
   console.log('[7] Boreal Tactical — Phase A…');
-  await page.goto(`${BASE}/tactical_legacy.html?mode=boreal`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/tactical_legacy.html?mode=boreal`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1800);
   await page.selectOption('#sel-model', 'elite').catch(() => {});
   await spotlight(page, '#sel-model', 600);
@@ -311,7 +322,7 @@ async function spotlight(page, selector, holdMs = 1000) {
   // ACT 8 — SWEDEN AOR TACTICAL  (~8s)
   // ═══════════════════════════════════════════════════════════════════
   console.log('[8] Sweden AOR Tactical…');
-  await page.goto(`${BASE}/tactical_legacy.html?mode=sweden`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/tactical_legacy.html?mode=sweden`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1800);
   await spotlight(page, '#theater-title, h1, .theater-label', 700);
   for (let i = 0; i < 4; i++) { await page.click('#btn-threat'); await page.waitForTimeout(280); }
@@ -323,8 +334,25 @@ async function spotlight(page, selector, holdMs = 1000) {
   // ACT 9 — LIVE VIEW  (~6s)
   // ═══════════════════════════════════════════════════════════════════
   console.log('[9] Live View…');
-  await page.goto(`${BASE}/live_view.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/live_view.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(2500);
+  for (const idx of [0, 1, 2, 3, 4]) {
+    const cards = page.locator('.base-card');
+    if (await cards.count() > idx) {
+      await cards.nth(idx).click();
+      await page.waitForTimeout(280);
+    }
+  }
+  for (const weapon of ['CRUISE', 'HYPERSONIC', 'LOITER', 'BALLISTIC', 'MARV', 'MIRV', 'FIGHTER_DOG']) {
+    await page.selectOption('#lv-sel-weapon', weapon).catch(() => {});
+    await page.waitForTimeout(120);
+  }
+  await spotlight(page, '#btn-lv-saturation', 700);
+  await page.click('#btn-lv-saturation');
+  await page.waitForTimeout(2500);
+  await page.click('#btn-auto-wave');
+  await page.waitForTimeout(2200);
+  await page.click('#btn-auto-wave');
   await pan(page, 100, 150, 1300, 700, 30, 35);
   await spotlight(page, '.log-container, #log-stream, .live-log, .console-out', 900);
   await page.waitForTimeout(1500);
@@ -333,7 +361,7 @@ async function spotlight(page, selector, holdMs = 1000) {
   // PORTAL RETURN
   // ═══════════════════════════════════════════════════════════════════
   console.log('[→] Return to Portal…');
-  await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/frontend/index.html`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(2800);
 
   console.log('[DONE] Closing — video will be saved…');

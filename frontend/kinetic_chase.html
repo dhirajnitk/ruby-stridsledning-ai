@@ -92,6 +92,10 @@
   }
   .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-block { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .legend-mini { display: flex; flex-wrap: wrap; gap: 5px 8px; }
+  .legend-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; color: var(--tx2); }
+  .legend-pill .legend-dot { width: 6px; height: 6px; }
 </style>
 </head>
 <body>
@@ -164,6 +168,18 @@
     <div class="legend-row"><div class="legend-dot" style="background:#3fb950"></div> SAM battery</div>
     <div class="legend-row"><div class="legend-dot" style="background:#e3b341"></div> Defended target</div>
     <div class="legend-row"><div class="legend-dot" style="background:rgba(0,242,255,0.4); border:1px solid rgba(0,242,255,0.5);"></div> Theater bases</div>
+    <div class="legend-block">
+      <div class="legend-mini">
+        <div class="legend-pill"><div class="legend-dot" style="background:#ff3e3e"></div>CRUISE</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#ffcc00"></div>HYPERSONIC</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#ff00ff"></div>LOITER</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#ff5500"></div>BALLISTIC</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#ff8800"></div>MARV</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#ff3300"></div>MIRV</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#00ccff"></div>FIGHTER</div>
+        <div class="legend-pill"><div class="legend-dot" style="background:#00f2ff"></div>SAM</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -186,7 +202,7 @@ const _urlP = new URLSearchParams(window.location.search);
 
 async function loadBases() {
   try {
-    const r = await fetch('http://localhost:8000/state');
+    const r = await fetch('http://127.0.0.1:8000/state');
     const d = await r.json();
     _bases = d.bases || [];
     const sel = document.getElementById('base-select');
@@ -313,7 +329,7 @@ async function runLiveSimulation() {
   sVectD.textContent = `STANDOFF: ${rangKm}km`;
 
   try {
-    const url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=live` +
+    const url = `http://127.0.0.1:8000/api/simulate-kinetic-chase?scenario=live` +
       `&tx=${vects.tx}&ty=${vects.ty}&destx=${vects.destx}&desty=${vects.desty}` +
       `&mx=${vects.mx}&my=${vects.my}&is_marv=${isMarv}&threat_type=${threatType}&raw=true`;
     const res = await fetch(url);
@@ -373,9 +389,9 @@ async function runSimulation(scenario, customParams = null) {
   sVectD.textContent = 'RANGE: 100km';
 
   try {
-    let url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=${scenario}&raw=true`;
+    let url = `http://127.0.0.1:8000/api/simulate-kinetic-chase?scenario=${scenario}&raw=true`;
     if (scenario === 'custom' && customParams) {
-      url = `http://localhost:8000/api/simulate-kinetic-chase?scenario=live` +
+      url = `http://127.0.0.1:8000/api/simulate-kinetic-chase?scenario=live` +
             `&tx=${customParams.tx*1000}&ty=${customParams.ty*1000}` +
             `&destx=${customParams.destx*1000}&desty=${customParams.desty*1000}` +
             `&mx=${customParams.mx*1000}&my=${customParams.my*1000}` +

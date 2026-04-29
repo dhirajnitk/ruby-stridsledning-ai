@@ -8,6 +8,18 @@ from ppo_agent import BorealDirectEngine, BorealValueNetwork
 #          (src/engine.py does not exist; classes live in src/training/train_models.py)
 
 import sys
+
+class BorealLegacyMLP(nn.Module):
+    def __init__(self, input_dim=18, output_dim=11):
+        super().__init__()
+        self.fc1 = nn.Linear(input_dim, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.fc3 = nn.Linear(256, output_dim)
+        self.val = nn.Linear(256, 1)
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return torch.sigmoid(self.fc3(x)), self.val(x)
 # --- CONFIGURATION ---
 DEFAULT_EVAL = "data/training/strategic_mega_corpus/eval_shared_gold.npz"
 EVAL_DATASET = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_EVAL
@@ -97,13 +109,13 @@ def benchmark():
 
     # 4. TEST BOREAL UNIFIED SUITE
     ppo_models = {
-        "Generalist E10 (Robust)": "models/boreal_generalist_e10.pth",
-        "Supreme V2 (Intuition)": "models/boreal_supreme_v2.pth",
-        "Elite V3 (Contrastive)": "models/boreal_elite_v3.pth",
-        "Hybrid RL V3 (Contrastive)": "models/boreal_hybrid_v3.pth",
-        "Titan Oracle (75% Frontier)": "models/boreal_titan_transformer.pth",
-        "Chronos Oracle (Temporal)": "models/boreal_chronos_gru.pth",
-        "Sinkhorn Oracle (Holy Grail)": "models/boreal_sinkhorn_oracle.pth"
+        "Supreme V4 (25D)": "models/ppo_strategic_v4_25d.pth",
+        "Generalist E10 (Robust)": "models/generalist_e10.pth",
+        "Supreme V2 (Intuition)": "models/supreme_v2.pth",
+        "Elite V3.5 (Contrastive)": "models/elite_v3_5.pth",
+        "Hybrid RL V3": "models/hybrid_rl.pth",
+        "Titan Transformer": "models/titan.pth",
+        "Chronos Oracle (V3.1)": "models/supreme_v3_1.pth"
     }
     
     norm_vec = np.load("models/doctrine_normalization.npy") if os.path.exists("models/doctrine_normalization.npy") else np.ones(11)
@@ -127,27 +139,52 @@ def benchmark():
             local_std = torch.std(features, dim=0) + 1e-6
             features_norm = torch.clamp((features - local_mean) / local_std, -3.0, 3.0)
             
-            if "Hybrid" in name or "ValueNetwork" in name:
-                from ppo_agent import BorealValueNetwork
-                model = BorealValueNetwork(input_dim=15).to(DEVICE)
+            if "Supreme V4" in name:
+                from ppo_agent import BorealDirectEngine
+                model = BorealDirectEngine(input_dim=25, output_dim=11).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.eval()  # FIX B5: was model.train() — corrupts BatchNorm / dropout
+                model.eval()
+                # Load authoritative V4 scalers
+                import json
+                with open("models/policy_network_params.json", "r") as f:
+                    p = json.load(f)
+                    v4_mean = torch.tensor(p["scaler_mean"]).to(DEVICE)
+                    v4_std = torch.tensor(p["scaler_scale"]).to(DEVICE)
+                features_norm = torch.clamp((features - v4_mean) / (v4_std + 1e-6), -3.0, 3.0)
+                with torch.no_grad():
+                    preds, values = model(features_norm)
+            elif "Hybrid" in name or "ValueNetwork" in name:
+                from ppo_agent import BorealValueNetwork
+                model = BorealValueNetwork(input_dim=18).to(DEVICE)
+                try:
+                    model.load_state_dict(checkpoint)
+                except:
+                    # Try legacy 15-D if 18-D fails
+                    model = BorealValueNetwork(input_dim=15).to(DEVICE)
+                    model.load_state_dict(checkpoint)
+                    features = features[:, :15] # Re-slice
+                model.eval()
+                feat_dim = 18 if "input.weight" in checkpoint and checkpoint["input.weight"].shape[1] == 18 else 15
+                feat_slice = features[:, :feat_dim]
+                features_norm = torch.clamp((feat_slice - feat_mean[:feat_dim]) / (feat_std[:feat_dim] + 1e-6), -3.0, 3.0)
                 with torch.no_grad():
                     values = model(features_norm)
                     preds = torch.zeros((features.shape[0], 11)).to(DEVICE)
             elif "Chronos" in name:
-                # FIX B4: ppo_chronos_gru.py lives in src/training/, not src/
                 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "training"))
                 from ppo_chronos_gru import BorealChronosGRU
-                model = BorealChronosGRU(input_dim=15, output_dim=11).to(DEVICE)
+                # Detect hidden size (384 vs 1536)
+                h_size = 128 if checkpoint["gru.weight_ih_l0"].shape[0] == 384 else 512
+                model = BorealChronosGRU(input_dim=18, output_dim=11, hidden_dim=h_size).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.eval()  # FIX B5: eval mode for deterministic inference
+                model.eval()
+                feat_18 = features[:, :18]
+                features_norm_18 = torch.clamp((feat_18 - feat_mean[:18]) / (feat_std[:18] + 1e-6), -3.0, 3.0)
                 with torch.no_grad():
-                    # BATCHED TEMPORAL AUDIT: Process in chunks to avoid OOM
                     all_preds, all_values = [], []
                     chunk_size = 32
-                    for i in range(0, features_norm.shape[0], chunk_size):
-                        chunk = features_norm[i:i+chunk_size]
+                    for i in range(0, features_norm_18.shape[0], chunk_size):
+                        chunk = features_norm_18[i:i+chunk_size]
                         seq = []
                         for s in range(60):
                             scale = 1.0 - (0.005 * (60 - s))
@@ -160,29 +197,29 @@ def benchmark():
                     values = torch.cat(all_values, dim=0)
             elif "Titan" in name:
                 from ppo_titan_transformer import BorealTitanEngine
-                model = BorealTitanEngine(input_dim=15, output_dim=11).to(DEVICE)
+                model = BorealTitanEngine(input_dim=18, output_dim=11).to(DEVICE)
                 model.load_state_dict(checkpoint)
-                model.eval()  # FIX B5: was model.train() — eval mode for deterministic inference
+                model.eval()
+                feat_18 = features[:, :18]
+                features_norm_18 = torch.clamp((feat_18 - feat_mean[:18]) / (feat_std[:18] + 1e-6), -3.0, 3.0)
                 with torch.no_grad():
-                    preds, values = model(features_norm)
-            elif "Sinkhorn" in name:
-                from ppo_sinkhorn_agent import BorealSinkhornEngine
-                model = BorealSinkhornEngine(input_dim=15, num_weapons=11, num_targets=11).to(DEVICE)
-                model.load_state_dict(checkpoint)
-                model.eval()  # FIX B5: was model.train() — eval mode for deterministic inference
-                with torch.no_grad():
-                    # Sinkhorn outputs (Matrix, Value)
-                    pred_matrix, values = model(features_norm)
-                    # For Policy Accuracy, we take the diagonal as a 'weighted vector' equivalent
-                    # This allows side-by-side comparison with our weight-vector models
-                    preds = torch.diagonal(pred_matrix, dim1=1, dim2=2) 
+                    preds, values = model(features_norm_18)
             else:
-                from ppo_agent import BorealDirectEngine
-                model = BorealDirectEngine(input_dim=15, output_dim=11).to(DEVICE)
-                model.load_state_dict(checkpoint)
-                model.eval()  # FIX B5: was model.train() — eval mode for deterministic inference
+                # Try Legacy MLP first
+                try:
+                    model = BorealLegacyMLP(input_dim=18, output_dim=11).to(DEVICE)
+                    model.load_state_dict(checkpoint)
+                except:
+                    # Fallback to current Engine
+                    from ppo_agent import BorealDirectEngine
+                    model = BorealDirectEngine(input_dim=18, output_dim=11).to(DEVICE)
+                    model.load_state_dict(checkpoint)
+                
+                model.eval()
+                feat_18 = features[:, :18]
+                features_norm_18 = torch.clamp((feat_18 - feat_mean[:18]) / (feat_std[:18] + 1e-6), -3.0, 3.0)
                 with torch.no_grad():
-                    preds, values = model(features_norm)
+                    preds, values = model(features_norm_18)
             
             # STRATEGIC ALIGNMENT: Standardized Space (Z-Score)
             norm_preds = preds.cpu().numpy()

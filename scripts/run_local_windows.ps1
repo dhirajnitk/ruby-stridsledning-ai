@@ -15,7 +15,16 @@ $venvPython = Join-Path $venvPath "Scripts\python.exe"
 # 1. Environment Configuration
 Write-Host "`n[1/5] Setting Environment Variables..." -ForegroundColor Yellow
 $env:SAAB_MODE = "boreal"
-$env:OPENROUTER_API_KEY = "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"
+
+if (-not $env:OPENROUTER_API_KEY) {
+    Write-Host "WARNING: OPENROUTER_API_KEY is not set. LLM features will be disabled." -ForegroundColor Yellow
+    Write-Host "To enable, run: `$env:OPENROUTER_API_KEY='your-key-here'` before starting." -ForegroundColor Gray
+}
+
+$env:ANTHROPIC_BASE_URL = "https://openrouter.ai/api"
+$env:ANTHROPIC_AUTH_TOKEN = $env:OPENROUTER_API_KEY
+$env:ANTHROPIC_API_KEY = $env:OPENROUTER_API_KEY
+$env:ANTHROPIC_MODEL = "openrouter/free"
 Write-Host "Environment configured." -ForegroundColor Green
 
 # 2. Python Check

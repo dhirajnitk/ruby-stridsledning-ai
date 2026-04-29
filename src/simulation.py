@@ -4,6 +4,7 @@ import time
 import json
 import requests
 from models import EFFECTORS
+from core.routing import AStarRouter
 
 # Boreal Passage Map Constants
 CAPITAL_X = 418.3
@@ -14,6 +15,70 @@ BASE_A_X = 198.3
 BASE_A_Y = 335.0
 BASE_B_X = 838.3
 BASE_B_Y = 75.0
+
+class AirborneSimAsset:
+    """Dynamic aircraft with fuel, trajectory, and cost-weighted routing."""
+    def __init__(self, id: str, name: str, type: str, x: float, y: float, 
+                 fuel_max: float = 1000.0, op_cost: float = 50000.0,
+                 weapons: Dict = None, has_drop_tanks: bool = False):
+        self.id = id
+        self.name = name
+        self.type = type
+        self.x = x
+        self.y = y
+        self.status = "operational"
+        self.fuel_max = fuel_max
+        # If drop tanks are equipped, fuel capacity increases (simplified as bonus range)
+        if has_drop_tanks: self.fuel_max *= 1.4
+        
+        self.fuel_current = self.fuel_max
+        self.op_cost = op_cost
+        self.weapon_inventory = weapons or {}
+        self.has_drop_tanks = has_drop_tanks
+        self.path = []
+        self.phase = "CRUISE" # CLIMB, CRUISE, COMBAT, RTB
+        self.burn_rates = {"CLIMB": 2.5, "CRUISE": 1.0, "COMBAT": 4.5, "RTB": 0.8}
+        self.speed_kmh = 1200.0 if type == "fighter" else 600.0
+
+    def set_target(self, tx: float, ty: float, router: AStarRouter, weather: List, threats: List):
+        """Calculate cost-optimized path to target."""
+        self.path = router.get_path((self.x, self.y), (tx, ty), weather, threats)
+        self.status = "operational"
+
+    def move(self, dt_seconds: float = 10.0):
+        if self.status in ["destroyed", "landed"]: return
+        
+        # Determine speed and burn rate
+        speed_kms = self.speed_kmh / 3600.0
+        dist_this_tick = speed_kms * dt_seconds
+        
+        if self.path:
+            target = self.path[0]
+            dx, dy = target[0] - self.x, target[1] - self.y
+            dist_to_wp = math.hypot(dx, dy)
+            
+            if dist_to_wp <= dist_this_tick:
+                self.x, self.y = target
+                self.path.pop(0)
+            else:
+                self.x += (dx / dist_to_wp) * dist_this_tick
+                self.y += (dy / dist_to_wp) * dist_this_tick
+            
+            # Consume fuel
+            burn = self.burn_rates.get(self.phase, 1.0) * dist_this_tick
+            self.fuel_current -= burn
+            
+            # Bingo Fuel Check (RTB at 15% or No Ammo)
+            total_ammo = sum(self.weapon_inventory.values())
+            if (self.fuel_current < self.fuel_max * 0.15 or (self.type == "fighter" and total_ammo == 0)) and self.status != "rtb":
+                self.status = "rtb"
+                self.phase = "RTB"
+                reason = "BINGO FUEL" if self.fuel_current < self.fuel_max * 0.15 else "WINCHESTER (OUT OF AMMO)"
+                print(f"[LOGISTICS] {self.id} {reason} - Initiating RTB")
+        
+        if self.fuel_current <= 0:
+            self.status = "destroyed"
+            print(f"[CRITICAL] {self.id} FLAMEOUT - ASSET LOST")
 
 class SimThreat:
     """Represents a dynamic threat moving across the map with high-fidelity trajectory."""
@@ -214,6 +279,11 @@ class SimulationLoop:
     def __init__(self):
         self.tick_count = 0
         self.threats = []
+        self.assets = [] # AirborneSimAsset list
+        self.router = AStarRouter()
+        self.weather_cells = []
+        self.threat_zones = []
+        
         self.threat_counter = 1
         self.attack_plan = []
         self.total_damage = 0.0
@@ -225,6 +295,10 @@ class SimulationLoop:
             "Base A": 14,   # 4 Fighters, 10 Drones
             "Base B": 14    # 4 Fighters, 10 Drones
         }
+        
+        # Initialize some default assets
+        self.assets.append(AirborneSimAsset("AWACS-1", "GlobalEye-A", "awacs", 200, 200, fuel_max=5000))
+        self.assets.append(AirborneSimAsset("FTR-1", "Gripen-Alpha", "fighter", BASE_A_X, BASE_A_Y, fuel_max=1200))
 
     def load_attack_plan(self, filepath: str):
         """Loads an LLM-generated JSON attack plan into the timeline."""
@@ -285,6 +359,10 @@ class SimulationLoop:
             children = t.try_release_mirv()
             new_children.extend(children)
         self.threats.extend(new_children)
+
+        # ── Airborne Assets: Move and consume fuel ───────────────────────────
+        for a in self.assets:
+            a.move(10.0) # 10s tick
 
         active_threats = []
         for t in self.threats:

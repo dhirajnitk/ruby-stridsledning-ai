@@ -18,6 +18,7 @@ import queue
 import asyncio
 import random
 import uvicorn
+import numpy as np
 from fastapi.responses import StreamingResponse
 
 # 1. CORE MODELS & LOGIC
@@ -72,11 +73,13 @@ class ConnectionManager:
             except Exception: pass
 
 ws_manager = ConnectionManager()
+kinetic_ws_manager = ConnectionManager()
 GLOBAL_LOG_QUEUE = queue.Queue()
 LAST_USE_RL = True 
 RECENTLY_ACTIVE = False
 MAX_CACHE_SIZE = 100
 EVALUATION_CACHE = OrderedDict()
+KINETIC_START_TIME = time.time()
 
 # 5. PYDANTIC SCHEMAS
 class IncomingThreat(BaseModel):
@@ -105,8 +108,20 @@ class IncomingBase(BaseModel):
     y: float
     inventory: dict
 
+class IncomingAsset(BaseModel):
+    id: str
+    name: str
+    type: str
+    x: float
+    y: float
+    is_airborne: bool = False
+    scramble_time_sec: float = 300.0
+    fuel_current: float = 1000.0
+    weapon_inventory: dict = {}
+
 class TacticalState(BaseModel):
     bases: List[IncomingBase]
+    assets: Optional[List[IncomingAsset]] = []
 
 class TacticalRequest(BaseModel):
     state: Optional[TacticalState] = None
@@ -219,6 +234,15 @@ async def startup_event():
             RECENTLY_ACTIVE = False # Reset flag
     asyncio.create_task(idle_pulse())
 
+    async def kinetic_broadcaster():
+        while True:
+            try:
+                await kinetic_ws_manager.broadcast(json.dumps(build_kinetic_state_payload()))
+                await asyncio.sleep(0.5)
+            except Exception:
+                await asyncio.sleep(1.0)
+    asyncio.create_task(kinetic_broadcaster())
+
 @app.get("/health")
 async def health_check():
     """Backend health check endpoint used by index.html and frontend badges."""
@@ -246,10 +270,200 @@ async def get_state():
         "theater": ACTIVE_THEATER["name"],
         "base_count": len(state.bases),
         "bases": [
-            {"name": b.name, "x_km": b.x, "y_km": b.y, "inventory": b.inventory}
+            {"name": b.name, "x_km": b.x, "y_km": b.y, "inventory": b.inventory, "subtype": b.subtype}
             for b in state.bases
         ],
+        "assets": [
+            {
+                "id": a.id, 
+                "name": a.name, 
+                "type": a.type, 
+                "x_km": a.x, 
+                "y_km": a.y, 
+                "coverage_km": a.coverage_radius_km,
+                "is_airborne": a.is_airborne,
+                "scramble_time_sec": a.scramble_time_sec,
+                "endurance_min": a.endurance_min,
+                "fuel_current": a.fuel_current,
+                "fuel_max": a.fuel_max,
+                "status": a.status,
+                "phase": a.phase
+            }
+            for a in state.assets
+        ]
     }
+
+
+def _asset_seed(asset_id: str) -> int:
+    return sum(ord(ch) for ch in asset_id)
+
+
+def _ease_in_out(value: float) -> float:
+    value = max(0.0, min(1.0, value))
+    return value * value * (3.0 - 2.0 * value)
+
+
+def _project_kinetic_asset(asset, elapsed_s: float):
+    home_x = float(asset.x)
+    home_y = float(asset.y)
+    seed = _asset_seed(asset.id)
+    runway_angle = math.radians(seed % 360)
+    runway_dx = math.cos(runway_angle)
+    runway_dy = math.sin(runway_angle)
+    patrol_radius = 14.0 + (seed % 9)
+    patrol_center_x = home_x + runway_dx * (8.0 + (seed % 11))
+    patrol_center_y = home_y + runway_dy * (8.0 + (seed % 11))
+    scramble_delay = float(getattr(asset, "scramble_time_sec", 0.0))
+    endurance_min = float(getattr(asset, "endurance_min", 180.0))
+    fuel_max = float(getattr(asset, "fuel_max", 1000.0))
+
+    def takeoff_state(progress: float):
+        x_km = home_x + runway_dx * (1.2 + progress * 3.0)
+        y_km = home_y + runway_dy * (1.2 + progress * 3.0)
+        altitude_m = 400.0 + 2800.0 * _ease_in_out(progress)
+        heading_deg = runway_angle * 180.0 / math.pi + 2.5 * math.sin(progress * math.pi)
+        return x_km, y_km, altitude_m, heading_deg
+
+    def climb_state(progress: float):
+        x_km = home_x + runway_dx * (4.2 + progress * 12.0)
+        y_km = home_y + runway_dy * (4.2 + progress * 12.0)
+        altitude_m = 3200.0 + 7800.0 * _ease_in_out(progress)
+        heading_deg = runway_angle * 180.0 / math.pi + 8.0 * math.sin(progress * math.pi * 0.8)
+        return x_km, y_km, altitude_m, heading_deg
+
+    def cruise_state(cruise_t: float):
+        orbit_period = 210.0 + (seed % 5) * 25.0
+        orbit_angle = (cruise_t / orbit_period) * math.tau + (seed % 37) * 0.11
+        x_km = patrol_center_x + math.cos(orbit_angle) * patrol_radius
+        y_km = patrol_center_y + math.sin(orbit_angle) * patrol_radius * 0.82
+        altitude_m = 9200.0 + 900.0 * math.sin(orbit_angle * 0.5)
+        heading_deg = math.degrees(orbit_angle + math.pi / 2.0)
+        return x_km, y_km, altitude_m, heading_deg
+
+    def rtb_state(rtb_t: float):
+        x_km = patrol_center_x + (home_x - patrol_center_x) * _ease_in_out(rtb_t)
+        y_km = patrol_center_y + (home_y - patrol_center_y) * _ease_in_out(rtb_t)
+        altitude_m = 9200.0 * (1.0 - _ease_in_out(rtb_t))
+        heading_deg = math.degrees(math.atan2(home_y - patrol_center_y, home_x - patrol_center_x))
+        return x_km, y_km, altitude_m, heading_deg
+
+    if elapsed_s < scramble_delay:
+        return {
+            "id": asset.id,
+            "name": asset.name,
+            "type": asset.type,
+            "x_km": home_x,
+            "y_km": home_y,
+            "altitude_m": 0.0,
+            "heading_deg": runway_angle * 180.0 / math.pi,
+            "is_airborne": False,
+            "scramble_time_sec": max(0.0, scramble_delay - elapsed_s),
+            "fuel_current": fuel_max,
+            "fuel_max": fuel_max,
+            "endurance_min": endurance_min,
+            "status": getattr(asset, "status", "operational"),
+            "phase": "SCRAMBLE",
+            "coverage_km": float(getattr(asset, "coverage_radius_km", 0.0)),
+            "track": [{"x_km": home_x, "y_km": home_y, "altitude_m": 0.0}],
+        }
+
+    flight_s = elapsed_s - scramble_delay
+    takeoff_s = 45.0
+    climb_s = 90.0
+    endurance_s = max(900.0, endurance_min * 60.0)
+    cruise_s = max(180.0, endurance_s * 0.68)
+    rtb_s = 180.0
+
+    if flight_s < takeoff_s:
+        phase = "TAKEOFF"
+        progress = flight_s / takeoff_s
+        x_km, y_km, altitude_m, heading_deg = takeoff_state(progress)
+    elif flight_s < takeoff_s + climb_s:
+        phase = "CLIMB"
+        progress = (flight_s - takeoff_s) / climb_s
+        x_km, y_km, altitude_m, heading_deg = climb_state(progress)
+    elif flight_s < cruise_s:
+        phase = "CRUISE"
+        cruise_t = flight_s - takeoff_s - climb_s
+        x_km, y_km, altitude_m, heading_deg = cruise_state(cruise_t)
+    else:
+        phase = "RTB"
+        rtb_t = min(1.0, (flight_s - cruise_s) / rtb_s)
+        x_km, y_km, altitude_m, heading_deg = rtb_state(rtb_t)
+
+    fuel_drop = flight_s * 0.55
+    fuel_current = max(0.0, fuel_max - fuel_drop)
+    is_airborne = phase != "LANDED"
+    if phase == "RTB" and fuel_current <= fuel_max * 0.15:
+        heading_deg = math.degrees(math.atan2(home_y - y_km, home_x - x_km))
+
+    track = []
+    for idx in range(18, -1, -1):
+        sample_t = max(0.0, elapsed_s - idx * 8.0)
+        if sample_t < scramble_delay:
+            track.append({"x_km": home_x, "y_km": home_y, "altitude_m": 0.0})
+            continue
+        sample_flight = sample_t - scramble_delay
+        if sample_flight < takeoff_s:
+            sample_progress = sample_flight / takeoff_s
+            x_s, y_s, alt_s, _ = takeoff_state(sample_progress)
+        elif sample_flight < takeoff_s + climb_s:
+            sample_progress = (sample_flight - takeoff_s) / climb_s
+            x_s, y_s, alt_s, _ = climb_state(sample_progress)
+        elif sample_flight < cruise_s:
+            cruise_t = sample_flight - takeoff_s - climb_s
+            x_s, y_s, alt_s, _ = cruise_state(cruise_t)
+        else:
+            sample_rtb_t = min(1.0, (sample_flight - cruise_s) / rtb_s)
+            x_s, y_s, alt_s, _ = rtb_state(sample_rtb_t)
+        track.append({"x_km": x_s, "y_km": y_s, "altitude_m": alt_s})
+
+    return {
+        "id": asset.id,
+        "name": asset.name,
+        "type": asset.type,
+        "x_km": x_km,
+        "y_km": y_km,
+        "altitude_m": altitude_m,
+        "heading_deg": heading_deg,
+        "is_airborne": is_airborne,
+        "scramble_time_sec": max(0.0, scramble_delay - elapsed_s) if elapsed_s < scramble_delay else scramble_delay,
+        "fuel_current": fuel_current,
+        "fuel_max": fuel_max,
+        "endurance_min": endurance_min,
+        "status": getattr(asset, "status", "operational"),
+        "phase": phase,
+        "coverage_km": float(getattr(asset, "coverage_radius_km", 0.0)),
+        "track": track,
+    }
+
+
+def build_kinetic_state_payload():
+    state = load_battlefield_state(CSV_FILE_PATH)
+    elapsed_s = time.time() - KINETIC_START_TIME
+    assets = [_project_kinetic_asset(a, elapsed_s) for a in state.assets]
+    return {
+        "mode": SAAB_MODE,
+        "theater": ACTIVE_THEATER["name"],
+        "elapsed_s": elapsed_s,
+        "assets": assets,
+        "active_airborne": sum(1 for a in assets if a["is_airborne"]),
+    }
+
+
+@app.get("/kinetic_state")
+async def get_kinetic_state():
+    return build_kinetic_state_payload()
+
+
+@app.websocket("/ws/kinetics")
+async def websocket_kinetics(websocket: WebSocket):
+    await kinetic_ws_manager.connect(websocket)
+    try:
+        while True:
+            await asyncio.sleep(30)
+    except WebSocketDisconnect:
+        kinetic_ws_manager.disconnect(websocket)
 
 @app.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
@@ -278,7 +492,18 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
     
     if request.state and request.state.bases:
         bases = [Base(b.name, b.x, b.y, b.inventory) for b in request.state.bases]
-        game_state = GameState(bases=bases, blind_spots=[(656.7, 493.3)])
+        assets = []
+        if request.state.assets:
+            from core.models import AirborneAsset
+            for a in request.state.assets:
+                assets.append(AirborneAsset(
+                    a.id, a.name, a.type, a.x, a.y, 
+                    is_airborne=a.is_airborne, 
+                    scramble_time_sec=a.scramble_time_sec,
+                    fuel_current=a.fuel_current,
+                    weapon_inventory=a.weapon_inventory
+                ))
+        game_state = GameState(bases=bases, assets=assets, blind_spots=[(656.7, 493.3)])
     else:
         game_state = load_battlefield_state(CSV_FILE_PATH)
         

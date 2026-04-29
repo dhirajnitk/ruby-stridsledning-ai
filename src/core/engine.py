@@ -22,31 +22,76 @@ from .models import Effector, Threat, Base, GameState
 # Authoritative values aligned with cortex_c2.html::EFFECTORS_DEF (meters ÷ 1000) and src/core/models.py.
 # speed_kmh is the interceptor missile speed (not used in range gating, only in arrival-time urgency calc).
 EFFECTORS = {
-    "patriot-pac3":  Effector("Patriot PAC-3",  4500, 800, 120, {"drone": 0.95, "cruise-missile": 0.95, "fighter": 0.90, "ballistic": 0.85, "hypersonic-pgm": 0.75, "decoy": 0.99}),
-    "iris-t-sls":    Effector("IRIS-T SLS",      3500, 150,  12, {"drone": 0.90, "cruise-missile": 0.85, "fighter": 0.80, "decoy": 0.95}),
-    "saab-nimbrix":  Effector("Saab Nimbrix",     600,  20,   5, {"drone": 0.95, "decoy": 0.99}, "soft-kill-unjammable"),
-    "meteor":        Effector("Meteor",           4500, 1200, 150, {"fighter": 0.95, "cruise-missile": 0.90, "hypersonic-pgm": 0.80}, "no-escape-zone"),
-    "nasams":        Effector("NASAMS",           3000, 300,  40, {"drone": 0.92, "cruise-missile": 0.88, "fighter": 0.85}),
-    "coyote-block2": Effector("RTX Coyote B2",    800,   5,  15, {"drone": 0.95, "cruise-missile": 0.30}),
-    "merops-interceptor": Effector("Merops",       400,   2,   3, {"drone": 0.95}),
-    "thaad":         Effector("THAAD",            7200, 800, 200, {"ballistic": 0.98, "hypersonic-pgm": 0.80, "cruise-missile": 0.40}),
-    "lids-ew":       Effector("LIDS EW",       300000,   1,   8, {"drone": 0.85}, "soft-kill-unjammable"),
+    # --- AIR-TO-AIR (Domain Alpha/Beta) ---
+    "meteor":        Effector("Meteor BVRAAM",    4500, 1200, 150, {"fighter": 0.95, "cruise-missile": 0.90, "hypersonic-pgm": 0.80}),
+    "aim-120d":      Effector("AIM-120D AMRAAM",  4800, 1000, 160, {"fighter": 0.92, "cruise-missile": 0.85, "drone": 0.70}),
+    "aim-9x":        Effector("AIM-9X Sidewinder",3000,  150,  20, {"fighter": 0.95, "drone": 0.90, "cruise-missile": 0.60}),
+    "iris-t-air":    Effector("IRIS-T (Air)",     3500,  120,  25, {"fighter": 0.94, "drone": 0.95, "cruise-missile": 0.70}),
+
+    # --- LAND-BASED STRATEGIC (Domain Alpha) ---
+    "patriot-pac3":  Effector("Patriot PAC-3",    4500, 800, 120, {"ballistic": 0.92, "hypersonic-pgm": 0.80, "cruise-missile": 0.95, "fighter": 0.90}),
+    "patriot-pac2":  Effector("Patriot PAC-2",    3500, 600, 160, {"ballistic": 0.75, "cruise-missile": 0.85, "fighter": 0.95}),
+    "thaad":         Effector("THAAD",            7200, 800, 200, {"ballistic": 0.98, "hypersonic-pgm": 0.85, "cruise-missile": 0.40}),
+    "samp-t":        Effector("SAMP/T Mamba",     4000, 500, 100, {"ballistic": 0.85, "cruise-missile": 0.92, "fighter": 0.90}),
+
+    # --- LAND-BASED TACTICAL/SHORAD ---
+    "nasams":        Effector("NASAMS",           3000, 300,  40, {"cruise-missile": 0.92, "fighter": 0.85, "drone": 0.90}),
+    "iris-t-slm":    Effector("IRIS-T SLM",       3500, 250,  40, {"cruise-missile": 0.94, "drone": 0.92}),
+    "iris-t-sls":    Effector("IRIS-T SLS",       3500, 150,  12, {"cruise-missile": 0.85, "drone": 0.95}),
+    "camm":          Effector("CAMM (Land)",      3700, 200,  25, {"cruise-missile": 0.95, "drone": 0.90}),
+    "rbs-70-ng":     Effector("Saab RBS-70 NG",   2800,  60,   9, {"drone": 0.90, "cruise-missile": 0.70, "fighter": 0.75}),
+    "stinger":       Effector("FIM-92 Stinger",   2400,  40,   5, {"drone": 0.95, "cruise-missile": 0.40}),
+
+    # --- NAVAL SYSTEMS ---
+    "sm-6":          Effector("Standard SM-6",    4200, 900, 240, {"ballistic": 0.90, "hypersonic-pgm": 0.85, "cruise-missile": 0.95, "fighter": 0.95}),
+    "sm-2":          Effector("Standard SM-2",    3500, 500, 160, {"cruise-missile": 0.85, "fighter": 0.90}),
+    "sea-sparrow":   Effector("ESSM Block 2",     4500, 350,  50, {"cruise-missile": 0.95, "drone": 0.80}),
+    "aster-15":      Effector("Aster 15",         3600, 200,  30, {"cruise-missile": 0.92, "fighter": 0.90}),
+    "phalanx":       Effector("Phalanx CIWS",     3500,  15,   2, {"cruise-missile": 0.99, "drone": 0.99}),
+
+    # --- ASYMMETRIC/POINT DEFENSE (Domain Beta/Gamma) ---
+    "skynex":        Effector("Skynex 35mm",      1200,   5,   4, {"drone": 0.99, "cruise-missile": 0.80}),
+    "saab-nimbrix":  Effector("Saab Nimbrix",      600,  20,   5, {"drone": 0.95}, "soft-kill"),
+    "coyote-b3":     Effector("Coyote Block 3",   1000,   8,  15, {"drone": 0.98}),
+    "helws":         Effector("Saab HELWS",     300000,   1,   3, {"drone": 0.95, "cruise-missile": 0.20}, "laser"),
+    "lids-ew":       Effector("LIDS EW",        300000,   1,   8, {"drone": 0.95}, "soft-kill"),
 }
 
-# --- GLOBAL NEURAL MODELS ---
-RL_MODEL = None
-DOCTRINE_MODEL = None
+# --- DOCTRINE WEIGHT MAPPING (24-D EFFECTOR HIERARCHY) ---
+DOCTRINE_KEYS = [
+    "meteor", "aim-120d", "aim-9x", "iris-t-air",
+    "patriot-pac3", "patriot-pac2", "thaad", "samp-t",
+    "nasams", "iris-t-slm", "iris-t-sls", "camm", "rbs-70-ng", "stinger",
+    "sm-6", "sm-2", "sea-sparrow", "aster-15", "phalanx",
+    "skynex", "saab-nimbrix", "coyote-b3", "helws", "lids-ew"
+]
 
 def load_neural_models():
     global RL_MODEL, DOCTRINE_MODEL
     if RL_MODEL is not None: return
+    if not HAS_TORCH: return
+    
     try:
-        RL_MODEL = lambda x: torch.tensor([0.85])
-        DOCTRINE_MODEL = lambda x: torch.ones((1, 11))
-    except: pass
+        from ppo_agent import BorealDirectEngine
+        model_path = "models/ppo_strategic_v4_25d.pth"
+        if os.path.exists(model_path):
+            # Load 25-D Supreme V4 Model (Now 24-D Output)
+            engine = BorealDirectEngine(input_dim=25, output_dim=24)
+            engine.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+            engine.eval()
+            DOCTRINE_MODEL = engine
+            RL_MODEL = lambda x: engine(x)[1] # Value head
+            print(f"[SUCCESS] Strategic V4 (25-D) Tactical Brain Loaded.")
+        else:
+            # Fallback
+            DOCTRINE_MODEL = lambda x: torch.ones((1, 11))
+            RL_MODEL = lambda x: torch.tensor([0.85])
+            print(f"[SYSTEM] Strategic V4 model not found. Using Heuristic Fallback.")
+    except Exception as e:
+        print(f"[ERROR] Failed to load neural strategic models: {e}")
 
 def extract_rl_features(state, threats, weather="clear", primary="balanced", blend=1.0, **kwargs):
-    """Extract the 18-D tactical feature vector for PPO / neural inference.
+    """Extract the 25-D 'National Grid' feature vector for Hyper-Scaled neural inference.
     
     Features 0-12: Classic production features.
     Feature 13: total_assigned (TemporalCommitment).
@@ -57,7 +102,7 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     existing PPO checkpoints can stay at 18 inputs while MCTS reasons over
     the extra commitment state.
     """
-    if not threats: return [0.0] * 18
+    if not threats: return [0.0] * 25
     
     num_threats = len(threats)
     capital = next((b for b in state.bases if "Capital" in b.name), state.bases[0])
@@ -90,12 +135,66 @@ def extract_rl_features(state, threats, weather="clear", primary="balanced", ble
     total_mirv_warheads = float(sum(getattr(t, "mirv_count", 0) for t in threats
                                     if getattr(t, "is_mirv", False) and not getattr(t, "mirv_released", False)))
     
-    # FINAL 18-FEATURE PRODUCTION VECTOR (Preserving Training Distribution)
+    # ── EW & Logistics Awareness ──
+    avg_fuel_norm = 1.0
+    if state.assets:
+        avg_fuel_norm = sum(a.fuel_current / a.fuel_max for a in state.assets) / len(state.assets)
+    
+    # ── EW Awareness ──
+    jamming_count = float(sum(1 for t in threats if getattr(t, "is_jamming", False)))
+    
+    # ── High-Fidelity Logistics Breakdown ──
+    # 1. Total Theater Magazine Depth
+    ammo_heavy = 0      # Meteor, Patriot, SM-6, THAAD
+    ammo_point = 0      # IRIS-T, NASAMS, Sea Sparrow
+    ammo_attrition = 0  # Drone interceptors, Nimbrix
+    
+    # Count from Bases (Ground/Naval)
+    for b in state.bases:
+        for wkey, count in b.inventory.items():
+            if wkey in ["meteor", "patriot-pac3", "thaad", "sm-6"]: ammo_heavy += count
+            elif wkey in ["iris-t-sls", "nasams", "sea-sparrow"]: ammo_point += count
+            else: ammo_attrition += count
+
+    # Count from Airborne Assets
+    for a in state.assets:
+        for wkey, count in a.weapon_inventory.items():
+            if wkey in ["meteor", "patriot-pac3", "thaad", "sm-6"]: ammo_heavy += count
+            elif wkey in ["iris-t-sls", "nasams", "sea-sparrow"]: ammo_point += count
+            else: ammo_attrition += count
+            
+    # 2. Fleet Endurance by Class (RADIUS-AWARE)
+    endurance_strat = 1.0 # AWACS, F-35
+    endurance_tac = 1.0   # Gripen, Drones
+    
+    strat_assets = [a for a in state.assets if a.type == "awacs" or "f-35" in a.name.lower()]
+    tac_assets = [a for a in state.assets if a.type == "fighter" and "f-35" not in a.name.lower()]
+    
+    if strat_assets:
+        # For strat assets, we still use fuel as primary metric
+        endurance_strat = sum(a.fuel_current / a.fuel_max for a in strat_assets) / len(strat_assets)
+    if tac_assets:
+        # For tactical assets, we use the new dynamic Combat Radius
+        total_radius = sum(a.get_combat_radius_km(EFFECTORS) for a in tac_assets)
+        # Normalize by a 500km benchmark
+        endurance_tac = min(1.0, (total_radius / len(tac_assets)) / 500.0)
+
+    # ── Temporal Intelligence ──
+    # Calculate average closing velocity of the swarm
+    avg_speed = sum(t.speed_kmh for t in threats) / num_threats if num_threats > 0 else 0
+    # Temporal Pressure: threats per km (normalized density)
+    pressure = num_threats / (max(1, avg_dist))
+
+    # FINAL 25-FEATURE PRODUCTION VECTOR (Temporal/Granular Logistics/EW)
     return [
         num_threats, avg_dist, min_dist, total_val,
         fighters, sams, drones, cap_sams, weather_bin, blend,
         west_threats, east_threats, ammo_stress, dist_norm, val_norm,
-        has_marv, has_mirv, total_mirv_warheads
+        has_marv, has_mirv, total_mirv_warheads,
+        jamming_count,
+        float(ammo_heavy), float(ammo_point),
+        endurance_strat, endurance_tac,
+        avg_speed / 5000.0, pressure * 100.0
     ]
 
 def extract_mcts_temporal_context(threats):
@@ -185,38 +284,149 @@ class TacticalEngine:
 
         if t_arrival_mins < 2.0:   utility += 1000.0
         if t.heading == base.name: utility += 200.0
+
+        # ── EW: Jamming Degradation
+        # If any OTHER threat is jamming within range of this engagement, penalize utility
+        for other_t in flags.get("all_threats", []):
+            if other_t.id == t.id: continue
+            if getattr(other_t, "is_jamming", False):
+                d_jam = math.hypot(other_t.x - t.x, other_t.y - t.y)
+                if d_jam < getattr(other_t, "jamming_radius_km", 25.0):
+                    utility *= getattr(other_t, "jamming_strength", 0.4)
+                    
         return utility
 
     @staticmethod
-    def get_optimal_assignments(state, threats, weights=None, flags=None, salvo_ratio=1):
+    def calculate_radar_horizon(h_sensor, h_target=50.0):
+        """Calculates the radar horizon in km based on Earth's curvature.
+        h_target defaults to 50m (Cruise missile low-altitude profile).
+        """
+        # Distance (km) = 3.57 * (sqrt(h_sensor) + sqrt(h_target))
+        return 3.57 * (math.sqrt(max(0.1, h_sensor)) + math.sqrt(max(0.1, h_target)))
+
+    @staticmethod
+    def get_defensive_sectors(state, threats, sector_size_km=400):
+        """Partitions the battlefield into defensive sectors for nation-wide scaling.
+        Returns a dict of {sector_id: [threat_indices]}
+        """
+        sectors = {}
+        for idx, t in enumerate(threats):
+            sx = int(t.x // sector_size_km)
+            sy = int(t.y // sector_size_km)
+            sid = f"S-{sx}-{sy}"
+            if sid not in sectors: sectors[sid] = []
+            sectors[sid].append(idx)
+        return sectors
+
+    @staticmethod
+    def get_optimal_assignments(state, threats, weights=None, flags=None, salvo_ratio=1, current_time=0.0):
         if weights is None: weights = {}
         if flags is None: flags = {}
         assignments = []
         indexed_pairs = []
+
+        # 0. Regional Sectoring for Scalability
+        sectors = TacticalEngine.get_defensive_sectors(state, threats)
+        
+        # 1. Evaluate Ground Bases (SAMs)
         for b_idx, base in enumerate(state.bases):
+            # Check Horizon for ground-based radar
+            # We assume ground sensors are at base.altitude_m + 10m (tower)
+            h_sensor = getattr(base, "altitude_m", 0.0) + 10.0
+            horizon_km = TacticalEngine.calculate_radar_horizon(h_sensor)
+            
             for t_idx, t in enumerate(threats):
                 for eff_name, count in base.inventory.items():
                     if count <= 0: continue
                     eff_def = EFFECTORS.get(eff_name.lower())
                     if not eff_def: continue
+                    
                     dist = math.hypot(base.x - t.x, base.y - t.y)
+                    
+                    # PHYSICAL CONSTRAINTS: Range + Horizon
                     if dist > eff_def.range_km: continue
+                    if dist > horizon_km: continue # Threat is below horizon
+                    
                     utility = TacticalEngine._calculate_utility(base, t, eff_def, weights, flags)
-                    indexed_pairs.append((-utility, b_idx, t_idx, eff_name))
+                    indexed_pairs.append((-utility, "BASE", b_idx, t_idx, eff_name))
+
+        # 2. Evaluate Airborne Assets (Fighters/AWACS)
+        for a_idx, asset in enumerate(state.assets):
+            # LOGISTICS: Readiness & Turnaround
+            if current_time < getattr(asset, "ready_at_time", 0.0): continue
+            if asset.status != "operational" or asset.fuel_current < asset.fuel_max * 0.1: continue
+            if asset.type != "fighter": continue 
+            
+            # Horizon for Airborne Radar (Look-down)
+            # Fighters fly at ~10,000m
+            h_sensor_a = 10000.0 
+            horizon_km_a = TacticalEngine.calculate_radar_horizon(h_sensor_a)
+            
+            total_dist = 0
+            for t_idx, t in enumerate(threats):
+                total_dist = math.hypot(asset.x - t.x, asset.y - t.y)
+                
+                # LOGISTICS: Scramble Latency & Endurance
+                is_grounded = not getattr(asset, "is_airborne", False)
+                scramble_delay = asset.scramble_time_sec if is_grounded else 0.0
+                
+                # Dynamic Combat Radius (Fuel + Payload Dependent)
+                c_radius = asset.get_combat_radius_km(EFFECTORS)
+                
+                for eff_name, count in asset.weapon_inventory.items():
+                    if count <= 0: continue
+                    eff_def = EFFECTORS.get(eff_name.lower())
+                    if not eff_def: continue
+                    
+                    # Intercept Check: Platform Travel + Missile Range
+                    travel_needed = max(0.0, total_dist - eff_def.range_km)
+                    
+                    # PHYSICAL CONSTRAINTS: Radius + Horizon
+                    if travel_needed > c_radius: continue
+                    if total_dist > horizon_km_a: continue 
+                    
+                    # Mock a Base object for utility calculation
+                    mock_base = Base(asset.name, asset.x, asset.y, {})
+                    utility = TacticalEngine._calculate_utility(mock_base, t, eff_def, weights, flags)
+                    
+                    # LOGISTICS PENALTIES
+                    radius_usage = travel_needed / (c_radius + 1e-6)
+                    scramble_penalty = 200.0 if is_grounded else 0.0 # High penalty for non-ready assets
+                    
+                    final_score = utility - (radius_usage * 50.0) - scramble_penalty
+                    indexed_pairs.append((-final_score, "ASSET", a_idx, t_idx, eff_name))
+
         indexed_pairs.sort()
         threat_coverage = {t.id: 0 for t in threats}
         base_inv = {b.name: copy.deepcopy(b.inventory) for b in state.bases}
-        for val, b_idx, t_idx, eff_name in indexed_pairs:
-            base = state.bases[b_idx]
+        # In-memory tracking of asset ammo during assignment loop
+        asset_ammo = {a.id: copy.deepcopy(a.weapon_inventory) for a in state.assets}
+        
+        for val, source_type, s_idx, t_idx, eff_name in indexed_pairs:
             threat = threats[t_idx]
-            
-            # Account for in-flight interceptors already assigned by the frontend
             effective_coverage = threat_coverage[threat.id] + getattr(threat, "interceptors_assigned", 0)
             if effective_coverage >= salvo_ratio: continue
-            if base_inv[base.name].get(eff_name, 0) <= 0: continue
-            assignments.append({"base": base.name, "effector": eff_name, "threat_id": threat.id})
+
+            if source_type == "BASE":
+                base = state.bases[s_idx]
+                if base_inv[base.name].get(eff_name, 0) <= 0: continue
+                assignments.append({"base": base.name, "effector": eff_name, "threat_id": threat.id})
+                base_inv[base.name][eff_name] -= 1
+            else:
+                asset = state.assets[s_idx]
+                if asset_ammo[asset.id].get(eff_name, 0) <= 0: continue
+                is_grounded = not getattr(asset, "is_airborne", False)
+                assignments.append({
+                    "base": asset.name, 
+                    "effector": eff_name, 
+                    "threat_id": threat.id, 
+                    "is_airborne": True,
+                    "is_grounded": is_grounded,
+                    "scramble_delay": asset.scramble_time_sec if is_grounded else 0.0
+                })
+                asset_ammo[asset.id][eff_name] -= 1
+            
             threat_coverage[threat.id] += 1
-            base_inv[base.name][eff_name] -= 1
         return assignments
 
 class StrategicMCTS:
@@ -312,7 +522,12 @@ class StrategicMCTS:
             if not t: continue
             eff = EFFECTORS.get(a["effector"].lower())
             if not eff: continue
-            b = next(base for base in state.bases if base.name == a["base"])
+            # Find platform (Base or Asset)
+            b = next((base for base in state.bases if base.name == a["base"]), None)
+            if not b:
+                b = next((asset for asset in state.assets if asset.name == a["base"]), None)
+            
+            if not b: continue
             if math.hypot(b.x - t.x, b.y - t.y) > eff.range_km: continue
 
             effective_pk = eff.pk_matrix.get(t.estimated_type, 0.5) * weather_mod
@@ -362,11 +577,6 @@ class StrategicMCTS:
             total_s += s; total_l += d["leaked"]
         return total_s/max(1, iterations), {"leaked": total_l/max(1, iterations)}, 0.0
 
-# --- DOCTRINE WEIGHT MAPPING (11-D EFFECTOR HIERARCHY) ---
-DOCTRINE_KEYS = [
-    "lv-103", "e98", "rbs70", "lvkv90", "meteor", 
-    "thaad", "patriot-pac3", "nasams", "cram", "helws", "aegis"
-]
 
 def survival_mc(state, threats, n_sims=100, salvo_ratio=2, weather="clear", mcts_temporal_context=None):
     """Run N strategic rollouts, return survival_rate (score>0) and mean score."""
@@ -434,6 +644,7 @@ def evaluate_threats_advanced(state, threats, mcts_iterations=50, salvo_ratio=2,
     # BUG FIX: Ensure the requested salvo_ratio is respected.
     final_salvo = max(float(salvo_ratio), neural_salvo_ratio)
 
+    flags["all_threats"] = threats # For EW/Jamming lookups
     filtered = [t for t in threats if t.estimated_type != "decoy" or min(math.hypot(b.x-t.x, b.y-t.y) for b in state.bases) < 15]
     plan = TacticalEngine.get_optimal_assignments(state, filtered, weights=weights, flags=flags, salvo_ratio=final_salvo)
     score, details, rl_val = StrategicMCTS.run_mcts_rollout(

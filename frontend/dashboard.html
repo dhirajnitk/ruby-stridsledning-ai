@@ -6,127 +6,167 @@
     <title>BOREAL STRATEGIC COMMAND | V8.3</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .module-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .stat-box { text-align:center; padding:0.7rem; border:1px solid rgba(0,242,255,0.2); border-radius:4px; }
-        .stat-val { font-family:'Orbitron',sans-serif; font-size:1.3rem; margin-top:2px; }
-        .stat-lbl { font-size:0.5rem; color:#888; letter-spacing:1px; }
-        .bench-row { display:flex; justify-content:space-between; align-items:center;
-                     padding:0.3rem 0; border-bottom:1px solid rgba(255,255,255,0.06);
-                     font-family:'JetBrains Mono',monospace; font-size:0.65rem; }
+        /* ── MIDNIGHT TACTICAL HUD DESIGN SYSTEM ────────────────────────── */
+        :root {
+          --panel-bg: rgba(5, 12, 20, 0.82);
+          --glass-bg: rgba(13, 25, 41, 0.72);
+          --accent-blue: #00f2ff;
+          --accent-green: #3fb950;
+          --accent-red: #f85149;
+          --accent-yellow: #facc15;
+          --border-color: rgba(0, 242, 255, 0.18);
+        }
+
+        body { background: #010409; color: #e6edf3; font-family: 'Inter', -apple-system, sans-serif; }
+
+        .module {
+          background: var(--glass-bg);
+          backdrop-filter: blur(12px);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 1.25rem;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+        }
+
+        .module-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+          padding-bottom: 0.5rem;
+        }
+        .module-header h2 {
+          font-family: 'Orbitron', sans-serif; font-size: 0.75rem;
+          letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7);
+        }
+
+        .stat-box {
+          text-align:center; padding:0.7rem; background: rgba(255,255,255,0.02);
+          border:1px solid rgba(0,242,255,0.1); border-radius:4px;
+        }
+        .stat-val { font-family:'Orbitron',sans-serif; font-size:1.3rem; margin-top:2px; text-shadow: 0 0 10px rgba(0,242,255,0.3); }
+        .stat-lbl { font-size:0.5rem; color:#666; letter-spacing:1.5px; text-transform: uppercase; }
+
+        .bench-row {
+          display:flex; justify-content:space-between; align-items:center;
+          padding:0.4rem 0; border-bottom:1px solid rgba(255,255,255,0.04);
+          font-family:'JetBrains Mono',monospace; font-size:0.65rem;
+        }
         .bench-label { color:#888; }
-        .bench-truth { color:var(--accent-yellow); }
-        .bench-live  { color:var(--accent-blue); }
-        .bench-delta.good { color:var(--accent-green); }
-        .bench-delta.bad  { color:var(--accent-red); }
-        .sep { border:none; border-top:1px solid rgba(255,255,255,0.08); margin:0.5rem 0; }
+        .sep { border:none; border-top:1px solid rgba(255,255,255,0.08); margin:0.75rem 0; }
+
+        /* ── COMMAND LOG (CoT FEED) ────────────────────────── */
+        .cot-feed {
+          background: rgba(0,0,0,0.2); border-radius: 4px; padding: 10px;
+          font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; line-height: 1.6;
+          border-left: 2px solid var(--accent-blue);
+        }
+        .cot-feed p { margin-bottom: 0.4rem; animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
 
         /* ── HITL MODE PANEL ─────────────────────────────────── */
-        .hitl-panel { background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,255,0.15); border-radius:6px; padding:10px 12px; margin-top:6px; }
+        .hitl-panel { background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,255,0.1); border-radius:6px; padding:10px 12px; margin-top:6px; }
         .mode-btn-row { display:flex; gap:6px; margin-bottom:8px; }
         .mode-btn {
           flex:1; padding:7px 4px; font-family:'Orbitron',monospace; font-size:0.48rem;
-          letter-spacing:1px; cursor:pointer; border-radius:4px; border:1px solid rgba(0,242,255,0.3);
-          background:rgba(0,242,255,0.05); color:rgba(0,242,255,0.6); transition:all 0.2s;
+          letter-spacing:1px; cursor:pointer; border-radius:4px; border:1px solid rgba(255,255,255,0.1);
+          background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.4); transition:all 0.2s;
         }
-        .mode-btn:hover { background:rgba(0,242,255,0.12); color:#00f2ff; }
-        .mode-btn.active-auto  { border-color:#00ff88; background:rgba(0,255,136,0.12); color:#00ff88; box-shadow:0 0 10px rgba(0,255,136,0.2); }
-        .mode-btn.active-hitl  { border-color:#ffcc00; background:rgba(255,204,0,0.1);  color:#ffcc00; box-shadow:0 0 10px rgba(255,204,0,0.2); }
-        .mode-btn.active-manual{ border-color:#ff3e3e; background:rgba(255,62,62,0.1);  color:#ff3e3e; box-shadow:0 0 10px rgba(255,62,62,0.2); }
-        .mode-desc { font-size:0.48rem; color:#666; letter-spacing:.5px; margin-bottom:8px; min-height:28px; }
-        /* Approval Queue */
-        #approval-queue { max-height:160px; overflow-y:auto; margin-top:6px; }
-        .approval-card {
-          border:1px solid rgba(255,204,0,0.3); border-radius:4px; padding:7px 9px; margin-bottom:5px;
-          background:rgba(255,204,0,0.05); font-family:'JetBrains Mono',monospace; font-size:0.55rem;
-          animation: fadeIn 0.3s ease;
-        }
-        .approval-card .ath { color:#ffcc00; margin-bottom:4px; }
-        .approval-card .arow { display:flex; gap:5px; margin-top:5px; }
-        .approval-card button { flex:1; padding:4px; font-size:0.48rem; cursor:pointer; border-radius:3px; border:none; font-family:'Orbitron',monospace; }
-        .approval-card .approve { background:rgba(0,255,136,0.2); color:#00ff88; border:1px solid #00ff88; }
-        .approval-card .reject  { background:rgba(255,62,62,0.15); color:#ff3e3e; border:1px solid #ff3e3e; }
-        /* Manual Override Panel */
-        #manual-panel { margin-top:6px; }
-        #manual-panel select, #manual-panel input[type=range] { width:100%; margin-bottom:5px; }
-        #manual-panel select { background:rgba(0,0,0,.6); border:1px solid rgba(255,62,62,.4); color:#ff3e3e; padding:5px; font-size:0.55rem; border-radius:3px; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-
-        /* ── THEATER INVENTORY GRID ─────────────────────────────── */
-        #theater-inventory-grid { margin-top:6px; max-height:190px; overflow-y:auto; }
+        .mode-btn:hover { background:rgba(255,255,255,0.08); color:#fff; }
+        .mode-btn.active-auto  { border-color:var(--accent-green); background:rgba(63,185,80,0.12); color:var(--accent-green); box-shadow:0 0 12px rgba(63,185,80,0.2); }
+        .mode-btn.active-hitl  { border-color:var(--accent-yellow); background:rgba(250,204,21,0.1);  color:var(--accent-yellow); box-shadow:0 0 12px rgba(250,204,21,0.2); }
+        .mode-btn.active-manual{ border-color:var(--accent-red); background:rgba(248,81,73,0.1);  color:var(--accent-red); box-shadow:0 0 12px rgba(248,81,73,0.2); }
+        
+        /* ── THEATER INVENTORY ─────────────────────────────── */
+        #theater-inventory-grid { margin-top:6px; max-height:190px; overflow-y:auto; scrollbar-width: thin; }
         .tinv-row {
           display:grid; grid-template-columns:32px 1fr 62px 72px;
-          align-items:center; gap:4px; padding:3px 4px;
-          border-bottom:1px solid rgba(255,255,255,0.05);
+          align-items:center; gap:8px; padding:6px 4px;
+          border-bottom:1px solid rgba(255,255,255,0.03);
           font-family:'JetBrains Mono',monospace; font-size:0.55rem;
         }
-        .tinv-row:hover { background:rgba(0,242,255,0.04); }
-        .tinv-destroyed { opacity:0.4; text-decoration:line-through; }
-        .tinv-id   { color:#888; font-size:0.48rem; }
-        .tinv-name { color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .tinv-bars { display:flex; flex-direction:column; gap:2px; }
-        .tinv-bar-wrap { background:rgba(255,255,255,0.06); border-radius:2px; height:3px; width:100%; }
-        .tinv-bar  { height:3px; border-radius:2px; transition:width 0.4s ease; }
-        .tinv-stat { font-size:0.5rem; text-align:right; }
+        .tinv-row:hover { background:rgba(0,242,255,0.05); }
+        .tinv-bar-wrap { background:rgba(255,255,255,0.04); border-radius:1px; height:2px; width:100%; }
+        .tinv-bar { height:2px; border-radius:1px; }
 
-        /* ── NEURAL AUTONOMY BADGE ──────────────────────────────── */
-        #neural-autonomy-badge {
-          display:none; margin-left:6px;
-          background:rgba(255,204,0,0.15); border:1px solid #ffcc00;
-          color:#ffcc00; font-size:0.45rem; padding:3px 8px;
-          border-radius:3px; font-family:'Orbitron',monospace;
-          letter-spacing:1px; animation:pulseYellow 0.8s infinite alternate;
-          vertical-align:middle;
+        /* ── NAVIGATION BUTTONS ──────────────────────────────── */
+        .nav-link {
+          font-size: 0.5rem; font-weight: 700; letter-spacing: 1.5px;
+          padding: 6px 14px; border-radius: 4px; text-decoration: none;
+          text-transform: uppercase; transition: all 0.2s; font-family: 'Orbitron';
         }
-        @keyframes pulseYellow {
-          from { box-shadow:0 0 4px rgba(255,204,0,0.3); }
-          to   { box-shadow:0 0 12px rgba(255,204,0,0.7); }
+        .nav-link.primary { border: 1px solid var(--accent-blue); color: var(--accent-blue); background: rgba(0,242,255,0.06); }
+        .nav-link.primary:hover { background: rgba(0,242,255,0.15); box-shadow: 0 0 15px rgba(0,242,255,0.3); }
+        .nav-link.secondary { border: 1px solid rgba(255,255,255,0.2); color: #aaa; background: rgba(255,255,255,0.04); }
+        .nav-link.warning { border: 1px solid var(--accent-yellow); color: var(--accent-yellow); background: rgba(250,204,21,0.06); }
+        /* ── GAME ENGINE CRT & RADAR EFFECTS ────────────────── */
+        .crt-overlay {
+          position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+          pointer-events: none; z-index: 5;
+          background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                      linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+          background-size: 100% 3px, 3px 100%;
+          opacity: 0.3;
         }
+        .scanline {
+          position: absolute; top: 0; left: 0; width: 100%; height: 100px;
+          background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.05), transparent);
+          opacity: 0.1; pointer-events: none; z-index: 6;
+          animation: scanline 8s linear infinite;
+        }
+        @keyframes scanline { from { top: -100px; } to { top: 100%; } }
+        
+        #radar-sweep {
+          transform-origin: 500px 390px;
+          animation: radar-rotate 4s linear infinite;
+        }
+        @keyframes radar-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div id="alert-container" style="position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; display: flex; flex-direction: column; gap: 10px; align-items: center;"></div>
     <main id="app-grid">
         <!-- TOP HEADER -->
-        <header style="display:flex; justify-content:space-between; align-items:center; padding:0 2rem; background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(0,242,255,0.2);">
-            <div class="logo" style="display:flex; align-items:center; gap:3rem;">
-                <h1 id="main-title">BOREAL STRATEGIC COMMAND</h1>
-                <div id="live-feed-header" style="width:280px; height:60px; border:1px solid var(--accent-blue); border-radius:4px; overflow:hidden; position:relative;">
-                    <video autoplay muted loop style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:0 2rem; background:rgba(5,12,20,0.9); border-bottom:1px solid var(--border-color); height: 70px;">
+            <div class="logo" style="display:flex; align-items:center; gap:2rem;">
+                <h1 id="main-title" style="font-family: 'Orbitron'; font-size: 1rem; letter-spacing: 4px; background: linear-gradient(90deg, #fff, var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BOREAL STRATEGIC COMMAND</h1>
+                <div id="live-feed-header" style="width:240px; height:45px; border:1px solid rgba(0,242,255,0.3); border-radius:4px; overflow:hidden; position:relative; background: #000;">
+                    <video autoplay muted loop style="width:100%; height:100%; object-fit:cover; opacity:0.6;">
                         <source src="/video/AI_Prevents_Missile_Strike.mp4" type="video/mp4">
                     </video>
-                    <div style="position:absolute; top:2px; left:5px; color:var(--accent-blue); font-size:0.4rem; font-family:'Orbitron';">LIVE FEED :: KINETIC OVERLAY</div>
+                    <div style="position:absolute; top:2px; left:5px; color:var(--accent-blue); font-size:0.35rem; font-family:'Orbitron'; letter-spacing: 1px;">LIVE FEED :: KINETIC OVERLAY</div>
                 </div>
             </div>
             <div class="city-status" style="flex-grow:1; display:flex; justify-content:flex-end; align-items:center; gap:1rem;">
-                <span style="font-size:0.7rem; color:#888;">CAPITAL INTEGRITY:</span>
-                <div class="health-bar-container" style="width:200px;">
-                    <div id="city-health" class="health-fill"></div>
+                <span style="font-size:0.55rem; color:#666; letter-spacing: 1px; font-family: 'Orbitron';">CAPITAL INTEGRITY</span>
+                <div class="health-bar-container" style="width:160px; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px;">
+                    <div id="city-health" class="health-fill" style="height: 100%; background: var(--accent-blue); border-radius: 3px; box-shadow: 0 0 10px var(--accent-blue);"></div>
                 </div>
-                <div class="status-badge scanning">Operational</div>
-                <div id="engine-status-badge" title="CORTEX-1 engine connection status" style="font-size:0.42rem;padding:3px 9px;border-radius:3px;font-family:'Orbitron',monospace;letter-spacing:1px;border:1px solid rgba(255,255,255,0.2);color:#888;background:rgba(0,0,0,0.3);cursor:default;white-space:nowrap;">○ ENGINE CHECKING…</div>
-                <a id="nav-live-view" href="live_view.html" style="margin-left:8px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(0,242,255,0.4); border-radius:4px; color:#00f2ff; background:rgba(0,242,255,0.06); text-decoration:none; white-space:nowrap;">LIVE VIEW &#x2197;</a>
-                <a href="tactical_legacy.html" id="nav-tactical-hdr" style="margin-left:4px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(255,255,255,0.18); border-radius:4px; color:#aaa; background:rgba(255,255,255,0.04); text-decoration:none; white-space:nowrap;">TACTICAL &#x2197;</a>
-                <a href="cortex_c2.html" target="_blank" style="margin-left:4px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(250,204,21,0.5); border-radius:4px; color:#facc15; background:rgba(250,204,21,0.08); text-decoration:none; white-space:nowrap;">CORTEX-C2 &#x2197;</a>
-                <a href="index.html" style="margin-left:8px; font-size:0.5rem; font-weight:700; letter-spacing:1px; padding:4px 12px; border:1px solid rgba(255,255,255,0.12); border-radius:4px; color:#666; background:rgba(0,0,0,0.3); text-decoration:none; white-space:nowrap;">&#x2302; PORTAL</a>
+                <div id="engine-status-badge" class="status-badge" style="font-size:0.42rem;padding:4px 10px;border-radius:3px;font-family:'Orbitron',monospace;letter-spacing:1px;border:1px solid rgba(255,255,255,0.1);color:#888;background:rgba(255,255,255,0.03);">○ ENGINE CHECKING…</div>
+                <a id="nav-live-view" href="live_view.html?mode=boreal" class="nav-link primary">LIVE VIEW</a>
+                <a id="nav-tactical-hdr" href="tactical_legacy.html?mode=boreal" class="nav-link secondary">TACTICAL</a>
+                <a href="cortex_c2.html" target="_blank" class="nav-link warning">CORTEX-C2</a>
+                <a href="index.html" class="nav-link secondary">PORTAL</a>
             </div>
         </header>
 
         <!-- CENTER COLUMN: SVG MAP -->
         <section class="module map-module" style="grid-column:2; grid-row:2; overflow:hidden; position:relative;">
+            <div class="crt-overlay"></div>
+            <div class="scanline"></div>
             <div class="module-header" style="position:absolute; top:1rem; left:1rem; right:1rem; z-index:10;">
                 <h2 id="map-title">Strategic Map :: <span id="theater-label">Baltic Theater</span></h2>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button id="btn-kinetic-3d" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,255,136,0.1); border-color:var(--accent-green); color:var(--accent-green);">🎯 3D KINETIC SIM ↗</button>
-                    <button id="btn-live-audit" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,242,255,0.1); border-color:var(--accent-blue); color:var(--accent-blue);">Launch Live 3D Audit ↗</button>
+                          <button id="btn-kinetic-3d" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,255,136,0.1); border-color:var(--accent-green); color:var(--accent-green);">🎯 3D KINETIC SIM ↗</button>
+                          <button id="btn-live-audit" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,242,255,0.1); border-color:var(--accent-blue); color:var(--accent-blue);">Launch Live 3D Audit ↗</button>
                     <!-- Deep-link buttons: pre-populate kinetic_chase with each MARV engagement -->
-                    <a id="btn-engage-marv1" href="kinetic_chase.html?base=10&threat=marv&dir=north&autorun=1"
+                          <a id="btn-engage-marv1" href="kinetic_chase.html?v=20260428b&base=10&threat=marv&dir=north&autorun=1"
                        style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px;
                               background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
                        🔴 ENGAGE MARV-1 (CAL) ↗</a>
-                    <a id="btn-engage-marv2" href="kinetic_chase.html?base=11&threat=marv&dir=north&autorun=1"
+                          <a id="btn-engage-marv2" href="kinetic_chase.html?v=20260428b&base=11&threat=marv&dir=north&autorun=1"
                        style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px;
                               background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
                        🔴 ENGAGE MARV-2 (SOL) ↗</a>
-                    <a id="btn-engage-marv3" href="kinetic_chase.html?base=9&threat=marv&dir=north&autorun=1"
+                          <a id="btn-engage-marv3" href="kinetic_chase.html?v=20260428b&base=9&threat=marv&dir=north&autorun=1"
                        style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px;
                               background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
                        🔴 ENGAGE MARV-3 (MER) ↗</a>
@@ -141,7 +181,47 @@
                 <g id="map-geometry"></g>
                 <g id="base-icons"></g>
                 <g id="threat-layer-2d"></g>
+                <!-- Animated Radar Sweep -->
+                <g id="radar-sweep">
+                    <line x1="500" y1="390" x2="500" y2="0" stroke="rgba(0, 242, 255, 0.15)" stroke-width="2" />
+                    <polygon points="500,390 500,0 450,0" fill="url(#radarGrad)" opacity="0.4" />
+                </g>
+                <defs>
+                    <linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:rgba(0,242,255,0); stop-opacity:0" />
+                        <stop offset="100%" style="stop-color:rgba(0,242,255,0.4); stop-opacity:1" />
+                    </linearGradient>
+                </defs>
             </svg>
+
+            <!-- TACTICAL LEGEND (Premium Hi-Fi Symbology) -->
+            <div id="tactical-legend" style="position:absolute; bottom:1.5rem; left:1.5rem; background:rgba(5,12,20,0.85); backdrop-filter:blur(12px); border:1px solid rgba(0,242,255,0.25); border-radius:6px; padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px; pointer-events:none; z-index:100; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+                <div style="font-family:'Orbitron'; font-size:0.5rem; color:var(--accent-blue); letter-spacing:1.5px; grid-column:1/span 2; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:6px; margin-bottom:4px;">TACTICAL SYMBOLOGY</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-8 7,-4 7,4 0,8 -7,4 -7,-4" fill="none" stroke="var(--accent-blue)" stroke-width="1.5"/></svg>
+                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">AIR BASE</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-8 10,8 0,4 -10,8" fill="var(--accent-blue)" opacity="0.9"/></svg>
+                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">GRIPEN (DELTA)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-10 6,2 0,-2 -6,2" fill="var(--accent-red)" opacity="0.9"/></svg>
+                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">CRUISE MISSILE</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-10 5,0 0,10 -5,0" fill="var(--accent-red)" opacity="0.9"/></svg>
+                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">HYPERSONIC (DIAMOND)</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg width="16" height="16" viewBox="-10 -10 20 20"><path d="M-6,-6 L6,6 M6,-6 L-6,6" stroke="var(--accent-red)" stroke-width="2.5" opacity="0.9"/></svg>
+                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">LOITER / DRONE</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg width="16" height="16" viewBox="-10 -10 20 20"><circle cx="0" cy="0" r="3.5" fill="var(--accent-green)"/></svg>
+                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">SAM INTERCEPT</span>
+                </div>
+            </div>
         </section>
 
         <!-- LEFT COLUMN: ENGAGEMENT MONITOR -->
@@ -276,14 +356,14 @@
                 <div style="font-size:0.5rem; color:#888; letter-spacing:2px;">NEURAL ARCHITECTURE</div>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <select id="sel-model-core" style="background:rgba(0,242,255,0.15); border:2px solid rgba(0,242,255,0.4); color:#00f2ff; font-family:'Orbitron',sans-serif; font-size:0.55rem; padding:6px 12px; border-radius:4px; outline:none; cursor:pointer; font-weight:bold; text-shadow: 0 0 5px rgba(0,242,255,0.5);">
-                        <option value="elite">Elite V3.5 (Final Boss) 👑</option>
-                        <option value="supreme3">Supreme V3.1 (Chronos) 👁️</option>
-                        <option value="supreme2">Supreme V2 (Legacy) 🏛️</option>
-                        <option value="titan">Titan Transformer 🌪️</option>
-                        <option value="hybrid">Hybrid RL V8.4 🛡️</option>
-                        <option value="genE10">Generalist E10 🧬</option>
-                        <option value="heuristic" selected>Heuristic (Triage-Aware) ⚙️</option>
-                        <option value="hBase">Heuristic V2 (Base) 📜</option>
+                        <option value="elite">Elite V4.0 · TRANSFORMER-RESNET</option>
+                        <option value="supreme3">Supreme V4.1 · GRU (Chronos-Prime)</option>
+                        <option value="supreme2">Boreal Prime V2.0</option>
+                        <option value="titan">Titan-X · LSTM</option>
+                        <option value="hybrid">Hybrid RL V9.0</option>
+                        <option value="genE10">Generalist E12</option>
+                        <option value="heuristic" selected>Heuristic (Triage-Aware)</option>
+                        <option value="hBase">Heuristic V2 (Base)</option>
                         <option value="random">Random Assignment 🎲</option>
                     </select>
                     <div id="arch-badge" style="background:var(--accent-blue); border:2px solid #fff; color:#000; font-size:0.5rem; padding:4px 10px; border-radius:4px; letter-spacing:1px; font-weight:900; box-shadow: 0 0 15px rgba(0,242,255,0.4);">CLASS-AWARE LOGIC</div>
@@ -310,7 +390,7 @@
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="viz_engine.js?v=20260427d"></script>
+    <script src="viz_engine.js?v=20260429b"></script>
     <script>
     // ── Dashboard init: theater mode, backend status badge ──────────────────────
     (function() {
@@ -360,7 +440,7 @@
       };
 
       // Fetch /theater from backend to confirm (updates status badge)
-      fetch('http://localhost:8000/theater').then(r => {
+      fetch('http://127.0.0.1:8000/theater').then(r => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       }).then(d => {
@@ -445,7 +525,7 @@
           use_rl: true
         };
         
-        const res = await fetch('http://localhost:8000/evaluate_advanced', {
+        const res = await fetch('http://127.0.0.1:8000/evaluate_advanced', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -666,7 +746,7 @@
     if (btn3d) {
       btn3d.addEventListener('click', () => {
         const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
-        window.open(`kinetic_3d.html?theater=${mode}`, '_blank');
+        window.open(`kinetic_3d.html?v=20260428b&theater=${mode}`, '_blank');
       });
     }
 
@@ -675,7 +755,7 @@
     if (btnLiveAudit) {
       btnLiveAudit.addEventListener('click', () => {
         const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
-        window.open(`live_view.html?mode=${mode}`, '_blank');
+        window.open(`live_view.html?v=20260428b&mode=${mode}`, '_blank');
       });
     }
 
@@ -684,7 +764,7 @@
       const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
       const lv = document.getElementById('nav-live-view');
       const tac = document.getElementById('nav-tactical-hdr');
-      if (lv)  lv.href  = `live_view.html?mode=${mode}`;
+      if (lv)  lv.href  = `live_view.html?v=20260428b&mode=${mode}`;
       if (tac) tac.href = `tactical_legacy.html?mode=${mode}`;
     })();
 

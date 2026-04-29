@@ -11,33 +11,56 @@ class ResBlock(nn.Module):
 
 class BorealDirectEngine(nn.Module):
     """Elite/Supreme direct-action policy network.
-    Input : (Batch, 18) theater feature vector (15 original + 3 MARV/MIRV/Dogfight)
+    Input : (Batch, 25) theater feature vector (Temporal/Granular Logistics/EW)
     Output: (policy (Batch, output_dim), value (Batch, 1)) tuple
     """
-    def __init__(self, input_dim=18, output_dim=11):
+    def __init__(self, input_dim=25, output_dim=24):
         super().__init__()
-        self.embed = nn.Linear(input_dim, 128)
-        self.attn = nn.MultiheadAttention(128, 4, batch_first=True)
-        self.res = ResBlock(128)
-        self.head = nn.Linear(128, output_dim)        # policy
-        self.value_head = nn.Linear(128, 1)           # FIX B1: added value head
+        self.embed = nn.Linear(input_dim, 512)
+        self.attn = nn.MultiheadAttention(512, 16, batch_first=True) # Increased heads
+        
+        # Deep Residual Stack (Shared Reasoning)
+        self.res_stack = nn.Sequential(
+            ResBlock(512),
+            ResBlock(512),
+            ResBlock(512),
+            ResBlock(512)
+        )
+        
+        # Hyper-Policy Head
+        self.policy_head = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, output_dim),
+            nn.Sigmoid()
+        )
+        
+        # Hyper-Strategic Head (Value)
+        self.value_head = nn.Sequential(
+            ResBlock(512),
+            ResBlock(512),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
 
     def forward(self, x):
         if len(x.shape) == 1: x = x.unsqueeze(0)
         x = torch.relu(self.embed(x)).unsqueeze(1)
         x, _ = self.attn(x, x, x)
-        x = self.res(x.squeeze(1))
-        policy = torch.sigmoid(self.head(x))
-        value  = self.value_head(x)                   # FIX B1: return value alongside policy
+        features = self.res_stack(x.squeeze(1))
+        
+        policy = self.policy_head(features)
+        value  = self.value_head(features)
         return policy, value
 
 class BorealValueNetwork(nn.Module):
     """Hybrid RL critic — returns scalar value only."""
-    def __init__(self, input_dim=18):
+    def __init__(self, input_dim=25):
         super().__init__()
-        self.input = nn.Linear(input_dim, 128)
-        self.res1 = ResBlock(128)
-        self.head = nn.Linear(128, 1)
+        self.input = nn.Linear(input_dim, 512)
+        self.res1 = ResBlock(512)
+        self.head = nn.Linear(512, 1)
     def forward(self, x):
         x = torch.relu(self.input(x))
         x = self.res1(x)
@@ -59,8 +82,8 @@ class ActorCriticDirect(nn.Module):
              thr  (N_thr, THR_FEAT)  — per-threat feature rows
     Outputs: affinity (N_eff, N_thr) logits, value scalar
     """
-    EFF_FEAT = 8
-    THR_FEAT = 6
+    EFF_FEAT = 10
+    THR_FEAT = 7
 
     def __init__(self, hidden=64):
         super().__init__()
@@ -100,32 +123,47 @@ _EFF_RANGE = {
 
 
 def extract_direct_features(state, threats):
-    """Extract per-effector (N_eff, 8) and per-threat (N_thr, 6) feature tensors.
+    """Extract per-effector (N_eff, 10) and per-threat (N_thr, 7) feature tensors.
 
     Returns (eff_tensor, thr_tensor, eff_meta, thr_meta) or
             (None, None, None, None) if no valid effectors or threats.
     """
     effector_rows, effector_meta = [], []
+    
+    # 1. Ground Bases
     for base in state.bases:
         for eff_name, count in base.inventory.items():
-            if count <= 0:
-                continue
+            if count <= 0: continue
             key = eff_name.lower()
             pk_avg  = _EFF_PK_AVG.get(key, 0.5)
             range_n = _EFF_RANGE.get(key, 1000) / 10000.0
             type_n  = _EFF_TYPE_IDX.get(key, len(_EFF_TYPE_IDX)) / len(_EFF_TYPE_IDX)
             row = [
-                base.x  / 1000.0,   # normalised x
-                base.y  / 1000.0,   # normalised y
-                range_n,             # normalised range
-                min(count / 50.0, 1.0),  # ammo level
-                pk_avg,              # average Pk
-                type_n,              # effector type encoding
-                1.0,                 # availability flag
-                0.5,                 # doctrine affinity (neutral)
+                base.x  / 1000.0, base.y  / 1000.0,
+                range_n, min(count / 50.0, 1.0), pk_avg, type_n,
+                1.0, 0.5, # availability, doctrine
+                1.0, 0.0 # fuel (full for ground), is_airborne (false)
             ]
             effector_rows.append(row)
             effector_meta.append({"base": base.name, "type": eff_name})
+
+    # 2. Airborne Assets
+    for asset in state.assets:
+        if asset.type != "fighter" or asset.status != "operational": continue
+        for eff_name, count in asset.weapon_inventory.items():
+            if count <= 0: continue
+            key = eff_name.lower()
+            pk_avg = _EFF_PK_AVG.get(key, 0.5)
+            range_n = _EFF_RANGE.get(key, 1000) / 10000.0
+            type_n = _EFF_TYPE_IDX.get(key, len(_EFF_TYPE_IDX)) / len(_EFF_TYPE_IDX)
+            row = [
+                asset.x / 1000.0, asset.y / 1000.0,
+                range_n, min(count / 10.0, 1.0), pk_avg, type_n,
+                1.0, 0.5,
+                asset.fuel_current / asset.fuel_max, 1.0 # fuel, is_airborne (true)
+            ]
+            effector_rows.append(row)
+            effector_meta.append({"base": asset.name, "type": eff_name})
 
     threat_rows, threat_meta = [], []
     n_thr_types = len(_THR_TYPE_IDX) + 1
@@ -133,12 +171,9 @@ def extract_direct_features(state, threats):
         ttype = t.estimated_type.lower().split("-")[0]
         type_n = _THR_TYPE_IDX.get(ttype, len(_THR_TYPE_IDX)) / n_thr_types
         row = [
-            t.x           / 1000.0,
-            t.y           / 1000.0,
-            t.speed_kmh   / 10000.0,
-            t.threat_value / 500.0,
-            type_n,
-            1.0,   # active flag
+            t.x / 1000.0, t.y / 1000.0, t.speed_kmh / 10000.0, t.threat_value / 500.0,
+            type_n, 1.0,
+            1.0 if getattr(t, "is_jamming", False) else 0.0 # jamming flag
         ]
         threat_rows.append(row)
         threat_meta.append(t)

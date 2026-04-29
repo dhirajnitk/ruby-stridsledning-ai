@@ -38,7 +38,7 @@ function waitForApiResponse(page, urlSubstr) {
 // ═══════════════════════════════════════════════════════════════════════════
 test.beforeAll(async ({ playwright }) => {
   // Direct HTTP check — fail fast if backend is not up
-  const ctx = await request.newContext({ baseURL: 'http://localhost:8000' });
+  const ctx = await request.newContext({ baseURL: 'http://127.0.0.1:8000' });
   const res = await ctx.get('/health');
   expect(res.status(), 'Backend /health must return 200 — is agent_backend.py running?').toBe(200);
   const body = await res.json();
@@ -124,7 +124,7 @@ test('SEQ-2 LIVE — Dashboard: real /state bases + HITL/MANUAL modes', async ({
 
   // Separately verify /state has real bases by calling the API directly
   const apiCtx   = await page.context().request;
-  const stateRes  = await apiCtx.get('http://localhost:8000/state');
+  const stateRes  = await apiCtx.get('http://127.0.0.1:8000/state');
   expect(stateRes.status()).toBe(200);
   const stateBody = await stateRes.json();
 

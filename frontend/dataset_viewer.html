@@ -74,6 +74,7 @@
 
     <script>
         let dnaChart;
+        const API_BASE = 'http://127.0.0.1:8000';
         const featureNames = [
             "Avg Threat Velocity", "Avg Threat Prox", "Threat Density (N)", "Threat Density (S)", "Threat Density (E)",
             "Threat Density (W)", "Airspace Saturation", "Capital X Health", "Capital Y Health", "SAM Inventory (Total)",
@@ -103,7 +104,10 @@
 
         async function fetchSample() {
             const dataset = document.getElementById('dataset-select').value;
-            const res = await fetch(`/get_dataset_sample?dataset=${dataset}`);
+            const res = await fetch(`${API_BASE}/get_dataset_sample?dataset=${dataset}`);
+            if (!res.ok) {
+                throw new Error(`Dataset fetch failed (${res.status})`);
+            }
             const data = await res.json();
             
             if (data.error) { alert('Backend error: ' + data.error); return; }

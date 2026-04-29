@@ -1,5 +1,5 @@
-import numpy as np
 import os
+import numpy as np
 import random
 import time
 import json
@@ -9,8 +9,8 @@ from core.models import Threat, load_battlefield_state, CSV_FILE_PATH
 
 # --- CONFIGURATION ---
 TOTAL_SAMPLES = 2000 
-BATCH_SIZE = 50
-NUM_WORKERS = 2 
+BATCH_SIZE = 100
+NUM_WORKERS = 1 
 OUTPUT_DIR = "data/training/strategic_mega_corpus"
 REAL_DATA_PATH = "data/raw/real_baltic_traffic.json"
 
@@ -90,47 +90,55 @@ def load_real_clutter():
             return json.load(f)
     return []
 
-def generate_fused_scenario(real_clutter_pool):
-    # OPERATIONAL THREAT PROFILES: Fighters, Cruise Missiles, Loitering Munitions
-    mode = os.getenv("CONFLICT_MODE", "standard")
+def generate_fused_scenario(base_state, real_clutter_pool):
+    # OPERATIONAL THREAT PROFILES: High-Entropy Randomization
     threats = []
     
-    # 1. PROFILE: FIGHTER AIRCRAFT (4th Gen & Stealth)
-    num_air = random.randint(5, 10)
-    for i in range(num_air):
-        is_stealth = random.random() < 0.3
-        threats.append(Threat(
-            id=f"FIGHTER-{i}", x=random.uniform(50000, 80000), y=random.uniform(5000, 15000),
-            speed_kmh=random.randint(1200, 2500), heading="Sustained",
-            estimated_type="stealth-fighter" if is_stealth else "4th-gen-fighter", 
-            threat_value=400 
-        ))
+    # Authoritative Threat types
+    THREAT_TYPES = [
+        ("drone", 50, (150, 400)),
+        ("loitering-munition", 70, (200, 500)),
+        ("cruise-missile", 250, (800, 1000)),
+        ("ballistic", 400, (4000, 7000)),
+        ("hypersonic-pgm", 600, (6000, 15000)),
+        ("fighter", 450, (1200, 2500)),
+        ("stealth-fighter", 550, (1200, 2500)),
+        ("bomber", 800, (800, 1000)),
+        ("decoy", 10, (800, 1200))
+    ]
+
+    num_threats = random.randint(15, 60) # Increased density for "Hard Data"
+    bases = base_state.bases
+    
+    for i in range(num_threats):
+        tt_name, val, speed_range = random.choice(THREAT_TYPES)
+        target_base = random.choice(bases)
         
-    # 2. PROFILE: LOITERING MUNITIONS (Swarms)
-    num_loiter = random.randint(20, 50)
-    for i in range(num_loiter):
-        threats.append(Threat(
-            id=f"LOITER-{i}", x=random.uniform(20000, 40000), y=random.uniform(50, 500),
-            speed_kmh=random.randint(150, 250), heading="Saturation",
-            estimated_type="loitering-munition", threat_value=50 
-        ))
+        # 1. Random Origin (Any direction)
+        angle = random.uniform(0, 360)
+        rad = np.radians(angle)
+        dist_km = random.uniform(100, 600) # Coming from deep theater
         
-    # 3. PROFILE: CRUISE MISSILES (Subsonic Precision)
-    num_cruise = random.randint(10, 20)
-    for i in range(num_cruise):
-        threats.append(Threat(
-            id=f"CRUISE-{i}", x=random.uniform(40000, 100000), y=random.uniform(100, 1000),
-            speed_kmh=900, heading="Precision Strike",
-            estimated_type="cruise-missile", threat_value=250
-        ))
+        tx = target_base.x + np.cos(rad) * dist_km
+        ty = target_base.y + np.sin(rad) * dist_km
         
-    # 4. PROFILE: HYPERSONIC / PGM
-    num_pgm = random.randint(5, 10)
-    for i in range(num_pgm):
+        # 2. Physics & Logic Flags
+        is_marv = (tt_name == "hypersonic-pgm" or tt_name == "ballistic") and random.random() < 0.4
+        is_mirv = (tt_name == "ballistic") and random.random() < 0.2
+        
         threats.append(Threat(
-            id=f"HYPER-{i}", x=random.uniform(80000, 150000), y=random.uniform(30000, 80000),
-            speed_kmh=random.randint(5000, 15000), heading="Terminal Impact",
-            estimated_type="hypersonic-pgm", threat_value=500
+            id=f"T-{i}-{tt_name[:3]}",
+            x=tx,
+            y=ty,
+            speed_kmh=random.randint(*speed_range),
+            estimated_type=tt_name,
+            threat_value=val,
+            heading=target_base.name,
+            is_marv=is_marv,
+            is_mirv=is_mirv,
+            mirv_count=random.randint(3, 8) if is_mirv else 0,
+            can_dogfight=(tt_name == "fighter" or tt_name == "stealth-fighter"),
+            is_jamming=(random.random() < 0.1) # 10% jamming probability
         ))
 
     # Global Clutter Fusion (OpenSky)
@@ -138,8 +146,8 @@ def generate_fused_scenario(real_clutter_pool):
         num_clutter = random.randint(5, 15)
         clutter_samples = random.sample(real_clutter_pool, min(len(real_clutter_pool), num_clutter))
         for i, c in enumerate(clutter_samples):
-            rel_x = (c['lon'] - 18.07) * 111.0 + 80000 # Offset to theater edge
-            rel_y = (c['lat'] - 59.33) * 111.0 + 10000
+            rel_x = (c['lon'] - 18.07) * 111.0 + 400
+            rel_y = (c['lat'] - 59.33) * 111.0 + 300
             threats.append(Threat(
                 id=f"CIV-{i}", x=rel_x, y=rel_y,
                 speed_kmh=c.get('speed', 800), heading="Civ Traffic",
@@ -147,38 +155,56 @@ def generate_fused_scenario(real_clutter_pool):
             ))
     return threats
 
-    if real_clutter_pool:
-        num_clutter = random.randint(10, 20) if era != "standard" else random.randint(3, 8)
-        clutter_samples = random.sample(real_clutter_pool, min(len(real_clutter_pool), num_clutter))
-        for i, c in enumerate(clutter_samples):
-            rel_x = (c['lon'] - 18.07) * 111.0 + 800
-            rel_y = (c['lat'] - 59.33) * 111.0 + 400
-            threats.append(Threat(
-                id=f"CIV-{i}", x=rel_x, y=rel_y,
-                speed_kmh=c.get('speed', 800), heading="Civ Traffic",
-                estimated_type="civilian", threat_value=0
-            ))
-    return threats
-
-def worker_task(batch_id, batch_size, base_state, real_clutter_pool):
+def worker_task(batch_id, batch_size, base_state, real_clutter_pool, iterations=100):
     samples = []
+    # Set seed based on batch_id for variety
+    random.seed(batch_id * 1000 + int(time.time()))
+    np.random.seed(batch_id * 1000 + int(time.time()))
+    
     for _ in range(batch_size):
-        threats = generate_fused_scenario(real_clutter_pool)
+        threats = generate_fused_scenario(base_state, real_clutter_pool)
         weather = random.choice(["clear", "fog", "storm"])
         primary = random.choice(["balanced", "fortress", "aggressive"])
         blend = random.uniform(0.1, 0.9)
         
+        # 1. Strategic Survival Score (The "Value")
         score, details, _ = evaluate_threats_advanced(
-            base_state, threats, mcts_iterations=100, # Distilled Fidelity for Sprint
+            base_state, threats, mcts_iterations=iterations,
             weather=weather, doctrine_primary=primary, doctrine_blend=blend, use_rl=False
         )
+        
+        # 2. Tactical Prioritization (The "Policy")
+        # Extract the weapon usage frequency from MCTS details to create the 24-D target vector
+        usage = [0.0] * 24
+        eff_list = [
+            "meteor", "aim-120d", "aim-9x", "iris-t-air",
+            "patriot-pac3", "patriot-pac2", "thaad", "samp-t",
+            "nasams", "iris-t-slm", "iris-t-sls", "camm", "rbs-70-ng", "stinger",
+            "sm-6", "sm-2", "sea-sparrow", "aster-15", "phalanx",
+            "skynex", "saab-nimbrix", "coyote-b3", "helws", "lids-ew"
+        ]
+        eff_map = {name: i for i, name in enumerate(eff_list)}
+        
+        assignments = details.get("tactical_assignments", [])
+        for a in assignments:
+            e_name = a["effector"].lower()
+            if e_name in eff_map:
+                usage[eff_map[e_name]] += 1.0
+        
+        # Normalize to probability distribution
+        total_usage = sum(usage)
+        if total_usage > 0:
+            target_weights = [u / total_usage for u in usage]
+        else:
+            # Fallback if no assignments made (rare)
+            target_weights = [1.0/24.0] * 24
+            
         features = extract_rl_features(base_state, threats, weather, primary, blend, for_value=True)
-        # Mock weights for synthetic generation
-        mock_weights = [0.33] * 11
+        
         samples.append({
             "features": features,
             "score": score,
-            "weights": mock_weights
+            "weights": target_weights
         })
     return samples
 
@@ -191,23 +217,29 @@ def generate_tactical_labels(base_state, threats, weather, primary, blend, max_t
     assignments = details["tactical_assignments"]
     
     # Pad to [MAX_THREATS, N_Bases * N_Effectors]
-    labels = np.zeros((max_threats, 21 * 11))
+    labels = np.zeros((max_threats, 21 * 24))
     
     base_map = {b.name: i for i, b in enumerate(base_state.bases)}
-    eff_list = ["lv-103", "e98", "rbs70", "lvkv90", "meteor", "thaad", "pac3", "nasams", "cram", "helws", "aegis"]
+    eff_list = [
+        "meteor", "aim-120d", "aim-9x", "iris-t-air",
+        "patriot-pac3", "patriot-pac2", "thaad", "samp-t",
+        "nasams", "iris-t-slm", "iris-t-sls", "camm", "rbs-70-ng", "stinger",
+        "sm-6", "sm-2", "sea-sparrow", "aster-15", "phalanx",
+        "skynex", "saab-nimbrix", "coyote-b3", "helws", "lids-ew"
+    ]
     eff_map = {name: i for i, name in enumerate(eff_list)}
     
     for a in assignments:
         t_idx = next((i for i, t in enumerate(threats) if t.id == a["threat_id"]), None)
         if t_idx is not None and t_idx < max_threats:
-            b_idx = base_map.get(a["base_name"], 0)
+            b_idx = base_map.get(a["base"], 0)
             e_idx = eff_map.get(a["effector"].lower(), 0)
-            labels[t_idx, (b_idx * 11) + e_idx] = 1.0
+            labels[t_idx, (b_idx * 24) + e_idx] = 1.0
             
     return labels
 
 def generate_temporal_sequence(base_state, real_clutter_pool, seq_len=10):
-    threats = generate_fused_scenario(real_clutter_pool)
+    threats = generate_fused_scenario(base_state, real_clutter_pool)
     weather = random.choice(["clear", "fog", "storm"])
     primary = random.choice(["balanced", "fortress", "aggressive"])
     blend = random.uniform(0.1, 0.9)
@@ -229,12 +261,12 @@ def generate_temporal_sequence(base_state, real_clutter_pool, seq_len=10):
         "features": np.array(sequence, dtype=np.float32),
         "labels": labels, # NEW: Tactical Truth
         "score": score,
-        "weights": [0.33] * 11
+        "weights": [0.33] * 24
     }
 
 def generate_object_tracks(base_state, real_clutter_pool, max_threats=50, seq_len=20):
     # THE 75% FRONTIER: Radar-Guided Kinetic Synthesis
-    threats = generate_fused_scenario(real_clutter_pool)
+    threats = generate_fused_scenario(base_state, real_clutter_pool)
     
     history = []
     labels = []
@@ -286,6 +318,9 @@ def generate_object_tracks(base_state, real_clutter_pool, max_threats=50, seq_le
         "weights": [0.4, 0.3, 0.3]
     }
 
+def worker_task_wrapper(batch_id, batch_size, base_state, real_clutter_pool, iterations):
+    return worker_task(batch_id, batch_size, base_state, real_clutter_pool, iterations)
+
 def run_mega_factory():
     import argparse
     parser = argparse.ArgumentParser()
@@ -293,61 +328,44 @@ def run_mega_factory():
     parser.add_argument("--output", type=str, default="data/training/strategic_mega_corpus/boreal_object_level_gold.npz")
     parser.add_argument("--mode", type=str, default="standard")
     parser.add_argument("--format", type=str, default="snapshot") # snapshot, temporal, object-level
+    parser.add_argument("--iterations", type=int, default=100) # Label fidelity
     args = parser.parse_args()
 
     if args.mode == "hard":
         os.environ["HARD_MODE"] = "1"
 
-    print(f"[LAUNCH] MEGA DATA FACTORY (FORMAT: {args.format})", flush=True)
+    print(f"[LAUNCH] MEGA DATA FACTORY (FORMAT: {args.format}, ITER: {args.iterations})", flush=True)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     base_state = load_battlefield_state(CSV_FILE_PATH)
     real_clutter_pool = load_real_clutter()
     output_path = args.output
     
     start_time = time.time()
-    total_collected = 0
-    all_features, all_scores, all_weights, all_labels = [], [], [], []
     
-    total_needed = args.samples
+    # --- MULTIPROCESSING FORGE ---
+    num_workers = NUM_WORKERS
+    samples_per_worker = args.samples // num_workers
     
-    for i in range(total_needed // BATCH_SIZE):
-        for _ in range(BATCH_SIZE):
-            if args.format == "object-level":
-                s = generate_object_tracks(base_state, real_clutter_pool)
-            elif args.format == "temporal":
-                s = generate_temporal_sequence(base_state, real_clutter_pool)
-            else:
-                threats = generate_fused_scenario(real_clutter_pool)
-                weather = random.choice(["clear", "fog", "storm"])
-                primary = random.choice(["balanced", "fortress", "aggressive"])
-                blend = random.uniform(0.1, 0.9)
-                score, details, _ = evaluate_threats_advanced(base_state, threats, mcts_iterations=200, weather=weather, doctrine_primary=primary, doctrine_blend=blend, use_rl=False)
-                # Features now include theater-aware inventory and effector ranges
-                features = extract_rl_features(base_state, threats, weather, primary, blend, for_value=True)
-                labels = generate_tactical_labels(base_state, threats, weather, primary, blend)
-                s = {"features": features, "score": score, "weights": [0.33]*11, "labels": labels}
-            
-            all_features.append(s["features"])
-            all_scores.append(s["score"])
-            all_weights.append(s["weights"])
-            if "labels" in s: all_labels.append(s["labels"])
-            total_collected += 1
-        
-        elapsed = time.time() - start_time
-        rate = total_collected / elapsed if elapsed > 0 else 0
-        eta_min = ((total_needed - total_collected) / rate) / 60.0 if rate > 0 else 0
-        
-        if total_collected % 100 == 0:
-            print(f"[DATA] {total_collected}/{total_needed} | Rate: {rate:.1f} s/sec | ETA: {eta_min:.1f}m", flush=True)
-            save_dict = {
-                "features": np.array(all_features, dtype=np.float32),
-                "scores": np.array(all_scores, dtype=np.float32),
-                "weights": np.array(all_weights, dtype=np.float32)
-            }
-            if all_labels: save_dict["labels"] = np.array(all_labels, dtype=np.float32)
-            np.savez_compressed(output_path, **save_dict)
+    worker_args = []
+    for i in range(num_workers):
+        worker_args.append((i, samples_per_worker, base_state, real_clutter_pool, args.iterations))
 
-    print(f"[COMPLETE] Saved {total_collected} samples to {output_path}")
+    print(f"[PROCESS] Starting {num_workers} parallel workers...", flush=True)
+    with multiprocessing.Pool(processes=num_workers) as pool:
+        all_results = pool.starmap(worker_task_wrapper, worker_args)
+    
+    # Flatten results
+    all_samples = [s for batch in all_results for s in batch]
+    
+    all_features = np.array([s["features"] for s in all_samples], dtype=np.float32)
+    all_scores = np.array([s["score"] for s in all_samples], dtype=np.float32)
+    all_weights = np.array([s["weights"] for s in all_samples], dtype=np.float32)
+    
+    elapsed = time.time() - start_time
+    print(f"[COMPLETE] Generated {len(all_samples)} samples in {elapsed:.1f}s (Rate: {len(all_samples)/elapsed:.1f} s/sec)")
+    
+    np.savez_compressed(output_path, features=all_features, scores=all_scores, weights=all_weights)
+    print(f"[SAVE] Corpus secured: {output_path}")
 
 if __name__ == "__main__":
     run_mega_factory()

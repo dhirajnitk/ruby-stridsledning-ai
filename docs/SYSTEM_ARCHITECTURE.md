@@ -1,6 +1,6 @@
 # Boreal Chessmaster — System Architecture & Neural Engine Integration
-**Date:** 2026-04-24 (updated)
-**Status:** All integrations live — MARV/MIRV/Dogfight physics added, Live View V6 revamped
+**Date:** 2026-04-28 (V4.5 Hyper-Scale GOAT Edition)
+**Status:** National-Scale 24-D Supreme Arsenal Live | Hyper-Scaled 7-Model Suite Operational
 
 ---
 
@@ -56,7 +56,7 @@
 │  POST /evaluate_advanced                                                    │
 │  ├─ Accepts: threats[], bases[], weather, doctrine, use_rl                 │
 │  ├─ core/engine.py → extract_rl_features()                                 │
-│  │    → 18-D tactical vector for PPO / neural inference                    │
+│  │    → 25-D tactical vector for PPO / neural inference                    │
 │  ├─ core/engine.py → extract_mcts_temporal_context()                       │
 │  │    → 3-D strategic context: total_assigned, assigned_ratio,             │
 │  │       high_threat_unassigned                                             │
@@ -74,15 +74,10 @@
 │  core/engine.py  — TacticalEngine + StrategicMCTS                         │
 │  simulation.py   — Tick-based SimThreat with RTB origin fix               │
 │                                                                             │
-│  models/                                                                    │
-│  ├─ elite_v3_5.pth         (TRANSFORMER-RESNET,   Pk 97.8%)               │
-│  ├─ hybrid_rl.pth          (RESNET-128 + RL,       Pk 87.5%)               │
-│  ├─ titan.pth              (SELF-ATTENTION,         Pk 90.8%)               │
-│  ├─ supreme_v3_1.pth       (CHRONOS GRU,            Pk 94.2%)              │
-│  ├─ supreme_v2.pth                                                         │
-│  ├─ generalist_e10.pth                                                     │
-│  ├─ boreal_chronos_gru.pth                                                 │
-│  ├─ policy_network_params.json (RL policy)                                 │
+│  ├─ ppo_strategic_v4_25d.pth   (SUPREME V4, 4-Block RES, 24-D,  Pk 100.0%)     │
+│  ├─ titan.pth                 (TITAN-12 TRANS, 16-Head, 24-D, Pk 100.0%)     │
+│  ├─ chronos_v4_25d.pth        (CHRONOS-4 GRU, 2048-Dim, 24-D, Pk 100.0%)     │
+│  ├─ policy_network_params.json (25-D Normalization)                         │
 │  └─ value_network_params.json  (RL value)                                  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```

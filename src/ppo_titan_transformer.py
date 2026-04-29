@@ -32,23 +32,26 @@ class BorealTitanEngine(nn.Module):
     """
     BOREAL TITAN TRANSFORMER: The 75% Intuition Oracle.
     """
-    def __init__(self, input_dim=15, output_dim=11, latent_dim=512):
+    def __init__(self, input_dim=25, output_dim=24, latent_dim=1024):
         super(BorealTitanEngine, self).__init__()
-        # 1. Feature Projection (Lifts 15 -> 512)
+        # 1. Feature Projection (Lifts 25 -> 1024)
         self.input_proj = nn.Linear(input_dim, latent_dim)
         
-        # 2. Transformer Core (6 Stages of Self-Attention)
-        self.transformer = nn.Sequential(*[TitanBlock(latent_dim) for _ in range(6)])
+        # 2. Hyper-Transformer Core (12 Stages of Self-Attention)
+        self.transformer = nn.Sequential(*[TitanBlock(latent_dim, heads=16) for _ in range(12)])
         
         # 3. Tactical Path (Policy)
         self.actor_head = nn.Sequential(
-            nn.Linear(latent_dim, 256), nn.LeakyReLU(0.1),
-            nn.Linear(256, output_dim), nn.Sigmoid()
+            nn.Linear(latent_dim, 1024), nn.LeakyReLU(0.1),
+            nn.Linear(1024, 1024), nn.LeakyReLU(0.1),
+            nn.Linear(1024, 512), nn.LeakyReLU(0.1),
+            nn.Linear(512, output_dim), nn.Sigmoid()
         )
         
-        # 4. Strategic Path (Value/Intuition)
+        # 4. Deep Strategic Path (High-Precision Value)
         self.critic_head = nn.Sequential(
-            nn.Linear(latent_dim, 1024), nn.LeakyReLU(0.1),
+            nn.Linear(latent_dim, 2048), nn.LeakyReLU(0.1),
+            nn.Linear(2048, 1024), nn.LeakyReLU(0.1),
             nn.Linear(1024, 512), nn.LeakyReLU(0.1),
             nn.Linear(512, 1)
         )

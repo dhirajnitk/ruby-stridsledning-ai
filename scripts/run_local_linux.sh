@@ -11,7 +11,16 @@ echo -e "=========================================\e[0m"
 echo -e "\n\e[33m[1/5] Setting Environment Variables...\e[0m"
 export PYTHONPATH="./.local_lib"
 export SAAB_MODE="sweden"
-export OPENROUTER_API_KEY="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"
+
+if [ -z "$OPENROUTER_API_KEY" ]; then
+    echo -e "\e[33mWARNING: OPENROUTER_API_KEY is not set. LLM features will be disabled.\e[0m"
+    echo -e "To enable, run: export OPENROUTER_API_KEY='your-key-here' before starting."
+fi
+
+export ANTHROPIC_BASE_URL="https://openrouter.ai/api"
+export ANTHROPIC_AUTH_TOKEN="$OPENROUTER_API_KEY"
+export ANTHROPIC_API_KEY="$OPENROUTER_API_KEY"
+export ANTHROPIC_MODEL="openrouter/free"
 echo -e "\e[32mPYTHONPATH set to .local_lib (DLL Resolution Active).\e[0m"
 
 # 2. Python Check

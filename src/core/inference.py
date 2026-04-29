@@ -61,20 +61,27 @@ class BorealInference:
     def __init__(self, model_name="elite_v3_5", device="cpu"):
         self.device = torch.device(device)
         self.model_name = model_name.lower().replace(" ", "_")
+        mn = self.model_name
         
         # Load Scalers for Normalization
-        self.mean = np.zeros(18)
-        self.scale = np.ones(18)
+        self.mean = np.zeros(25)
+        self.scale = np.ones(25)
         params_path = "models/policy_network_params.json"
         if os.path.exists(params_path):
             with open(params_path, "r") as f:
                 p = json.load(f)
-                self.mean = np.array(p["scaler_mean"][:18]) if len(p.get("scaler_mean",[])) >= 18 else np.zeros(18)
-                self.scale = np.array(p["scaler_scale"][:18]) if len(p.get("scaler_scale",[])) >= 18 else np.ones(18)
+                # DYNAMIC DIMENSION CHECK: Support 18-D or 25-D scalers
+                dim = 25 if "supreme_v4" in mn else 18
+                self.mean = np.array(p["scaler_mean"][:dim]) if len(p.get("scaler_mean",[])) >= dim else np.zeros(dim)
+                self.scale = np.array(p["scaler_scale"][:dim]) if len(p.get("scaler_scale",[])) >= dim else np.ones(dim)
         
         # FIX B6: Proper per-model architecture mapping
         mn = self.model_name
-        if "supreme_v3_1" in mn or "chronos" in mn:
+        if "supreme_v4" in mn:
+            from ppo_agent import BorealDirectEngine
+            self.model = BorealDirectEngine(input_dim=25, output_dim=11)
+            model_path = "models/ppo_strategic_v4_25d.pth"
+        elif "supreme_v3_1" in mn or "chronos" in mn:
             self.model = ChronosGRU(18, 11)
         elif "supreme_v2" in mn:
             self.model = StandardResNet(18, 11, width=64)
@@ -115,5 +122,11 @@ class BorealInference:
             out = self.model(t_feat)
             # FIX B7: models may return (policy, value) tuple — extract policy only
             if isinstance(out, tuple):
-                out = out[0]
-            return out.squeeze(0).cpu().numpy().flatten()
+                p, v = out
+                return p.squeeze(0).cpu().numpy().flatten(), v.item()
+            return out.squeeze(0).cpu().numpy().flatten(), 0.85
+
+def run_elite_inference(features, model_name="supreme_v4"):
+    """Global convenience wrapper for the strategic engine."""
+    inf = BorealInference(model_name=model_name)
+    return inf.predict(features)

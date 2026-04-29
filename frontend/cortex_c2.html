@@ -645,10 +645,42 @@ body{
     <!-- Tactical Picture -->
     <div class="tactical-wrap">
       <div class="tactical-label" id="tac-label">TACTICAL DISPLAY · BOREAL-N</div>
+      
+      <!-- TACTICAL LEGEND (Premium Hi-Fi Symbology) -->
+      <div id="tactical-legend" style="position:absolute; bottom:10px; left:10px; background:rgba(5,12,20,0.85); backdrop-filter:blur(8px); border:1px solid rgba(0,242,255,0.2); border-radius:4px; padding:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px; pointer-events:none; z-index:10; box-shadow:0 4px 15px rgba(0,0,0,0.5);">
+          <div style="font-family:'Inter'; font-size:7px; font-weight:700; color:var(--blu); letter-spacing:1px; grid-column:1/span 2; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:3px; margin-bottom:2px; text-transform:uppercase;">Tactical Key</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+              <svg width="10" height="10" viewBox="-10 -10 20 20"><polygon points="0,-8 7,-4 7,4 0,8 -7,4 -7,-4" fill="none" stroke="var(--blu)" stroke-width="2"/></svg>
+              <span style="font-size:7px; color:var(--tx2); font-family:'JetBrains Mono';">BASE</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+              <svg width="10" height="10" viewBox="-10 -10 20 20"><polygon points="0,-10 10,8 0,4 -10,8" fill="var(--blu)"/></svg>
+              <span style="font-size:7px; color:var(--tx2); font-family:'JetBrains Mono';">GRIPEN</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+              <svg width="10" height="10" viewBox="-10 -10 20 20"><polygon points="0,-10 6,2 0,-2 -6,2" fill="var(--red)"/></svg>
+              <span style="font-size:7px; color:var(--tx2); font-family:'JetBrains Mono';">CRUISE</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+              <svg width="10" height="10" viewBox="-10 -10 20 20"><polygon points="0,-10 5,0 0,10 -5,0" fill="var(--red)"/></svg>
+              <span style="font-size:7px; color:var(--tx2); font-family:'JetBrains Mono';">HYPER</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+              <svg width="10" height="10" viewBox="-10 -10 20 20"><path d="M-6,-6 L6,6 M6,-6 L-6,6" stroke="var(--red)" stroke-width="3"/></svg>
+              <span style="font-size:7px; color:var(--tx2); font-family:'JetBrains Mono';">DRONE</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+              <svg width="10" height="10" viewBox="-10 -10 20 20"><circle cx="0" cy="0" r="4" fill="var(--grn)"/></svg>
+              <span style="font-size:7px; color:var(--tx2); font-family:'JetBrains Mono';">SAM</span>
+          </div>
+      </div>
+
       <button class="tactical-open-btn" onclick="window.open('kinetic_3d.html?theater=boreal','_blank')">↗ 3D KINETIC</button>
       <button class="tactical-open-btn" style="right: 100px; border-color: rgba(248,81,73,0.5); color: var(--red);" onclick="window.open('kinetic_chase.html','_blank')">↗ PRO-NAV CHASE</button>
       <button class="tactical-open-btn" style="right: 210px; border-color: rgba(227,179,65,0.5); color: var(--ylw);" onclick="window.open('swarm_physics.html','_blank')">↗ SWARM WORKER</button>
-      <svg id="tactical-svg" viewBox="0 0 860 560" preserveAspectRatio="xMidYMid meet">
+      <div class="crt-overlay"></div>
+      <div class="scanline"></div>
+      <svg id="tactical-svg" viewBox="0 0 860 560" preserveAspectRatio="xMidYMid slice">
         <defs>
           <marker id="arr" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto">
             <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(255,255,255,0.25)"/>
@@ -974,7 +1006,7 @@ function renderInventory() {
   const theaterName = ACTIVE_THEATER === 'sweden' ? `Sweden (${bases.length} nodes)` : `Boreal (${bases.length} nodes)`;
   if (lbl) lbl.textContent = theaterName;
 
-  grid.innerHTML = bases.map(b => {
+  const baseHtml = bases.map(b => {
     const st = inventoryState[b.id] || { hp:100, effAmmo:{}, destroyed:false };
     const hpPct = st.hp;
     const hpCol = hpPct > 60 ? '#3fb950' : hpPct > 30 ? '#e3b341' : '#f85149';
@@ -1010,6 +1042,35 @@ function renderInventory() {
       </div>
     </div>`;
   }).join('');
+
+  // ── Aviation Readiness Section ──
+  let assetHtml = '';
+  if (window.strategicAssets && window.strategicAssets.length) {
+    assetHtml = `<div style="margin-top:10px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px; color:var(--tx3); font-family:'Orbitron'; letter-spacing:1.5px; margin-bottom:5px;">AIRBORNE READINESS</div>
+        ${window.strategicAssets.map(a => {
+            const isAir = !!a.is_airborne;
+            const fuelPct = isAir ? Math.min(1, (a.endurance_min || 0) / 240) : 0;
+            const col = isAir ? '#3fb950' : '#facc15';
+            const logLabel = isAir ? `FUEL: ${a.endurance_min}m` : `ALERT-5: ${a.scramble_time_sec}s`;
+            return `
+            <div class="inv-row" style="padding:4px 0; background:rgba(255,255,255,0.02); margin-bottom:2px; border-radius:3px;">
+                <span class="inv-badge" style="background:${col}; color:#000; font-weight:900;">${a.type === 'awacs' ? 'SRV' : 'FTR'}</span>
+                <div style="flex:1; min-width:0; padding-left:5px;">
+                    <div class="inv-name" style="color:${col}; font-size:8.5px;">${a.name} ${isAir ? '· IN FLIGHT' : '· GROUNDED'}</div>
+                    <div style="display:flex; align-items:center; gap:5px; margin-top:2px;">
+                        <div style="flex:1; background:rgba(255,255,255,0.06); border-radius:1px; height:2px; overflow:hidden;">
+                            <div style="height:2px; width:${isAir ? fuelPct*100 : 100}%; background:${isAir ? (fuelPct < 0.2 ? '#f85149' : '#00f2ff') : '#444'};"></div>
+                        </div>
+                        <span style="font-size:7px; font-family:'JetBrains Mono'; color:${isAir ? '#aaa' : '#facc15'}">${logLabel}</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('')}
+    </div>`;
+  }
+
+  grid.innerHTML = baseHtml + assetHtml;
 }
 
 function replenishAll() {
@@ -1216,7 +1277,7 @@ async function pollKinematics(sc) {
       sensor_quality: _currentSq || null,
     };
     const t0 = Date.now();
-    const res = await fetch('http://localhost:8000/evaluate_advanced', {
+    const res = await fetch('http://127.0.0.1:8000/evaluate_advanced', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload), signal: AbortSignal.timeout(5000),
     });
@@ -1342,7 +1403,7 @@ async function runStrategicAudit() {
       model_id: document.getElementById('model-select')?.value || 'heuristic',
     };
 
-    const res = await fetch('http://localhost:8000/evaluate_advanced', {
+    const res = await fetch('http://127.0.0.1:8000/evaluate_advanced', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
@@ -2112,115 +2173,122 @@ function confirmSwap(coaIdx, assignIdx) {
 // ═══════════════════════════════════════════════════
 // RENDER: TACTICAL PICTURE (SVG)
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// RENDER: TACTICAL PICTURE (SVG) — Symbology Upgrade
+// ═══════════════════════════════════════════════════
 function renderTactical(sc, coa1) {
   const NS = 'http://www.w3.org/2000/svg';
-  // Coordinate mapping: Boreal (0-854, 0-742) → SVG viewBox (860, 560)
-  // We show top 560 rows of the theater (north theater), squash y slightly
   const SX = w => (w / 854) * 840 + 10;
   const SY = h => (h / 742) * 540 + 10;
 
-  // Clear layers
   ['tac-assign-lines','tac-bases','tac-threats'].forEach(id => {
-    document.getElementById(id).innerHTML = '';
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = '';
   });
 
   const linesG  = document.getElementById('tac-assign-lines');
   const basesG  = document.getElementById('tac-bases');
   const threatsG= document.getElementById('tac-threats');
 
-  // Assignment lookup: threatId → baseId
   const assignMap = {};
   coa1.assignments.forEach(a => { assignMap[a.threatId] = a.baseId; });
 
-  // Draw assignment lines
-  coa1.assignments.forEach(a => {
-    const t = sc.threats.find(x => x.id === a.threatId);
-    const b = [...THEATER_BASES, ...SWEDEN_BASES].find(x => x.id === a.baseId);
-    if (!t || !b) return;
-    const line = document.createElementNS(NS,'line');
-    line.setAttribute('x1', SX(t.spawnX)); line.setAttribute('y1', SY(t.spawnY));
-    line.setAttribute('x2', SX(b.x));      line.setAttribute('y2', SY(b.y));
-    line.setAttribute('stroke','rgba(255,255,255,0.18)');
-    line.setAttribute('stroke-width','1');
-    line.setAttribute('stroke-dasharray','4 3');
-    line.setAttribute('marker-end','url(#arr)');
-    linesG.appendChild(line);
-  });
-
-  // Draw bases — use active theater
+  // Draw bases — High-Fidelity Crosshair Symbology
   activeBases().forEach(b => {
     const bx = SX(b.x), by = SY(b.y);
     const col = b.type === 'HVA' ? '#3fb950' : '#58a6ff';
-    const r   = b.type === 'HVA' ? 9 : 7;
     const g = document.createElementNS(NS,'g');
 
-    const ring = document.createElementNS(NS,'circle');
-    ring.setAttribute('cx',bx); ring.setAttribute('cy',by); ring.setAttribute('r',r+4);
-    ring.setAttribute('fill','none'); ring.setAttribute('stroke',col); ring.setAttribute('stroke-width','0.6');
-    ring.setAttribute('opacity','0.3'); g.appendChild(ring);
-
-    const dot = document.createElementNS(NS,'circle');
-    dot.setAttribute('cx',bx); dot.setAttribute('cy',by); dot.setAttribute('r',r);
-    dot.setAttribute('fill',col); dot.setAttribute('opacity','0.9'); g.appendChild(dot);
+    if(b.type === 'HVA') {
+        // Pentagon for HVA
+        const poly = document.createElementNS(NS,'polygon');
+        poly.setAttribute('points', `${bx},${by-10} ${bx+9},${by-3} ${bx+6},${by+8} ${bx-6},${by+8} ${bx-9},${by-3}`);
+        poly.setAttribute('fill','none'); poly.setAttribute('stroke',col); poly.setAttribute('stroke-width','1.5');
+        g.appendChild(poly);
+        const cross1 = document.createElementNS(NS,'line');
+        cross1.setAttribute('x1',bx-12); cross1.setAttribute('y1',by); cross1.setAttribute('x2',bx+12); cross1.setAttribute('y2',by);
+        cross1.setAttribute('stroke',col); cross1.setAttribute('stroke-width','0.5'); cross1.setAttribute('opacity','0.5');
+        g.appendChild(cross1);
+        const cross2 = document.createElementNS(NS,'line');
+        cross2.setAttribute('x1',bx); cross2.setAttribute('y1',by-12); cross2.setAttribute('x2',bx); cross2.setAttribute('y2',by+12);
+        cross2.setAttribute('stroke',col); cross2.setAttribute('stroke-width','0.5'); cross2.setAttribute('opacity','0.5');
+        g.appendChild(cross2);
+    } else {
+        // Hexagon for Military Bases
+        const poly = document.createElementNS(NS,'polygon');
+        poly.setAttribute('points', `${bx},${by-8} ${bx+7},${by-4} ${bx+7},${by+4} ${bx},${by+8} ${bx-7},${by+4} ${bx-7},${by-4}`);
+        poly.setAttribute('fill','none'); poly.setAttribute('stroke',col); poly.setAttribute('stroke-width','1.2');
+        g.appendChild(poly);
+    }
 
     const lbl = document.createElementNS(NS,'text');
-    lbl.setAttribute('x',bx+r+3); lbl.setAttribute('y',by+4);
+    lbl.setAttribute('x',bx+12); lbl.setAttribute('y',by+4);
     lbl.setAttribute('fill',col); lbl.setAttribute('font-size','9');
     lbl.setAttribute('font-family','Inter,sans-serif'); lbl.setAttribute('font-weight','600');
     lbl.textContent = b.name; g.appendChild(lbl);
-
     basesG.appendChild(g);
   });
 
-  // Threat type colours
   const tCol = { HYPERSONIC:'#f85149', BALLISTIC:'#e3b341', CRUISE:'#ff7b2a', LOITER:'#8b949e', FIGHTER:'#58a6ff' };
 
-  // Draw threats as upward triangles
+  // Draw threats — Tactically Significant Silhouettes
   sc.threats.forEach(t => {
     const tx = SX(t.spawnX), ty = SY(t.spawnY);
     const col = t.decoy ? '#484f58' : (t.ghost ? '#8b949e' : (tCol[t.type] || '#c9d1d9'));
-    const size = t.decoy ? 5 : (t.value >= 80 ? 7 : 6);
     const g = document.createElementNS(NS,'g');
-    const pts = `${tx},${ty-size} ${tx-size*0.75},${ty+size*0.5} ${tx+size*0.75},${ty+size*0.5}`;
-    const tri = document.createElementNS(NS,'polygon');
-    tri.setAttribute('points',pts);
-    tri.setAttribute('fill',col);
-    tri.setAttribute('opacity', t.decoy ? '0.4' : '0.9');
-    g.appendChild(tri);
     
-    // Add click to deep dive into real kinematics
-    g.style.cursor = 'pointer';
-    g.onclick = () => {
-      // Find where threat is aiming
-      const ALL_BASES = [...THEATER_BASES, ...SWEDEN_BASES];
-      const targetBase = ALL_BASES.find(b => b.id === t.target) || {x: 430, y: 300};
-      
-      // Find where effector is launching from
-      const effBaseId = assignMap[t.id];
-      const effBase = ALL_BASES.find(b => b.id === effBaseId) || {x: 430, y: 700};
-      
-      const qs = `?tx=${t.spawnX}&ty=${t.spawnY}&destx=${targetBase.x}&desty=${targetBase.y}&mx=${effBase.x}&my=${effBase.y}&is_marv=${t.marv ? 'True' : 'False'}`;
-      window.open(`kinetic_chase.html${qs}`, '_blank');
-    };
+    let shape;
+    if(t.type === 'HYPERSONIC') {
+        // Slender Diamond
+        shape = document.createElementNS(NS,'polygon');
+        shape.setAttribute('points', `${tx},${ty-10} ${tx+4},${ty} ${tx},${ty+10} ${tx-4},${ty}`);
+    } else if(t.type === 'CRUISE') {
+        // Chevron (V-shape)
+        shape = document.createElementNS(NS,'polygon');
+        shape.setAttribute('points', `${tx},${ty-8} ${tx+6},${ty+2} ${tx},${ty-2} ${tx-6},${ty+2}`);
+    } else if(t.type === 'LOITER') {
+        // X-shape (Drones)
+        shape = document.createElementNS(NS,'path');
+        shape.setAttribute('d', `M${tx-5},${ty-5} L${tx+5},${ty+5} M${tx+5},${ty-5} L${tx-5},${ty+5}`);
+        shape.setAttribute('stroke', col); shape.setAttribute('stroke-width', '2');
+    } else {
+        // Standard Triangle (Ballistic / Fighter)
+        shape = document.createElementNS(NS,'polygon');
+        const size = 7;
+        shape.setAttribute('points', `${tx},${ty-size} ${tx-size*0.75},${ty+size*0.5} ${tx+size*0.75},${ty+size*0.5}`);
+    }
 
-    // ID label for non-decoy
+    if(shape.tagName === 'polygon') {
+        shape.setAttribute('fill', col);
+        shape.setAttribute('opacity', t.decoy ? '0.4' : '0.9');
+    }
+    g.appendChild(shape);
+
     if (!t.decoy) {
       const lbl = document.createElementNS(NS,'text');
-      lbl.setAttribute('x',tx+size); lbl.setAttribute('y',ty+3);
+      lbl.setAttribute('x',tx+8); lbl.setAttribute('y',ty+3);
       lbl.setAttribute('fill',col); lbl.setAttribute('font-size','7.5');
       lbl.setAttribute('font-family','JetBrains Mono,monospace');
       lbl.setAttribute('opacity','0.85');
       lbl.textContent = t.id; g.appendChild(lbl);
     }
 
-    // Assigned indicator (small dot if matched)
     if (assignMap[t.id]) {
       const match = document.createElementNS(NS,'circle');
-      match.setAttribute('cx',tx); match.setAttribute('cy',ty-size-4);
-      match.setAttribute('r',2); match.setAttribute('fill','#3fb950');
+      match.setAttribute('cx',tx); match.setAttribute('cy',ty-12);
+      match.setAttribute('r',2.5); match.setAttribute('fill','#3fb950');
       g.appendChild(match);
+      
+      const line = document.createElementNS(NS,'line');
+      const b = [...THEATER_BASES, ...SWEDEN_BASES].find(x => x.id === assignMap[t.id]);
+      if(b) {
+        line.setAttribute('x1', tx); line.setAttribute('y1', ty);
+        line.setAttribute('x2', SX(b.x)); line.setAttribute('y2', SY(b.y));
+        line.setAttribute('stroke','rgba(63,185,80,0.2)'); line.setAttribute('stroke-width','1');
+        line.setAttribute('stroke-dasharray','2 2');
+        linesG.appendChild(line);
+      }
     }
-
     threatsG.appendChild(g);
   });
 }
@@ -2370,7 +2438,7 @@ async function upgradeFromBackend(sc, coa1) {
       model_id: document.getElementById('model-select')?.value || 'heuristic',
       sensor_quality: _currentSq || null,
     };
-    const res = await fetch('http://localhost:8000/evaluate_advanced', {
+    const res = await fetch('http://127.0.0.1:8000/evaluate_advanced', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload), signal: AbortSignal.timeout(4000),
     });
@@ -2613,7 +2681,27 @@ async function askLLM() {
   }
 }
 
-// ── Auto-trigger LLM if key present on scenario change ─
+// ── Strategic Assets Sync ──────────────────────────
+window.strategicAssets = [];
+async function syncStrategicAssets() {
+    try {
+        const r = await fetch('http://127.0.0.1:8000/state');
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data.assets) {
+            window.strategicAssets = data.assets;
+            renderInventory(); // Refresh the inventory panel with new asset data
+        }
+    } catch (e) {
+        console.warn("ASSET SYNC FAILED", e);
+    }
+}
+
+// Start polling
+setInterval(syncStrategicAssets, 2000);
+syncStrategicAssets();
+
+// Initialize zulu clock
 setInterval(updateZuluClock, 1000);
 updateZuluClock();
 initLLMKeyUI();

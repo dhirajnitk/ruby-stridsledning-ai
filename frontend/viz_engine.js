@@ -33,39 +33,43 @@ const SWEDEN_KM = [
 ];
 
 const THEATER_DATA = (MODE === 'sweden') ? [
-  { type: "BASE", id: "F21", name: "LULEÅ AIR BASE", x: 185, y: 691, sam: 12, effectors: ['LV-103', 'E98', 'RBS70'] },
-  { type: "BASE", id: "F16", name: "UPPSALA AIR BASE", x: -27, y: 63, sam: 24, effectors: ['LV-103', 'E98'] },
-  { type: "BASE", id: "VID", name: "VIDSEL TEST RANGE", x: 95, y: 728, sam: 48, effectors: ['LV-103', 'LVKV90'] },
-  { type: "HVA", id: "STO", name: "STOCKHOLM", x: 0, y: 0, sam: 60, effectors: ['LV-103', 'E98', 'LVKV90'] },
-  { type: "BASE", id: "MUS", name: "MUSKÖ NAVAL", x: 4, y: -46, sam: 30, effectors: ['E98', 'METEOR'] },
-  { type: "BASE", id: "F7", name: "SÅTENÄS AIR BASE", x: -313, y: -99, sam: 24, effectors: ['E98', 'METEOR'] },
-  { type: "BASE", id: "F17", name: "RONNEBY AIR BASE", x: -172, y: -340, sam: 32, effectors: ['LV-103', 'E98'] },
-  { type: "BASE", id: "MAL", name: "MALMEN AIR BASE", x: -150, y: -104, sam: 16, effectors: ['E98', 'RBS70'] },
-  { type: "BASE", id: "KRL", name: "KARLSKRONA NAVAL", x: -153, y: -352, sam: 20, effectors: ['E98', 'LVKV90'] },
-  { type: "BASE", id: "GOT", name: "GOTLAND VISBY HUB", x: 16, y: -186, sam: 40, effectors: ['LV-103', 'E98', 'RBS70'] },
-  { type: "HVA", id: "GBG", name: "GOTHENBURG PORT", x: -364, y: -180, sam: 30, effectors: ['E98', 'LVKV90'] }
+  { type: "BASE", id: "F21", name: "LULEÅ AIR BASE", x: 185, y: 691, sam: 12, effectors: ['LV-103', 'E98', 'RBS70'], subtype: "air_base" },
+  { type: "BASE", id: "F16", name: "UPPSALA AIR BASE", x: -27, y: 63, sam: 24, effectors: ['LV-103', 'E98'], subtype: "air_base" },
+  { type: "BASE", id: "VID", name: "VIDSEL TEST RANGE", x: 95, y: 728, sam: 48, effectors: ['LV-103', 'LVKV90'], subtype: "ground_base" },
+  { type: "HVA", id: "STO", name: "STOCKHOLM", x: 0, y: 0, sam: 60, effectors: ['LV-103', 'E98', 'LVKV90'], subtype: "capital" },
+  { type: "BASE", id: "MUS", name: "MUSKÖ NAVAL", x: 4, y: -46, sam: 30, effectors: ['E98', 'METEOR'], subtype: "naval_base" },
+  { type: "BASE", id: "F7", name: "SÅTENÄS AIR BASE", x: -313, y: -99, sam: 24, effectors: ['E98', 'METEOR'], subtype: "air_base" },
+  { type: "BASE", id: "F17", name: "RONNEBY AIR BASE", x: -172, y: -340, sam: 32, effectors: ['LV-103', 'E98'], subtype: "air_base" },
+  { type: "BASE", id: "MAL", name: "MALMEN AIR BASE", x: -150, y: -104, sam: 16, effectors: ['E98', 'RBS70'], subtype: "air_base" },
+  { type: "BASE", id: "KRL", name: "KARLSKRONA NAVAL", x: -153, y: -352, sam: 20, effectors: ['E98', 'LVKV90'], subtype: "naval_base" },
+  { type: "BASE", id: "GOT", name: "GOTLAND VISBY HUB", x: 16, y: -186, sam: 40, effectors: ['LV-103', 'E98', 'RBS70'], subtype: "ground_base" },
+  { type: "HVA", id: "GBG", name: "GOTHENBURG PORT", x: -364, y: -180, sam: 30, effectors: ['E98', 'LVKV90'], subtype: "capital" }
 ] : [
-  // BOREAL (Extracted from the-boreal-passage-map.svg)
-  { type: "BASE", id: "NVB", name: "NORTHERN VANGUARD", x: 119, y: 197, sam: 40, effectors: ['PAC3', 'NASAMS', 'HELWS'] },
-  { type: "BASE", id: "HRC", name: "HIGHRIDGE COMMAND", x: 503, y: 41, sam: 30, effectors: ['THAAD', 'PAC3'] },
-  { type: "BASE", id: "BWP", name: "BOREAL WATCH POST", x: 695, y: 227, sam: 50, effectors: ['NASAMS', 'CRAM'] },
-  { type: "HVA", id: "ARK", name: "ARKTHOLM CAPITAL", x: 251, y: 57, sam: 100, effectors: ['THAAD', 'PAC3', 'NASAMS', 'CRAM'] },
-  { type: "HVA", id: "VAL", name: "VALBREK", x: 854, y: 128, sam: 60, effectors: ['PAC3', 'HELWS'] },
-  { type: "HVA", id: "NRD", name: "NORDVIK", x: 84, y: 194, sam: 40, effectors: ['NASAMS', 'CRAM'] },
-  // SOUTH SIDE
-  { type: "BASE", id: "FWS", name: "FIREWATCH STATION", x: 839, y: 639, sam: 24, domain: "KINETIC" },
-  { type: "BASE", id: "SRB", name: "SOUTHERN REDOUBT", x: 193, y: 739, sam: 16, domain: "KINETIC" },
-  { type: "BASE", id: "SPB", name: "SPEAR POINT BASE", x: 551, y: 497, sam: 20, domain: "KINETIC" },
-  { type: "HVA", id: "MER", name: "MERIDIA CAPITAL", x: 735, y: 725, sam: 40, effectors: ['THAAD', 'PAC3', 'NASAMS'] },
-  { type: "HVA", id: "CAL", name: "CALLHAVEN", x: 58, y: 690, sam: 28, effectors: ['PAC3', 'NASAMS'] },
-  { type: "HVA", id: "SOL", name: "SOLANO", x: 346, y: 742, sam: 28, effectors: ['PAC3', 'NASAMS'] },
-  // TERRAIN POLYGONS (Sync from Boreal_passage_coordinates.csv)
-  { type: "TERRAIN", id: "TN1", name: "NORTH MAINLAND", side: "north", poly: [[0, 0], [1000, 0], [1000, 170], [920, 188], [860, 174], [800, 170], [742, 205], [678, 190], [616, 178], [556, 212], [488, 194], [428, 188], [366, 220], [302, 192], [236, 200], [178, 230], [118, 204], [54, 212], [0, 228]] },
-  { type: "TERRAIN", id: "TN2", name: "SOUTH MAINLAND", side: "south", poly: [[0, 780], [1000, 780], [1000, 640], [948, 616], [882, 628], [818, 642], [756, 608], [688, 622], [624, 640], [560, 606], [492, 626], [428, 646], [362, 612], [294, 622], [232, 648], [168, 618], [98, 630], [30, 648], [0, 638]] },
-  { type: "TERRAIN", id: "TN3", name: "STRAIT ISLAND W", side: "north", poly: [[355, 268], [378, 256], [410, 258], [424, 278], [436, 296], [426, 322], [406, 328], [386, 334], [362, 318], [354, 298]] },
-  { type: "TERRAIN", id: "TN4", name: "STRAIT ISLAND E", side: "north", poly: [[678, 214], [692, 204], [710, 208], [716, 224], [722, 238], [712, 254], [696, 256], [680, 258], [668, 244], [668, 228]] },
-  { type: "ZONE", id: "BST", name: "BOREAL STRAIT", x: 500, y: 400, subtype: "water" },
+  // BOREAL
+  { type: "BASE", id: "NVB", name: "NORTHERN VANGUARD", x: 119, y: 197, sam: 40, effectors: ['PAC3', 'NASAMS', 'HELWS'], subtype: "air_base" },
+  { type: "BASE", id: "HRC", name: "HIGHRIDGE COMMAND", x: 503, y: 41, sam: 30, effectors: ['THAAD', 'PAC3'], subtype: "ground_base" },
+  { type: "BASE", id: "BWP", name: "BOREAL WATCH POST", x: 695, y: 227, sam: 50, effectors: ['NASAMS', 'CRAM'], subtype: "ground_base" },
+  { type: "HVA", id: "ARK", name: "ARKTHOLM CAPITAL", x: 251, y: 57, sam: 100, effectors: ['THAAD', 'PAC3', 'NASAMS', 'CRAM'], subtype: "capital" },
+  { type: "HVA", id: "VAL", name: "VALBREK", x: 854, y: 128, sam: 60, effectors: ['PAC3', 'HELWS'], subtype: "capital" },
+  { type: "HVA", id: "NRD", name: "NORDVIK", x: 84, y: 194, sam: 40, effectors: ['NASAMS', 'CRAM'], subtype: "ground_base" },
+  { type: "BASE", id: "FWS", name: "FIREWATCH STATION", x: 839, y: 639, sam: 24, domain: "KINETIC", subtype: "ground_base" },
+  { type: "BASE", id: "SRB", name: "SOUTHERN REDOUBT", x: 193, y: 739, sam: 16, domain: "KINETIC", subtype: "ground_base" },
+  { type: "BASE", id: "SPB", name: "SPEAR POINT BASE", x: 551, y: 497, sam: 20, domain: "KINETIC", subtype: "ground_base" },
+  { type: "HVA", id: "MER", name: "MERIDIA CAPITAL", x: 735, y: 725, sam: 40, effectors: ['THAAD', 'PAC3', 'NASAMS'], subtype: "capital" },
+  { type: "HVA", id: "CAL", name: "CALLHAVEN", x: 58, y: 690, sam: 28, effectors: ['PAC3', 'NASAMS'], subtype: "capital" },
+  { type: "HVA", id: "SOL", name: "SOLANO", x: 346, y: 742, sam: 28, effectors: ['PAC3', 'NASAMS'], subtype: "capital" },
+  { type: "ZONE", id: "BST", name: "BOREAL STRAIT", x: 500, y: 400, subtype: "water" }
 ];
+window.THEATER_DATA = THEATER_DATA;
+
+const TACTICAL_SYMBOLS = {
+  capital: 'M0,-10 L9,-3 L6,8 L-6,8 L-9,-3 Z M-12,0 L12,0 M0,-12 L0,12', // Pentagon Crosshair
+  air_base: 'M0,-8 L7,-4 L7,4 L0,8 -7,4 -7,-4 Z', // Hexagon
+  naval_base: 'M0,-7 L0,7 M-5,2 L0,7 L5,2 M-5,-2 L5,-2', // Anchor-ish
+  ground_base: 'M-5,-5 L5,-5 L5,5 L-5,5 Z', // Square
+  awacs: 'M0,0 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 M0,-10 L0,0 M-3,-3 L3,3 M-3,3 L3,-3', // Radar Circle
+  fighter: 'M0,-8 L10,8 L0,4 L-10,8 Z' // Delta Wing
+};
 
 // --- EFFECTOR DEFINITIONS (Audited per NATO/Sweden Doctrine) ---
 const EFFECTORS = {
@@ -97,6 +101,31 @@ const EFFECTORS = {
 const ENGINE_EFF_MAP = {
   boreal: { 'patriot-pac3': 'PAC3', 'nasams': 'NASAMS', 'thaad': 'THAAD', 'iris-t-sls': 'PAC3', 'coyote-block2': 'COYOTE2', 'merops-interceptor': 'MEROPS', 'saab-nimbrix': 'COYOTE3', 'lids-ew': 'COYOTE3', 'meteor': 'PAC3' },
   sweden: { 'patriot-pac3': 'LV-103', 'nasams': 'LV-103', 'iris-t-sls': 'E98', 'meteor': 'METEOR', 'saab-nimbrix': 'NIMBRIX', 'lids-ew': 'LIDS-EW', 'thaad': 'LV-103' }
+};
+
+let weatherCells = []; // Dynamic atmospheric cells
+let debrisList = []; // Persistent BDA debris
+let chaseTarget = null; // Target object for 3D Chase View
+const weatherLayerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+weatherLayerG.id = 'weather-layer';
+
+// Terrain "Mountains" for masking (SVG units)
+const TERRAIN_MOUNTAINS = (MODE === 'boreal') ? [
+    { x: 300, y: 300, r: 100, h: 15000 },
+    { x: 700, y: 500, r: 120, h: 20000 },
+    { x: 150, y: 550, r: 80, h: 12000 }
+] : [
+    { x: 100, y: 400, r: 150, h: 18000 },
+    { x: -200, y: 200, r: 120, h: 15000 }
+];
+
+const THREAT_SYMBOLS = {
+  CRUISE: 'M-5,0 L5,0 M-2,-3 L3,0 L-2,3',
+  BALLISTIC: 'M0,6 L0,-6 M-3,2 L0,-6 L3,2',
+  HYPERSONIC: 'M-6,0 L6,0 M-3,-4 L5,0 L-3,4 M-6,-2 L-2,0 L-6,2',
+  MARV: 'M0,6 L0,-6 M-3,2 L0,-6 L3,2 M-2,-2 L2,2 M-2,2 L2,-2', // Ballistic + X
+  LOITER: 'M-4,-2 L4,2 M-4,2 L4,-2 M0,-4 L0,4',
+  DEFAULT: 'M-4,-4 L4,4 M-4,4 L4,-4'
 };
 // Active doctrine key, updated by setDoctrine() and used in callEngine()
 window._ACTIVE_DOCTRINE = 'balanced';
@@ -267,6 +296,7 @@ function restoreSessionSnapshot() {
       const int = new Interceptor(base, is.effKey || 'PAC3');
       int.baseId = is.baseId || base?.id || null;
       int._effKey = is.effKey || int._effKey;
+      int.bindThreat(threat);
       int.pos.set(is.pos.x, is.pos.y, is.pos.z);
       if (int.mesh) int.mesh.position.copy(int.pos);
       int.hit = !!is.hit;
@@ -340,6 +370,7 @@ const WEAPONS = {
     isDogfight: true, dogWinProb: 0.30, canRtb: true
   },
 };
+window.WEAPONS = WEAPONS;
 
 const WAVE_SEQ = [
   { name: 'OPENING PROBE', weapons: ['CRUISE'], count: 4 },
@@ -359,10 +390,17 @@ let cityHealth = 100, isSimulating = false, currentScenarioIdx = 0, currentWaveI
 let currentTheater = MODE; // active theater/mode key; persisted in session snapshot
 let BENCHMARKS = {};
 let threats = [];
+let strategicAssets = [];
 let rejectedThreats = new Set(); // Tracks HITL-rejected threat IDs so they aren't re-queued
+const KINETIC_STATE_URL = 'http://127.0.0.1:8000/kinetic_state';
+const KINETIC_STATE_WS_URL = 'ws://127.0.0.1:8000/ws/kinetics';
+let kineticStateSocket = null;
+let assetMeshes = new Map();
+let assetTrailMeshes = new Map();
 
 // Expose live state to dashboard panels (manual override, HITL queue) via getters
 Object.defineProperty(window, 'threats', { get: () => threats, configurable: true });
+Object.defineProperty(window, 'strategicAssets', { get: () => strategicAssets, configurable: true });
 Object.defineProperty(window, 'BASES', { get: () => BASES, configurable: true });
 Object.defineProperty(window, 'ammo', { get: () => ammo, configurable: true });
 Object.defineProperty(window, 'baseHealth', { get: () => baseHealth, configurable: true });
@@ -406,6 +444,86 @@ function updateAccuracyDisplay() {
   if (tc) tc.innerText = threats.filter(t => !t.hit).length + ' ACTIVE';
 }
 
+function normalizeKineticAsset(asset) {
+  const normalized = { ...asset };
+  normalized._backendManaged = true;
+  normalized._path = Array.isArray(asset.track)
+    ? asset.track.map(pt => ({ x: pt.x_km, y: pt.y_km }))
+    : (Array.isArray(asset._path) ? asset._path : []);
+  return normalized;
+}
+
+function applyStrategicAssetSnapshot(data) {
+  if (!data || !Array.isArray(data.assets)) return false;
+  strategicAssets = data.assets.map(normalizeKineticAsset);
+  if (baseIconsG) renderMap();
+  updateStrategicAssetScene();
+  return true;
+}
+
+function updateStrategicAssetScene() {
+  if (!scene) return;
+
+  const liveIds = new Set();
+  strategicAssets.forEach(asset => {
+    liveIds.add(asset.id);
+    const col = asset.type === 'awacs' ? 0xff00ff : (asset.is_airborne ? 0x00f2ff : 0x7aa2ff);
+    let mesh = assetMeshes.get(asset.id);
+    if (!mesh) {
+      const geo = asset.is_airborne
+        ? new THREE.ConeGeometry(4500, 14000, 6)
+        : new THREE.CylinderGeometry(3500, 5500, 9000, 5);
+      mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, wireframe: true }));
+      scene.add(mesh);
+      assetMeshes.set(asset.id, mesh);
+    }
+    mesh.material.color.setHex(col);
+    mesh.position.set(to3X(asset.x_km), asset.is_airborne ? Math.max(1500, asset.altitude_m || 0) : 900, to3Z(asset.y_km));
+    mesh.rotation.y = ((asset.heading_deg || 0) * Math.PI) / 180;
+
+    const track = Array.isArray(asset._path) ? asset._path : [];
+    let trail = assetTrailMeshes.get(asset.id);
+    if (track.length > 1) {
+      const positions = [];
+      track.forEach(pt => {
+        positions.push(to3X(pt.x), Math.max(1200, asset.altitude_m || 0), to3Z(pt.y));
+      });
+      if (!trail) {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        trail = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.45 }));
+        scene.add(trail);
+        assetTrailMeshes.set(asset.id, trail);
+      } else {
+        trail.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        trail.geometry.attributes.position.needsUpdate = true;
+      }
+    } else if (trail) {
+      scene.remove(trail);
+      trail.geometry.dispose();
+      trail.material.dispose();
+      assetTrailMeshes.delete(asset.id);
+    }
+  });
+
+  for (const [id, mesh] of assetMeshes.entries()) {
+    if (!liveIds.has(id)) {
+      scene.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+      assetMeshes.delete(id);
+    }
+  }
+  for (const [id, trail] of assetTrailMeshes.entries()) {
+    if (!liveIds.has(id)) {
+      scene.remove(trail);
+      trail.geometry.dispose();
+      trail.material.dispose();
+      assetTrailMeshes.delete(id);
+    }
+  }
+}
+
 // SAAB_CH is declared once at the top of the file — no redeclaration here
 window.isMirror = !window.location.pathname.includes('dashboard.html');
 
@@ -447,6 +565,7 @@ SAAB_CH.onmessage = e => {
         const int = new Interceptor(BASES[e.data.baseId], e.data.effector || 'PAC3');
         int.baseId = e.data.baseId;
         int._effKey = e.data.effector || int._effKey;
+        int.bindThreat(t);
         t.interceptors.push(int);
         stats.fired++;
       }
@@ -639,11 +758,15 @@ function renderMap() {
       line2.setAttribute('stroke', col); line2.setAttribute('stroke-width', '1');
       g.appendChild(line2);
     } else {
-      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      dot.setAttribute('cx', sx); dot.setAttribute('cy', sy); dot.setAttribute('r', node.type === 'HVA' ? '6' : '4');
-      dot.setAttribute('fill', col);
-      dot.setAttribute('filter', 'drop-shadow(0 0 3px ' + col + ')');
-      g.appendChild(dot);
+      const symbolPath = TACTICAL_SYMBOLS[node.subtype] || TACTICAL_SYMBOLS.ground_base;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', symbolPath);
+      path.setAttribute('transform', `translate(${sx}, ${sy})`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', col);
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('filter', 'drop-shadow(0 0 3px ' + col + ')');
+      g.appendChild(path);
     }
 
     const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -656,7 +779,160 @@ function renderMap() {
 
     baseIconsG.appendChild(g);
   });
+
+  // ── Render Strategic Assets (Airborne & Grounded Alert-5) ──────────────────────────
+  strategicAssets.forEach(asset => {
+    const sx = toSvgX(asset.x_km * KM_TO_UNIT), sy = toSvgY(asset.y_km * KM_TO_UNIT);
+    const col = asset.type === 'awacs' ? '#ff00ff' : '#00f2ff';
+    const isAirborne = !!asset.is_airborne;
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('opacity', isAirborne ? '1' : '0.4');
+
+    // Draw Sensor/Combat Coverage Circle
+    if (asset.coverage_km) {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', sx); circle.setAttribute('cy', sy);
+      circle.setAttribute('r', asset.coverage_km * KM_TO_UNIT * SVG_SCALE);
+      circle.setAttribute('fill', col);
+      circle.setAttribute('fill-opacity', '0.05');
+      circle.setAttribute('stroke', col);
+      circle.setAttribute('stroke-width', '1');
+      circle.setAttribute('stroke-dasharray', isAirborne ? '4 4' : '2 2');
+      circle.setAttribute('opacity', isAirborne ? '0.3' : '0.1');
+      g.appendChild(circle);
+    }
+
+    const symbolPath = TACTICAL_SYMBOLS[asset.type] || TACTICAL_SYMBOLS.fighter;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', symbolPath);
+    const angle = asset.heading_deg || asset._heading || 0;
+    path.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${angle})`);
+    path.setAttribute('fill', isAirborne ? col : 'none');
+    path.setAttribute('stroke', col);
+    path.setAttribute('stroke-width', '2');
+    if(isAirborne) {
+        path.setAttribute('filter', 'drop-shadow(0 0 6px ' + col + ')');
+        // Add flickering exhaust for airborne assets
+        const exhaust = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        exhaust.setAttribute('d', 'M-2,2 L0,10 L2,2 Z');
+        exhaust.setAttribute('fill', 'url(#flameGrad)');
+        const s = 0.6 + Math.random() * 0.4;
+        exhaust.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${angle}) scale(${s}, ${s * 1.5})`);
+        exhaust.setAttribute('opacity', (0.7 + Math.random() * 0.3).toString());
+        g.appendChild(exhaust);
+    }
+    g.appendChild(path);
+    
+    // Add flame gradient defs if missing
+    if (isAirborne && !document.getElementById('flameGrad')) {
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `
+            <linearGradient id="flameGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#fff" />
+                <stop offset="40%" stop-color="#ffaa00" />
+                <stop offset="100%" stop-color="rgba(255,0,0,0)" />
+            </linearGradient>
+        `;
+        balticMap.prepend(defs);
+    }
+
+    // Logistics Overlay: Scramble Timer or Endurance Bar
+    if(!isAirborne && asset.scramble_time_sec > 0) {
+        // SCRAMBLE TIMER (Alert-5)
+        const sbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        sbl.setAttribute('x', sx); sbl.setAttribute('y', sy - 14);
+        sbl.setAttribute('fill', '#facc15'); sbl.setAttribute('font-size', '7');
+        sbl.setAttribute('font-family', 'JetBrains Mono'); sbl.setAttribute('text-anchor', 'middle');
+        sbl.textContent = `ALERT-5: ${asset.scramble_time_sec}s`;
+        g.appendChild(sbl);
+    } else if(isAirborne && asset.endurance_min !== undefined) {
+        // ENDURANCE BAR
+        const barWidth = 20;
+        const fuelPct = Math.min(1, asset.endurance_min / 240); // 4h max
+        const rect1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect1.setAttribute('x', sx - barWidth/2); rect1.setAttribute('y', sy + 12);
+        rect1.setAttribute('width', barWidth); rect1.setAttribute('height', '2');
+        rect1.setAttribute('fill', 'rgba(255,255,255,0.1)');
+        g.appendChild(rect1);
+        const rect2 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect2.setAttribute('x', sx - barWidth/2); rect2.setAttribute('y', sy + 12);
+        rect2.setAttribute('width', barWidth * fuelPct); rect2.setAttribute('height', '2');
+        rect2.setAttribute('fill', fuelPct < 0.2 ? '#f85149' : '#00f2ff');
+        g.appendChild(rect2);
+    }
+
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    lbl.setAttribute('x', sx + 12); lbl.setAttribute('y', sy + 4);
+    lbl.setAttribute('fill', col); lbl.setAttribute('font-size', '9');
+    lbl.setAttribute('font-family', 'Orbitron');
+    lbl.textContent = asset.name;
+    g.appendChild(lbl);
+
+    baseIconsG.appendChild(g);
+  });
+
+  // ── STRATEGIC ASSET TRAILS (RIBBON) ──────────────────────────
+  strategicAssets.forEach(a => {
+    if (a.is_airborne && a._path && a._path.length > 1) {
+        const trail = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        const pts = a._path.map(p => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(' ');
+        trail.setAttribute('points', pts);
+        trail.setAttribute('stroke', '#00f2ff');
+        trail.setAttribute('stroke-width', '2');
+        trail.setAttribute('fill', 'none');
+        trail.setAttribute('opacity', '0.3');
+        trail.setAttribute('filter', 'blur(1px)');
+        baseIconsG.appendChild(trail);
+    }
+  });
+
   renderThreatVectors();
+}
+
+async function syncStrategicAssets() {
+    try {
+        let data = null;
+        try {
+            const kinetic = await fetch(KINETIC_STATE_URL, { cache: 'no-store' });
+            if (kinetic.ok) data = await kinetic.json();
+        } catch (kineticErr) {
+            console.warn('KINETIC STATE FETCH FAILED', kineticErr);
+        }
+        if (!data) {
+            const fallback = await fetch('http://127.0.0.1:8000/state', { cache: 'no-store' });
+            data = await fallback.json();
+        }
+        if (!applyStrategicAssetSnapshot(data) && data.assets) {
+            strategicAssets = data.assets;
+            if (baseIconsG) renderMap();
+            updateStrategicAssetScene();
+        }
+    } catch (e) {
+        console.warn("ASSET SYNC FAILED", e);
+    }
+}
+
+function connectKineticStream() {
+  try {
+    kineticStateSocket = new WebSocket(KINETIC_STATE_WS_URL);
+    kineticStateSocket.onmessage = e => {
+      try {
+        const data = JSON.parse(e.data);
+        if (!applyStrategicAssetSnapshot(data)) return;
+      } catch (parseErr) {
+        console.warn('KINETIC STATE PARSE FAILED', parseErr);
+      }
+    };
+    kineticStateSocket.onclose = () => {
+      kineticStateSocket = null;
+      setTimeout(connectKineticStream, 2500);
+    };
+    kineticStateSocket.onerror = () => {
+      try { kineticStateSocket.close(); } catch (_) {}
+    };
+  } catch (err) {
+    console.warn('KINETIC WEBSOCKET FAILED', err);
+  }
 }
 
 // ── JS-driven MARV threat track animation with PAC-3 intercept events ───────
@@ -746,10 +1022,15 @@ function renderThreatVectors() {
     tr.pac3El = pac3;
 
     // MARV dot (red/orange)
-    const marv = document.createElementNS(svgNS, 'circle');
-    marv.setAttribute('r', '4.5');
-    marv.setAttribute('fill', '#ff6600');
+    const marv = document.createElementNS(svgNS, 'path');
+    const threatKey = tr.label.split('-')[0].toUpperCase();
+    const sym = THREAT_SYMBOLS[threatKey] || THREAT_SYMBOLS.CRUISE;
+    marv.setAttribute('d', sym);
+    marv.setAttribute('fill', 'none');
+    marv.setAttribute('stroke', '#ff6600');
+    marv.setAttribute('stroke-width', '2');
     marv.setAttribute('opacity', '0');
+    marv.setAttribute('filter', 'drop-shadow(0 0 3px #ff6600)');
     g.appendChild(marv);
     tr.marvEl = marv;
 
@@ -819,8 +1100,7 @@ function renderThreatVectors() {
           jx = tr.jinkPX * jAmp * sineVal;
           jy = tr.jinkPY * jAmp * sineVal;
         }
-        tr.marvEl.setAttribute('cx', bp.x + jx);
-        tr.marvEl.setAttribute('cy', bp.y + jy);
+        tr.marvEl.setAttribute('transform', `translate(${bp.x + jx}, ${bp.y + jy})`);
         tr.marvEl.setAttribute('opacity', '1');
 
         // ── PAC-3: arcs upward from base, curves to intercept ────────────
@@ -839,14 +1119,15 @@ function renderThreatVectors() {
 
       } else if (cycleT < travelDur + explDur) {
         const et = (cycleT - travelDur) / explDur;
-        const er = et * 16;
+        const flashR = 2.5;
+        const ringR = 4.5;
         const op = Math.max(0, 1.0 - et);
         tr.marvEl.setAttribute('opacity', '0');
         tr.pac3El.setAttribute('opacity', '0');
-        tr.explEl.setAttribute('r', er);
-        tr.explEl.setAttribute('opacity', String(op * 0.95));
-        tr.ringEl.setAttribute('r', er * 2.2);
-        tr.ringEl.setAttribute('opacity', String(op * 0.65));
+        tr.explEl.setAttribute('r', flashR);
+        tr.explEl.setAttribute('opacity', String(op * 0.9));
+        tr.ringEl.setAttribute('r', ringR);
+        tr.ringEl.setAttribute('opacity', String(op * 0.45));
 
       } else {
         tr.marvEl.setAttribute('opacity', '0');
@@ -865,15 +1146,16 @@ function blastSvg(wx, wy, col) {
   if (!threatLayerG) return;
   const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   c.setAttribute('cx', toSvgX(wx)); c.setAttribute('cy', toSvgY(wy));
-  c.setAttribute('r', '2'); c.setAttribute('fill', col); c.setAttribute('opacity', '1');
+  c.setAttribute('r', '7'); c.setAttribute('fill', col); c.setAttribute('opacity', '0.9');
   threatLayerG.appendChild(c);
-  let s = 1;
+  let r = 7;
   const iv = setInterval(() => {
-    s += 3; c.setAttribute('r', s); c.setAttribute('opacity', String(1 - s / 30));
-    if (s > 30) { clearInterval(iv); c.remove(); }
-  }, 30);
-  // Guaranteed cleanup after 1.5s regardless of animation
-  setTimeout(() => { clearInterval(iv); c.remove(); }, 1500);
+    r += 0.25;
+    c.setAttribute('r', r.toFixed(2));
+    c.setAttribute('opacity', String(Math.max(0, 0.9 - (r - 7) * 0.08)));
+    if (r >= 12) { clearInterval(iv); c.remove(); }
+  }, 60);
+  setTimeout(() => { clearInterval(iv); c.remove(); }, 900);
 }
 
 // Miss marker: red X on SVG — auto-fades after 4s
@@ -1007,10 +1289,74 @@ function printBenchmarkComparison() {
 // --- KINETIC CLASSES ---
 class Interceptor {
   constructor(originNode, effectorKey) {
+    this.originNode = originNode;
     this.pos = new THREE.Vector3(to3X(originNode.x), 5000, to3Z(originNode.y));
     this.mesh = null;
     this.eff = EFFECTORS[MODE][effectorKey] || EFFECTORS[MODE][Object.keys(EFFECTORS[MODE])[0]];
     this._effKey = effectorKey;
+
+    // 2D SVG components for sorties
+    const svgNS = 'http://www.w3.org/2000/svg';
+    this.marker2D = document.createElementNS(svgNS, 'g');
+    const symbolPath = (originNode.subtype === 'air_base') ? TACTICAL_SYMBOLS.fighter : 'M0,0 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0';
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', symbolPath);
+    path.setAttribute('fill', this.eff.color || '#00f2ff');
+    path.setAttribute('filter', 'drop-shadow(0 0 8px ' + (this.eff.color || '#00f2ff') + ')');
+    this.marker2D.appendChild(path);
+
+    // ENHANCED EXHAUST FLAME
+    this.exhaust2D = document.createElementNS(svgNS, 'path');
+    this.exhaust2D.setAttribute('d', 'M-3,3 L0,12 L3,3 Z'); // Larger triangle
+    this.exhaust2D.setAttribute('fill', 'url(#flameGrad)');
+    this.exhaust2D.setAttribute('opacity', '0.9');
+    this.exhaust2D.setAttribute('filter', 'blur(1.5px)');
+    this.marker2D.appendChild(this.exhaust2D);
+
+    // Add flame gradient if it doesn't exist
+    if (!document.getElementById('flameGrad')) {
+        const defs = document.createElementNS(svgNS, 'defs');
+        const grad = document.createElementNS(svgNS, 'linearGradient');
+        grad.id = 'flameGrad'; grad.setAttribute('x1','0%'); grad.setAttribute('y1','0%'); grad.setAttribute('x2','0%'); grad.setAttribute('y2','100%');
+        const s1 = document.createElementNS(svgNS, 'stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','#fff');
+        const s2 = document.createElementNS(svgNS, 'stop'); s2.setAttribute('offset','40%'); s2.setAttribute('stop-color','#ffaa00');
+        const s3 = document.createElementNS(svgNS, 'stop'); s3.setAttribute('offset','100%'); s3.setAttribute('stop-color','rgba(255,0,0,0)');
+        grad.appendChild(s1); grad.appendChild(s2); grad.appendChild(s3);
+        defs.appendChild(grad);
+        (document.querySelector('#baltic-map, #tactical-svg') || document.getElementById('blast-overlay') || document.body)?.appendChild(defs);
+    }
+
+    this.sortieLine2D = document.createElementNS(svgNS, 'polyline');
+    this.sortieLine2D.setAttribute('stroke', this.eff.color || '#00f2ff');
+    this.sortieLine2D.setAttribute('stroke-width', '2');
+    this.sortieLine2D.setAttribute('fill', 'none');
+    this.sortieLine2D.setAttribute('opacity', '0.4');
+    this.sortieLine2D.setAttribute('filter', 'blur(1px)');
+    
+    this.path = []; // Track interceptor path
+    const ox = toSvgX(originNode.x), oy = toSvgY(originNode.y);
+    this.path.push({x: ox, y: oy});
+    
+    // Removed old line attributes
+
+    // Dynamic Intercept Vector
+    this.interceptVector2D = document.createElementNS(svgNS, 'line');
+    this.interceptVector2D.setAttribute('stroke', this.eff.color || '#00f2ff');
+    this.interceptVector2D.setAttribute('stroke-width', '1.5');
+    this.interceptVector2D.setAttribute('opacity', '0.6');
+    this.interceptVector2D.setAttribute('stroke-dasharray', '2 4');
+    const _svgRoot = threatLayerG || document.getElementById('blast-overlay');
+    _svgRoot?.appendChild(this.interceptVector2D);
+    _svgRoot?.appendChild(this.sortieLine2D);
+    _svgRoot?.appendChild(this.marker2D);
+
+    this.vel = null; // Initialized on first update
+    this.lastLOS = null;
+    this._backendTrajectoryPromise = null;
+    this._backendTrajectory = null;
+    this._backendTrajectoryReady = false;
+    this._backendFrame = 0;
+    this._prevBackendPos = null;
 
     if (scene) {
       if (this.eff.type === 'LASER') {
@@ -1024,30 +1370,180 @@ class Interceptor {
       }
     }
   }
+
+  bindThreat(threat) {
+    if (this._backendTrajectoryPromise || !threat) return this._backendTrajectoryPromise;
+    const params = new URLSearchParams({
+      tx: String(threat.pos.x),
+      ty: String(threat.pos.z),
+      destx: String(to3X(threat.targetNode.x)),
+      desty: String(to3Z(threat.targetNode.y)),
+      mx: String(to3X(this.originNode.x)),
+      my: String(to3Z(this.originNode.y)),
+      is_marv: String(!!threat.wdef.isMarv),
+      threat_type: (threat.wdef.type || 'ballistic').toLowerCase(),
+      raw: 'true'
+    });
+    this._backendTrajectoryPromise = fetch(`http://127.0.0.1:8000/api/simulate-kinetic-chase?${params.toString()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && Array.isArray(data.missile_trajectory) && data.missile_trajectory.length > 1) {
+          this._backendTrajectory = data;
+          this._backendTrajectoryReady = true;
+          this._backendFrame = 0;
+          this._prevBackendPos = null;
+          // Sync threat's target path from the SAME simulation so both paths
+          // converge at the same physics intercept point. The backend re-centred
+          // all coordinates so the interceptor base is at origin (0,0); add the
+          // base's absolute position back to recover theater-space coordinates.
+          if (threat && Array.isArray(data.target_trajectory) && data.target_trajectory.length > 1) {
+            const ox = to3X(this.originNode.x), oz = to3Z(this.originNode.y);
+            threat._backendTargetPath = data.target_trajectory.map(p => ({ x: p.x + ox, y: p.y + oz }));
+            threat._backendTargetReady = true;
+            threat._backendIntercepted = !!data.intercepted;
+            // Store current frame as the base so localFrame resets to 0 for this
+            // new path without touching the global _frame counter (avoids race
+            // where the old path advanced _frame far past path.length before
+            // the backend responded).
+            threat._pathFrameBase = threat._frame;
+            threat.path = []; // clear old trail so it re-draws from current position
+          }
+        }
+        return data;
+      })
+      .catch(() => null);
+    return this._backendTrajectoryPromise;
+  }
+
   update(targetPos) {
     if (this.hit) return false;
 
+    if (this._backendTrajectoryReady) {
+      const path = this._backendTrajectory.missile_trajectory || [];
+      const idx = Math.min(Math.floor(this._backendFrame / 6), path.length - 1);
+      const sample = path[idx];
+      const prev = this._prevBackendPos || sample;
+      // The backend re-centred coords so the interceptor base is at (0,0).
+      // Add base position back to convert to absolute theater-space coords.
+      const ox = to3X(this.originNode.x), oz = to3Z(this.originNode.y);
+      this.pos.x = sample.x + ox;
+      this.pos.z = sample.y + oz;
+      const progress = idx / Math.max(1, path.length - 1);
+      this.pos.y = 5000 + (1.0 - progress) * 2000 + progress * 12000;
+      this.vel = new THREE.Vector3(sample.x - prev.x, sample.y - prev.y, 0);
+      this._prevBackendPos = sample;
+      this._backendFrame += 1;
+
+      if (this.mesh) {
+        this.mesh.position.copy(this.pos);
+        if (this.vel.lengthSq() > 0) this.mesh.lookAt(this.pos.clone().add(this.vel));
+      }
+
+      const sx = toSvgX(this.pos.x / 1666), sy = toSvgY(this.pos.z / 1666);
+      if (this.marker2D) {
+        const angle = Math.atan2(this.vel.z || 0, this.vel.x || 1) * 180 / Math.PI + 90;
+        this.marker2D.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${angle})`);
+      }
+      if (this.sortieLine2D) {
+        this.path.push({x: sx, y: sy});
+        if (this.path.length > 30) this.path.shift();
+        this.sortieLine2D.setAttribute('points', this.path.map(p => `${p.x},${p.y}`).join(' '));
+      }
+      if (this.interceptVector2D) {
+        this.interceptVector2D.setAttribute('x1', sx); this.interceptVector2D.setAttribute('y1', sy);
+        this.interceptVector2D.setAttribute('x2', toSvgX(targetPos.x / 1666));
+        this.interceptVector2D.setAttribute('y2', toSvgY(targetPos.z / 1666));
+      }
+
+      const dist = this.pos.distanceTo(targetPos);
+      const backendIntercepted = !!this._backendTrajectory.intercepted;
+      if (dist < 15000 || this._backendFrame >= path.length - 1) {
+        this.done = true;
+        if (backendIntercepted) {
+          this.hit = true;
+          this.dispose();
+          return true;
+        }
+        addCoT(`FAILURE :: ${this.eff.name} MISSED`, 'error');
+        this.dispose();
+        return false;
+      }
+      return false;
+    }
+
     if (this.eff.type === 'LASER') {
-      // Laser is instantaneous for visualization purposes but we 'aim' it
       this.pos.copy(targetPos);
       if (this.mesh) {
         this.mesh.lookAt(targetPos);
         this.mesh.scale.set(1, this.pos.distanceTo(targetPos), 1);
       }
     } else {
-      const dir = targetPos.clone().sub(this.pos).normalize();
-      const flySpeed = (this.eff.type === 'GATLING') ? 15000 : 12000;
-      this.pos.add(dir.multiplyScalar(ACTIVE_MODEL.speed * flySpeed));
+      // --- PROPORTIONAL NAVIGATION (PRO-NAV) GUIDANCE ---
+      const flySpeed = ((this.eff.type === 'GATLING') ? 18000 : 18000) * ACTIVE_MODEL.speed;
+      const relPos = targetPos.clone().sub(this.pos);
+      const los = relPos.clone().normalize();
+
+      if (!this.vel) {
+          this.vel = los.clone().multiplyScalar(flySpeed);
+      }
+
+      if (this.lastLOS) {
+          // Calculate Line-of-Sight (LOS) rotation
+          const rotation = new THREE.Quaternion().setFromUnitVectors(this.lastLOS, los);
+          
+          // Apply Navigation Constant (N = 3 to 5 is optimal for interceptors)
+          const N = 3.5;
+          const navRotation = new THREE.Quaternion().slerp(rotation, N);
+          
+          this.vel.applyQuaternion(navRotation);
+          // Maintain constant fly speed
+          this.vel.normalize().multiplyScalar(flySpeed);
+      }
+      
+      this.lastLOS = los.clone();
+      this.pos.add(this.vel);
+    }
+
+    // Sync 3D mesh with physics
+    if (this.mesh && this.vel) {
+      this.mesh.position.copy(this.pos);
+      this.mesh.lookAt(this.pos.clone().add(this.vel));
+    }
+
+    // Update 2D sortie visuals
+    const sx = toSvgX(this.pos.x / 1666), sy = toSvgY(this.pos.z / 1666);
+    if (this.marker2D) {
+        // Rotate marker to face velocity
+        const angle = Math.atan2(this.vel.z, this.vel.x) * 180 / Math.PI + 90;
+        this.marker2D.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${angle})`);
+        
+        // Flicker exhaust
+        if (this.exhaust2D) {
+            const s = 0.8 + Math.random() * 0.4;
+            this.exhaust2D.setAttribute('transform', `scale(${s}, ${s * 1.5})`);
+            this.exhaust2D.setAttribute('opacity', (0.6 + Math.random() * 0.4).toString());
+        }
+    }
+    if (this.sortieLine2D) {
+        this.path.push({x: sx, y: sy});
+        if (this.path.length > 30) this.path.shift();
+        const pts = this.path.map(p => `${p.x},${p.y}`).join(' ');
+        this.sortieLine2D.setAttribute('points', pts);
+    }
+    if (this.interceptVector2D) {
+        this.interceptVector2D.setAttribute('x1', sx); this.interceptVector2D.setAttribute('y1', sy);
+        this.interceptVector2D.setAttribute('x2', toSvgX(targetPos.x / 1666));
+        this.interceptVector2D.setAttribute('y2', toSvgY(targetPos.z / 1666));
     }
 
     const dist = this.pos.distanceTo(targetPos);
     if (dist < 15000) {
-      this.done = true; // Mark as finished regardless of hit/miss
-      const pk = getWeatherAdjustedPk(this._threatType, this._effKey);
+      this.done = true; 
+      const pk = getWeatherAdjustedPk(this._threatType, this._effKey, this.pos);
       if (Math.random() < pk) {
         this.hit = true; this.dispose(); return true;
       } else {
-        addCoT(`INTERCEPT FAILURE :: ${this.eff.name} MISSED`, 'error');
+        addCoT(`FAILURE :: ${this.eff.name} MISSED`, 'error');
         this.dispose(); return false;
       }
     }
@@ -1088,6 +1584,10 @@ class Threat {
     this._totalFrames = 300;
     this.jinkPhase = Math.random() * Math.PI * 2;
     this.jinkV = { x: 0, z: 0 };
+    this._backendTargetPromise = null;
+    this._backendTargetPath = null;
+    this._backendTargetReady = false;
+    this._backendIntercepted = false;
 
     this.path = []; // Temporal data buffer
 
@@ -1095,7 +1595,17 @@ class Threat {
     this.circle2D = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this.circle2D.setAttribute('r', this.wdef.r2d);
     this.circle2D.setAttribute('fill', this.wdef.color3);
+    this.circle2D.setAttribute('filter', 'drop-shadow(0 0 4px ' + this.wdef.color3 + ')');
     this.circle2D.style.cursor = 'pointer';
+
+    // THREAT EXHAUST (Game-Engine style)
+    this.exhaustG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.exhaust2D = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    this.exhaust2D.setAttribute('d', 'M-3,0 L0,-12 L3,0 Z');
+    this.exhaust2D.setAttribute('fill', '#ff3300');
+    this.exhaust2D.setAttribute('opacity', '0.6');
+    this.exhaustG.appendChild(this.exhaust2D);
+    threatLayerG?.appendChild(this.exhaustG);
 
     // Path trail (Temporal Visualisation)
     this.trail2D = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
@@ -1105,6 +1615,16 @@ class Threat {
     this.trail2D.setAttribute('stroke-dasharray', '2 2');
     this.trail2D.setAttribute('opacity', '0.4');
     threatLayerG?.appendChild(this.trail2D);
+
+    // Trajectory Projection Line (Ghost line to target)
+    this.projection2D = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this.projection2D.setAttribute('stroke', this.wdef.color3);
+    this.projection2D.setAttribute('stroke-width', '1');
+    this.projection2D.setAttribute('stroke-dasharray', '5 5');
+    this.projection2D.setAttribute('opacity', '0.25');
+    const targetSvgX = targetNode.x, targetSvgY = targetNode.y;
+    this.projection2D.setAttribute('x2', toSvgX(targetSvgX)); this.projection2D.setAttribute('y2', toSvgY(targetSvgY));
+    threatLayerG?.appendChild(this.projection2D);
 
     // Specialized marker for MARV/MIRV
     if (this.wdef.isMarv || this.wdef.isMirv) {
@@ -1136,11 +1656,115 @@ class Threat {
       this.mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: this.wdef.hex3 }));
       scene.add(this.mesh);
     }
+
+    this._loadBackendTargetPath();
+  }
+
+  _loadBackendTargetPath() {
+    if (this._backendTargetPromise || this.wdef.isMirv || this.wdef.isDogfight) return this._backendTargetPromise;
+    // Record the spawn position so we can add it back when rendering this
+    // pre-bind path. The backend re-centres around mx=0,my=0 for the initial
+    // call (no interceptor assigned yet), so sample coords are relative to
+    // the threat's own spawn location — we restore absolute theater coords
+    // by adding the spawn position back.
+    const spawnX = this.pos.x, spawnZ = this.pos.z;
+    const params = new URLSearchParams({
+      tx: String(this.pos.x),
+      ty: String(this.pos.z),
+      destx: String(to3X(this.targetNode.x)),
+      desty: String(to3Z(this.targetNode.y)),
+      mx: String(this.pos.x), // use threat spawn as origin so path starts here
+      my: String(this.pos.z),
+      is_marv: String(!!this.wdef.isMarv),
+      threat_type: (this.wdef.type || 'ballistic').toLowerCase(),
+      raw: 'true'
+    });
+    this._backendTargetPromise = fetch(`http://127.0.0.1:8000/api/simulate-kinetic-chase?${params.toString()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && Array.isArray(data.target_trajectory) && data.target_trajectory.length > 1) {
+          // Restore absolute theater-space coords: backend re-centred to threat spawn = origin
+          this._backendTargetPath = data.target_trajectory.map(p => ({ x: p.x + spawnX, y: p.y + spawnZ }));
+          this._backendTargetReady = true;
+          this._backendIntercepted = !!data.intercepted;
+          this._pathFrameBase = 0; // frame offset when this path was installed
+        }
+        return data;
+      })
+      .catch(() => null);
+    return this._backendTargetPromise;
   }
   update() {
     if (this._disposed) return;
     this._frame++;
     const tgtPos = new THREE.Vector3(to3X(this.targetNode.x), 5000, to3Z(this.targetNode.y));
+
+    const useBackendTarget = this._backendTargetReady && !this.wdef.isMirv && !this.wdef.isDogfight;
+    if (useBackendTarget) {
+      const path = this._backendTargetPath;
+      // _pathFrameBase lets us re-sync to a new path without resetting the global
+      // _frame counter (avoids the bindThreat race: when the interceptor-assigned
+      // path arrives, _frame stays monotonic but the index resets via the base).
+      const localFrame = this._frame - (this._pathFrameBase || 0);
+      const idx = Math.min(Math.floor(localFrame / 6), path.length - 1);
+      const sample = path[idx];
+      this.pos.x = sample.x;
+      this.pos.z = sample.y;
+      const t = idx / Math.max(1, path.length - 1);
+      const peakY = this.wdef.alt * (1 - t * t * 0.3);
+      this.pos.y = peakY * (1 - t) + 10000 * t;
+
+      if (this.path.length === 0 || this._frame % 5 === 0) {
+        this.path.push(this.pos.clone());
+        if (this.path.length > 100) this.path.shift();
+      }
+
+      const sx = toSvgX(this.pos.x / 1666), sy = toSvgY(this.pos.z / 1666);
+      this.circle2D?.setAttribute('cx', sx);
+      this.circle2D?.setAttribute('cy', sy);
+
+      if (this.exhaustG) {
+        const angle = Math.atan2(sample.y - (path[Math.max(0, idx - 1)]?.y ?? sample.y), sample.x - (path[Math.max(0, idx - 1)]?.x ?? sample.x)) * 180 / Math.PI + 90;
+        this.exhaustG.setAttribute('transform', `translate(${sx},${sy}) rotate(${angle})`);
+      }
+      if (this.marker2D) {
+        this.marker2D.setAttribute('transform', `translate(${sx},${sy}) rotate(${this.wdef.isMarv ? (Math.sin(Date.now() / 200) * 20) : 0})`);
+      }
+      if (this.trail2D && this.path.length > 1) {
+        const pts = this.path.map(p => `${toSvgX(p.x / 1666)},${toSvgY(p.z / 1666)}`).join(' ');
+        this.trail2D.setAttribute('points', pts);
+      }
+      if (this.projection2D) {
+        this.projection2D.setAttribute('x1', sx);
+        this.projection2D.setAttribute('y1', sy);
+      }
+      if (this.mesh) this.mesh.position.copy(this.pos);
+
+      if (idx >= path.length - 1) {
+        if (this._backendIntercepted) {
+          this._state = 'killed';
+          createBlast(this.pos, 0x00f2ff, this.interceptors[0]?.originNode || null);
+          blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#00f2ff');
+          addCoT(`NEUTRALIZED ${this.wdef.label} — INTERCEPT CONFIRMED`, 'success');
+          stats.intercepted++;
+          updateAccuracyDisplay();
+          this.done = true; this.hit = true;
+          // dispose() cleans up mesh + SVG immediately; trail lingers 3s via opacity
+          setTimeout(() => this.dispose(), 100);
+        } else {
+          this._state = 'impact';
+          createBlast(this.pos, 0xff3e3e, this.interceptors[0]?.originNode || null);
+          blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#ff3e3e');
+          missMarkerSvg(this.pos.x / 1666, this.pos.z / 1666);
+          addCoT(`IMPACT AT ${this.targetNode.name} — DEFENSE BREACH`, 'alert');
+          stats.impacts++;
+          updateAccuracyDisplay();
+          this.done = true; this.hit = true;
+          setTimeout(() => this.dispose(), 100);
+        }
+      }
+      return;
+    }
 
     // ── MARV: terminal jink once inside trigger range ─────────────────
     if (this.wdef.isMarv) {
@@ -1218,13 +1842,19 @@ class Threat {
         } else {
           this.dogOutcome = 'KILL';
           addCoT(`✈ DOGFIGHT [${this.id}] — FIGHTER KILLED IN MERGE`, 'success');
-          if (!this._disposed) {
-            createBlast(this.pos, 0x00ccff);
-            blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#00ccff');
-            stats.intercepted++;
+          if (dist < 10) {
+            this.hit = true;
+            stats.impacts++;
+            cityHealth = Math.max(0, cityHealth - 5);
+            addCoT(`IMPACT DETECTED: ${this.id} STRUCK TARGET`, 'alert');
+            createBlast(this.pos, 0xff3e3e);
             updateAccuracyDisplay();
-            this.dispose();
+            return;
           }
+          blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#00ccff');
+          stats.intercepted++;
+          updateAccuracyDisplay();
+          this.dispose();
           return;
         }
       }
@@ -1256,6 +1886,13 @@ class Threat {
     this.circle2D?.setAttribute('cx', sx);
     this.circle2D?.setAttribute('cy', sy);
 
+    if (this.exhaustG) {
+        const angle = Math.atan2(this.vel.z, this.vel.x) * 180 / Math.PI + 90;
+        this.exhaustG.setAttribute('transform', `translate(${sx},${sy}) rotate(${angle})`);
+        const s = 0.7 + Math.random() * 0.5;
+        this.exhaust2D.setAttribute('transform', `scale(${s}, ${s * 1.3})`);
+    }
+
     if (this.marker2D) {
       this.marker2D.setAttribute('transform', `translate(${sx},${sy}) rotate(${this.wdef.isMarv ? (Math.sin(Date.now() / 200) * 20) : 0})`);
       if (this.wdef.isMirv) {
@@ -1268,14 +1905,23 @@ class Threat {
       this.trail2D.setAttribute('points', pts);
     }
 
+    if (this.projection2D) {
+        this.projection2D.setAttribute('x1', sx);
+        this.projection2D.setAttribute('y1', sy);
+    }
+
     if (this.mesh) this.mesh.position.copy(this.pos);
   }
   dispose() {
     if (this._disposed) return;
     this._disposed = true; this.hit = true;
     this.circle2D?.remove();
+    this.exhaustG?.remove();
     this.trail2D?.remove();
     this.marker2D?.remove();
+    this.sortieLine2D?.remove();
+    this.interceptVector2D?.remove();
+    this.projection2D?.remove();
     if (this.mesh) { scene?.remove(this.mesh); this.mesh.geometry.dispose(); this.mesh.material.dispose(); this.mesh = null; }
 
     // Dispose all interceptors in the salvo
@@ -1312,7 +1958,7 @@ async function callEngine(threatList) {
     inventory: theaterInv
   }));
   try {
-    const r = await fetch('http://localhost:8000/evaluate_advanced', {
+    const r = await fetch('http://127.0.0.1:8000/evaluate_advanced', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1381,12 +2027,35 @@ function getSalvoCount(threat) {
 /**
  * Get weather-adjusted Pk for a given threat and effector
  */
-function getWeatherAdjustedPk(threatType, effKey) {
+function getWeatherAdjustedPk(threatType, effKey, pos) {
   const eff = EFFECTORS[MODE][effKey];
   if (!eff) return 0.5;
   const basePk = eff.pk[threatType] || 0.5;
+
+  // TERRAIN MASKING: Low-altitude threats hidden behind mountains
+  if (pos && pos.y < 8000 && (threatType === 'CRUISE' || threatType === 'LOITER')) {
+      const sx = toSvgX(pos.x / 1666), sy = toSvgY(pos.z / 1666);
+      for (const m of TERRAIN_MOUNTAINS) {
+          const d = Math.hypot(sx - m.x, sy - m.y);
+          if (d < m.r) return 0; // Masked!
+      }
+  }
+
   const weather = document.getElementById('sel-weather')?.value || 'clear';
-  const weatherMod = { clear: 1.0, storm: 0.6, fog: 0.5 }[weather] || 1.0;
+  let weatherMod = { clear: 1.0, storm: 0.6, fog: 0.5 }[weather] || 1.0;
+
+  // Localized weather cell impact
+  if (pos) {
+      const sx = toSvgX(pos.x / 1666), sy = toSvgY(pos.z / 1666);
+      weatherCells.forEach(c => {
+          const dist = Math.hypot(sx - c.x, sy - c.y);
+          if (dist < c.radius) {
+              const localMod = c.type === 'storm' ? 0.7 : 0.8;
+              weatherMod *= localMod;
+          }
+      });
+  }
+
   return basePk * weatherMod;
 }
 
@@ -1540,6 +2209,7 @@ window.commitManualEngagement = (threatId, baseId, effector) => {
     const int = new Interceptor(BASES[baseId], effector);
     int.baseId = baseId;
     int._effKey = effector;
+    int.bindThreat(t);
     int._threatType = t.wdef.type;
     t.interceptors.push(int);  // FIX: was t.interceptor= (singular), never updated in sim loop
     stats.fired++;
@@ -1564,6 +2234,7 @@ window.processApprovedAssignment = (threatId) => {
     const int = new Interceptor(BASES[defId], effKey);
     int.baseId = defId;
     int._effKey = effKey;
+    int.bindThreat(t);
     int._threatType = t.wdef.type;
     t.interceptors.push(int);  // FIX: was t.interceptor= (singular), never updated in sim loop
     stats.fired++;
@@ -1602,7 +2273,20 @@ function updateSimulation() {
 
   if (nowFrozen) return;
 
-  let anyAlive = false;
+  updateWeather();
+  updateDebris();
+
+    strategicAssets.forEach(a => {
+      // Check for Bingo Fuel (15%)
+        if (a.fuel_current < a.fuel_max * 0.15 && !a.bingoTriggered) {
+            a.bingoTriggered = true;
+            triggerBingoAlert(a.name);
+        }
+    });
+    // Trigger map refresh only when the backend snapshot changes
+    if (strategicAssets.length > 0 && baseIconsG && !strategicAssets.some(a => a._backendManaged !== true)) renderMap();
+
+    let anyAlive = false;
   threats.forEach(t => {
     if (t.hit) return;
     anyAlive = true; t.update();
@@ -1612,7 +2296,6 @@ function updateSimulation() {
     // FIX: Re-engage if salvo count requirement increases (e.g. jink start)
     if (t.interceptors.length < getSalvoCount(t)) {
       if (ENGINE_MODE === 'auto') {
-        // Build all valid (base, effector) candidates that are in range
         const candidates = [];
         Object.keys(BASES).forEach(baseId => {
           if (ammo[baseId] <= 0) return;
@@ -1621,7 +2304,7 @@ function updateSimulation() {
           Object.keys(EFFECTORS[MODE]).forEach(effKey => {
             const eff = EFFECTORS[MODE][effKey];
             if (dToBase > eff.range) return; // outside this effector's reach
-            const pk = getWeatherAdjustedPk(t.wdef.type, effKey);
+            const pk = getWeatherAdjustedPk(t.wdef.type, effKey, t.pos);
             // Engine bonus: +50 utility if engine recommended this effector type
             const engKey = t.engineAssignment ? (ENGINE_EFF_MAP[MODE]?.[t.engineAssignment.effector] || null) : null;
             const engineBonus = (engKey && effKey === engKey) ? 50 : 0;
@@ -1647,6 +2330,7 @@ function updateSimulation() {
           const int = new Interceptor(BASES[cand.baseId], cand.effKey);
           int.baseId = cand.baseId;
           int._effKey = cand.effKey;
+          int.bindThreat(t);
           int._threatType = t.wdef.type;
           t.interceptors.push(int);
           stats.fired++; fired++;
@@ -1670,7 +2354,7 @@ function updateSimulation() {
               const eff = EFFECTORS[MODE][effKey];
               if (d > eff.range) return;
 
-              const pk = getWeatherAdjustedPk(t.wdef.type, effKey);
+              const pk = getWeatherAdjustedPk(t.wdef.type, effKey, t.pos);
 
               hitlCands.push({ baseId, effKey, d, utility: (pk * 100) - (d / 100000) });
             });
@@ -1697,9 +2381,11 @@ function updateSimulation() {
 
     // Update all interceptors in the salvo
     let threatNeutralized = false;
+    let hitSourceNode = null;
     t.interceptors = t.interceptors.filter(int => {
       if (int.update(t.pos)) {
         threatNeutralized = true;
+        hitSourceNode = int.originNode || null;
         return false; // Remove this interceptor
       }
       return !int.done;
@@ -1707,8 +2393,9 @@ function updateSimulation() {
 
     if (threatNeutralized) {
       if (!t._disposed) {
-        createBlast(t.pos, 0x00f2ff);
-        blastSvg(t.pos.x / 1666, t.pos.z / 1666, '#00f2ff'); // SVG unit = world m / SC(1666)
+        createBlast(t.pos, 0x00f2ff, hitSourceNode);
+        blastSvg(t.pos.x / 1666, t.pos.z / 1666, '#00f2ff'); 
+        spawnDebris(t.pos); // BDA Overlay
         stats.intercepted++;
         addCoT(`NEUTRALIZED ${t.id}`, 'success');
         t.dispose();
@@ -1717,7 +2404,7 @@ function updateSimulation() {
     } else if (!t._disposed && dist < 3000) {
       // FIX: impact threshold MUST be smaller than interceptor kill radius (15000)
       // Using 3000 units — threat is at the target node
-      createBlast(t.pos, 0xff3e3e);
+      createBlast(t.pos, 0xff3e3e, t.interceptors[0]?.originNode || null);
       const wx = t.pos.x / 1666, wy = t.pos.z / 1666; // correct SVG coords
       blastSvg(wx, wy, '#ff3e3e');
       missMarkerSvg(wx, wy);
@@ -1787,6 +2474,8 @@ function updateSimulation() {
     }
     if (!benchGroundTruth && currentWaveIdx < WAVE_SEQ.length) saveSessionSnapshot();
   }
+
+  updateBlastParticles();
 
   // --- SOURCE OF TRUTH BROADCAST ---
   // Periodically stream the entire theater state to secondary views (Kinetic 3D, Chase)
@@ -1887,45 +2576,241 @@ function init3D() {
     const ray = new THREE.Raycaster(); ray.setFromCamera(mouse, camera);
     const hits = ray.intersectObjects(scene.children);
     if (hits[0]?.object.userData.id) triggerDemo(hits[0].object.userData.id);
+    
+    // Chase Logic
+    if (hits[0]?.object) {
+        const id = hits[0].object.userData.id;
+        const thr = threats.find(t => t.id === id);
+        if (thr) {
+            chaseTarget = thr;
+            addCoT(`CHASE LOCK: ${id}`, 'info');
+        } else {
+            chaseTarget = null;
+        }
+    }
   });
 
   // Decouple physics/sync from rendering so it runs when tab is inactive
   setInterval(updateSimulation, 16);
-  (function loop() { requestAnimationFrame(loop); orbitControls.update(); renderer.render(scene, camera); })();
+  (function loop() { 
+    requestAnimationFrame(loop); 
+    if (chaseTarget && chaseTarget.pos) {
+        const offset = new THREE.Vector3(0, 50000, 150000);
+        const targetPos = chaseTarget.pos.clone();
+        camera.position.lerp(targetPos.clone().add(offset), 0.1);
+        orbitControls.target.lerp(targetPos, 0.1);
+    }
+    orbitControls.update(); 
+    renderer.render(scene, camera); 
+  })();
+
+  // Initialize Dynamic Weather Cells
+  initWeather();
+  connectKineticStream();
 }
 
-function createBlast(pos, col) {
-  // 3D Effect
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(20000, 16, 16), new THREE.MeshBasicMaterial({ color: col, wireframe: true, transparent: true }));
-  mesh.position.copy(pos); scene?.add(mesh);
-
-  // 2D SVG Effect
-  const circ = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  circ.setAttribute('r', '2');
-  circ.setAttribute('fill', 'none');
-  circ.setAttribute('stroke', '#' + col.toString(16).padStart(6, '0'));
-  circ.setAttribute('stroke-width', '4');
-  circ.setAttribute('cx', toSvgX(pos.x / 1666));
-  circ.setAttribute('cy', toSvgY(pos.z / 1666));
-  threatLayerG?.appendChild(circ);
-
-  let s = 1;
-  let op = 1.0;
-  const iv = setInterval(() => {
-    s += 2;
-    op -= 0.05;
-    mesh.scale.setScalar(s);
-    mesh.material.opacity = op;
-
-    circ.setAttribute('r', (s * 5).toString());
-    circ.setAttribute('opacity', op.toString());
-
-    if (op <= 0) {
-      clearInterval(iv);
-      scene?.remove(mesh);
-      circ.remove();
+function initWeather() {
+    if (!balticMap) return;
+    balticMap.insertBefore(weatherLayerG, document.getElementById('base-icons'));
+    
+    // Create 3-5 random weather cells
+    const count = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+        const type = Math.random() > 0.5 ? 'storm' : 'fog';
+        const cell = {
+            id: `weather-${i}`,
+            type: type,
+            x: 200 + Math.random() * 600,
+            y: 200 + Math.random() * 400,
+            vx: (Math.random() - 0.5) * 0.2,
+            vy: (Math.random() - 0.5) * 0.2,
+            radius: 80 + Math.random() * 70,
+            el: document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+        };
+        cell.el.setAttribute('r', cell.radius);
+        cell.el.setAttribute('fill', type === 'storm' ? 'url(#stormGradient)' : 'url(#fogGradient)');
+        cell.el.setAttribute('opacity', '0.15');
+        cell.el.style.filter = 'blur(15px)';
+        weatherLayerG.appendChild(cell.el);
+        weatherCells.push(cell);
     }
-  }, 40);
+
+    // Add gradients to defs if not present
+    let defs = balticMap.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        balticMap.prepend(defs);
+    }
+    defs.innerHTML += `
+        <radialGradient id="stormGradient">
+            <stop offset="0%" stop-color="#4a5568" />
+            <stop offset="100%" stop-color="#2d3748" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="fogGradient">
+            <stop offset="0%" stop-color="#cbd5e0" />
+            <stop offset="100%" stop-color="#edf2f7" stop-opacity="0" />
+        </radialGradient>
+    `;
+}
+
+function updateWeather() {
+    weatherCells.forEach(c => {
+        c.x += c.vx; c.y += c.vy;
+        if (c.x < 0 || c.x > 1000) c.vx *= -1;
+        if (c.y < 0 || c.y > 780) c.vy *= -1;
+        c.el.setAttribute('cx', c.x);
+        c.el.setAttribute('cy', c.y);
+        // Pulse effect
+        const s = 1 + Math.sin(Date.now() / 2000) * 0.05;
+        c.el.setAttribute('transform', `scale(${s})`);
+        c.el.setAttribute('transform-origin', `${c.x} ${c.y}`);
+    });
+}
+
+const blastSquares = [];
+
+function updateBlastParticles() {
+  for (let i = blastSquares.length - 1; i >= 0; i--) {
+    const p = blastSquares[i];
+    p.life -= p.decay;
+    if (p.life <= 0) {
+      if (p.mesh) { scene?.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.material.dispose(); }
+      if (p.svgEl) p.svgEl.remove();
+      blastSquares.splice(i, 1);
+      continue;
+    }
+    if (p.mesh) {
+      p.mesh.position.x += p.vx3d || 0;
+      p.mesh.position.y += p.vy3d || 0;
+      p.mesh.position.z += p.vz3d || 0;
+      p.mesh.material.opacity = p.life * (p.maxOp || 0.9);
+    }
+    if (p.svgEl) {
+      p.svgCx += p.svgVx || 0;
+      p.svgCy += p.svgVy || 0;
+      p.svgEl.setAttribute('cx', p.svgCx.toFixed(2));
+      p.svgEl.setAttribute('cy', p.svgCy.toFixed(2));
+      p.svgEl.setAttribute('opacity', (p.life * (p.maxOp || 0.9)).toFixed(3));
+    }
+  }
+}
+
+// Helper: add central flash + 10 scatter dots to any SVG container using px coords
+function _addBlastSvgTo(container, cx, cy, colHex) {
+  const COUNT = 10;
+  const ns = 'http://www.w3.org/2000/svg';
+
+  // Central bright flash — 1/4 original size
+  const flash = document.createElementNS(ns, 'circle');
+  flash.setAttribute('cx', String(cx)); flash.setAttribute('cy', String(cy));
+  flash.setAttribute('r', '4'); flash.setAttribute('fill', colHex);
+  flash.setAttribute('filter', 'drop-shadow(0 0 3px ' + colHex + ')');
+  flash.setAttribute('opacity', '1');
+  container.appendChild(flash);
+  blastSquares.push({ mesh: null, svgEl: flash, svgCx: cx, svgCy: cy, vx3d:0, vy3d:0, vz3d:0, svgVx:0, svgVy:0, life:1.0, decay:0.022, maxOp:0.95 });
+
+  // Scatter dots
+  for (let i = 0; i < COUNT; i++) {
+    const angle = (i / COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+    const sSvg = 0.18 + Math.random() * 0.14;
+    const dot = document.createElementNS(ns, 'circle');
+    dot.setAttribute('cx', String(cx)); dot.setAttribute('cy', String(cy));
+    dot.setAttribute('r', '1.5'); dot.setAttribute('fill', colHex); dot.setAttribute('opacity', '0.85');
+    container.appendChild(dot);
+    blastSquares.push({ mesh: null, svgEl: dot, svgCx: cx, svgCy: cy, vx3d:0, vy3d:0, vz3d:0,
+      svgVx: Math.cos(angle) * sSvg, svgVy: Math.sin(angle) * sSvg,
+      life: 1.0, decay: 0.032 + Math.random() * 0.01, maxOp: 0.8 });
+  }
+}
+
+function createBlast(pos, col, sourceNode = null) {
+  if (!scene && !threatLayerG && !document.getElementById('blast-overlay')) return;
+  const colHex = '#' + col.toString(16).padStart(6, '0');
+  const COUNT = 10;
+
+  // ── 3D: central flash sphere + scatter spheres (sized for scene scale) ──
+  if (scene) {
+    const flashMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(8000, 8, 8),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.95 })
+    );
+    flashMesh.position.copy(pos);
+    scene.add(flashMesh);
+    blastSquares.push({ mesh: flashMesh, svgEl: null, svgCx:0, svgCy:0, vx3d:0, vy3d:0, vz3d:0, svgVx:0, svgVy:0, life:1.0, decay:0.022, maxOp:0.95 });
+
+    for (let i = 0; i < COUNT; i++) {
+      const angle = (i / COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+      const s3d = 1000 + Math.random() * 1000;
+      const partMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(3000, 4, 4),
+        new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.75 })
+      );
+      partMesh.position.copy(pos);
+      scene.add(partMesh);
+      blastSquares.push({ mesh: partMesh, svgEl: null, svgCx:0, svgCy:0,
+        vx3d: Math.cos(angle) * s3d, vy3d: (Math.random()-0.5)*s3d*0.3, vz3d: Math.sin(angle)*s3d,
+        svgVx:0, svgVy:0, life:1.0, decay:0.028+Math.random()*0.01, maxOp:0.75 });
+    }
+  }
+
+  // ── SVG blast-overlay: screen-projected circles over 3D canvas ──────────
+  const blastOverlay = document.getElementById('blast-overlay');
+  if (blastOverlay && renderer && camera) {
+    const sp = pos.clone().project(camera);
+    const canv = renderer.domElement;
+    const W = canv.clientWidth || canv.width || 400;
+    const H = canv.clientHeight || canv.height || 300;
+    const px = (sp.x + 1) / 2 * W;
+    const py = (-sp.y + 1) / 2 * H;
+    if (sp.z < 1) _addBlastSvgTo(blastOverlay, px, py, colHex); // only if in front of camera
+  }
+
+  // ── SVG threat-layer-2d: 2D map overlay (dashboard / strategic) ─────────
+  if (threatLayerG) {
+    const svgX = toSvgX(pos.x / 1666);
+    const svgY = toSvgY(pos.z / 1666);
+    _addBlastSvgTo(threatLayerG, svgX, svgY, colHex);
+  }
+}
+
+function updateDebris() {
+    debrisList = debrisList.filter(d => {
+        d.pos.add(d.vel);
+        d.vel.y -= 200; // Gravity
+        d.life -= 0.01;
+        if (d.mesh) d.mesh.position.copy(d.pos);
+        if (d.el) {
+            d.el.setAttribute('cx', toSvgX(d.pos.x / 1666));
+            d.el.setAttribute('cy', toSvgY(d.pos.z / 1666));
+            d.el.setAttribute('opacity', d.life);
+        }
+        if (d.life <= 0 || d.pos.y < 0) {
+            if (d.mesh) { scene?.remove(d.mesh); d.mesh.geometry.dispose(); d.mesh.material.dispose(); }
+            if (d.el) d.el.remove();
+            return false;
+        }
+        return true;
+    });
+}
+
+function spawnDebris(pos) {
+    for (let i = 0; i < 5; i++) {
+        const d = {
+            pos: pos.clone(),
+            vel: new THREE.Vector3((Math.random() - 0.5) * 5000, Math.random() * 5000, (Math.random() - 0.5) * 5000),
+            life: 1.0,
+            el: document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+        };
+        d.el.setAttribute('r', '1.5');
+        d.el.setAttribute('fill', '#888');
+        threatLayerG?.appendChild(d.el);
+        
+        if (scene) {
+            d.mesh = new THREE.Mesh(new THREE.BoxGeometry(2000, 2000, 2000), new THREE.MeshBasicMaterial({ color: 0x444444 }));
+            scene.add(d.mesh);
+        }
+        debrisList.push(d);
+    }
 }
 
 function triggerDemo(id) {
@@ -2036,7 +2921,7 @@ function boot() {
 
   // ── Neural Engine WebSocket uplink — streams CORTEX-1 telemetry to CoT log
   try {
-    const _engWs = new WebSocket(`ws://${window.location.hostname}:8000/ws/logs`);
+    const _engWs = new WebSocket('ws://127.0.0.1:8000/ws/logs');
     _engWs.onopen = () => {
       addCoT('CORTEX-1 NEURAL UPLINK ESTABLISHED — ENGINE ONLINE', 'success');
       if (window._setEngineStatus) window._setEngineStatus(true, '');
@@ -2089,6 +2974,8 @@ function boot() {
     .catch(e => console.error("GROUND TRUTH FETCH FAILED", e));
 
   renderMap(); init3D(); initAmmo(); updateInventoryDisplay();
+  syncStrategicAssets();
+  setInterval(syncStrategicAssets, 5000);
   const restoredSession = restoreSessionSnapshot();
   if (restoredSession && !window.isMirror) {
     broadcastState();
@@ -2120,6 +3007,46 @@ function boot() {
 setInterval(() => {
   consumeLaunchRequest();
 }, 250);
+
+function triggerBingoAlert(assetName) {
+    const container = document.getElementById('alert-container');
+    if (!container) return;
+
+    const alert = document.createElement('div');
+    alert.style.cssText = `
+        background: rgba(248, 81, 73, 0.15);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(248, 81, 73, 0.5);
+        color: #f85149;
+        padding: 10px 25px;
+        border-radius: 4px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        box-shadow: 0 0 20px rgba(248, 81, 73, 0.3);
+        animation: pulse-red 1.5s infinite alternate;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    `;
+    alert.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>BINGO FUEL: ${assetName}</span>
+    `;
+
+    container.appendChild(alert);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alert.style.transition = 'opacity 1s, transform 1s';
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateY(-20px)';
+        setTimeout(() => alert.remove(), 1000);
+    }, 5000);
+}
 
 wireDashboardControls();
 boot();

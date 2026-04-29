@@ -178,7 +178,7 @@
     setTheater('boreal');
 
     // Check backend health
-    fetch('http://localhost:8000/health', { signal: AbortSignal.timeout(2500) })
+    fetch('http://127.0.0.1:8000/health', { signal: AbortSignal.timeout(2500) })
       .then(r => { document.getElementById('portal-backend').textContent = r.ok ? 'ONLINE' : 'OFFLINE'; document.getElementById('portal-backend').style.color = r.ok ? '#3fb950' : '#f85149'; })
       .catch(() => { document.getElementById('portal-backend').textContent = 'OFFLINE'; document.getElementById('portal-backend').style.color = '#f85149'; });
     </script>

@@ -7,8 +7,8 @@ import sys
 from ppo_titan_transformer import BorealTitanEngine
 
 # --- CONFIGURATION ---
-DATASET_PATH = "data/training/strategic_mega_corpus/titan_swarm_corpus.npz"
-MODEL_SAVE_PATH = "models/boreal_titan_transformer.pth"
+DATASET_PATH = "data/training/strategic_mega_corpus/ppo_train_hard_25d_100k.npz"
+MODEL_SAVE_PATH = "models/titan.pth"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EPOCHS = 100 
 LR = 1e-4
@@ -28,8 +28,8 @@ def train_titan():
     weights = torch.tensor(data['weights'], dtype=torch.float32).to(DEVICE)
     scores = torch.tensor(data['scores'], dtype=torch.float32).to(DEVICE)
     
-    # 2. Initialize Titan Engine
-    model = BorealTitanEngine(input_dim=15, output_dim=11).to(DEVICE)
+    # 2. Initialize Titan Engine (UPGRADED TO 25-D)
+    model = BorealTitanEngine(input_dim=25, output_dim=11).to(DEVICE)
     optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-2)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
     

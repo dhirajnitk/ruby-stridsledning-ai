@@ -45,11 +45,11 @@ test.describe('kinetic_3d.html — 3D Kinetic Simulator', () => {
   });
 
   // ── Weapon selector
-  test('weapon selector has 4 weapons', async ({ page }) => {
+  test('weapon selector has 7 weapons', async ({ page }) => {
     const sel = page.locator('#sel-weapon');
     await expect(sel).toBeVisible();
     const count = await sel.locator('option').count();
-    expect(count).toBe(4);
+    expect(count).toBe(7);
   });
 
   test('can select HYPERSONIC weapon', async ({ page }) => {

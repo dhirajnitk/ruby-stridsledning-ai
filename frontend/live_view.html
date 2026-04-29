@@ -105,8 +105,11 @@
     /* Event Banner */
     #event-banner {
       display:none; align-items:center; justify-content:center;
-      padding:7px 20px; flex-shrink:0;
-      font-size:0.65rem; letter-spacing:3px; font-weight:bold;
+      align-self:flex-end; width:fit-content; max-width:min(420px, calc(100% - 24px));
+      margin:4px 12px 4px auto; padding:1px 8px; flex-shrink:0;
+      font-size:0.3rem; letter-spacing:0.8px; font-weight:700;
+      line-height:1; min-height:12px; max-height:12px; border-radius:999px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     #event-banner.show { display:flex; }
     #event-banner.ev-marv   { background:rgba(255,136,0,0.18); color:#ff8800; border-bottom:1px solid #ff8800; }
@@ -120,8 +123,9 @@
 
     /* Center row: canvas + telemetry */
     #center-row { flex:1; display:flex; min-height:0; }
-    #canvas-container { flex:1; overflow:hidden; cursor:crosshair; }
+    #canvas-container { flex:1; overflow:hidden; cursor:crosshair; position:relative; }
     #canvas-container canvas { width:100%!important; height:100%!important; }
+    #blast-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
 
     /* Threat Telemetry Panel */
     #threat-telem {
@@ -240,6 +244,7 @@
     <button class="dbtn amber" id="btn-auto-wave">⟳ AUTO-WAVE: OFF</button>
     <button class="dbtn"       id="btn-reset">↺ CLEAR THEATRE</button>
     <button class="dbtn"       id="btn-back" onclick="window.location.href='dashboard.html?mode='+MODE">◄ DASHBOARD</button>
+    <button class="dbtn"       onclick="window.location.href='tactical_legacy.html?mode='+MODE">📋 TACTICAL</button>
     <button class="dbtn"       onclick="window.open('kinetic_3d.html?theater='+MODE,'_blank')">↗ 3D KINETIC</button>
     <button class="dbtn"       onclick="window.location.href='cortex_c2.html'">↗ CORTEX-C2</button>
     <button class="dbtn"       onclick="window.location.href='index.html'" title="Portal Home">⌂ PORTAL</button>
@@ -265,7 +270,9 @@
 
   <!-- Canvas + Telemetry -->
   <div id="center-row">
-    <div id="canvas-container"></div>
+    <div id="canvas-container">
+      <svg id="blast-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
 
     <div id="threat-telem">
       <div id="telem-header">
@@ -301,7 +308,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="viz_engine.js?v=20260427d"></script>
+<script src="viz_engine.js?v=20260429b"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────
 // live_view.html V6 — wired on top of viz_engine.js globals:
@@ -415,8 +422,10 @@ function refreshTelemetry() {
   if (empty) empty.style.display = 'none';
   list.innerHTML = '';
   active.forEach(t => {
-    const wdef  = (typeof WEAPONS !== 'undefined') ? (WEAPONS[t.weaponKey] || {}) : {};
-    const label = wdef.label || t.weaponKey || 'UNK';
+    const wdef  = t.wdef || ((typeof WEAPONS !== 'undefined') ? (WEAPONS[t.weaponKey] || {}) : {});
+    const label = wdef.label || wdef.type || t.weaponKey || t.wkey || 'UNK';
+    const eff   = t.engineAssignment?.effector || t.effector || t.assignedEffector || 'PENDING';
+    const base  = t.engineAssignment?.base || t.base || '';
     const tc    = _telemClass(label);
     const frac  = (t._frame != null && t._totalFrames > 0) ? Math.min(t._frame / t._totalFrames, 1) : 0;
     const card  = document.createElement('div');
@@ -424,6 +433,7 @@ function refreshTelemetry() {
     card.innerHTML = `
       <div class="tc-id">${t.id || '??'}</div>
       <div class="tc-type">${label}${t.dead?' — NEUTRALISED':''}</div>
+      <div class="tc-meta">${eff ? `EFF: ${eff}` : 'EFF: --'}${base ? ` · BASE: ${base}` : ''}</div>
       ${_statusHTML(t)}
       <div class="tc-bar-wrap"><div class="tc-bar" style="width:${Math.round(frac*100)}%"></div></div>
     `;
@@ -443,7 +453,10 @@ _btnAuto.addEventListener('click', () => {
     _btnAuto.classList.remove('active-auto'); _autoInd.classList.remove('on');
   } else {
     const fire = () => {
-      const pool = (typeof THEATER_DATA!=='undefined') ? THEATER_DATA.filter(n=>n.type==='HVA'||n.type==='BASE') : [];
+      const theaterData = (typeof window.THEATER_DATA !== 'undefined')
+        ? window.THEATER_DATA
+        : (typeof THEATER_DATA !== 'undefined' ? THEATER_DATA : []);
+      const pool = theaterData.filter(n => n.type === 'HVA' || n.type === 'BASE');
       if (!pool.length) return;
       const node = pool[Math.floor(Math.random()*pool.length)];
       if (typeof triggerDemo === 'function') triggerDemo(node.id);
@@ -458,7 +471,10 @@ _btnAuto.addEventListener('click', () => {
 // ── Build Base Cards ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const list = document.getElementById('base-list');
-  THEATER_DATA.forEach(node => {
+  const theaterData = (typeof window.THEATER_DATA !== 'undefined')
+    ? window.THEATER_DATA
+    : (typeof THEATER_DATA !== 'undefined' ? THEATER_DATA : []);
+  theaterData.forEach(node => {
     const card = document.createElement('div');
     card.className = 'base-card' + (node.type==='HVA' ? ' hva' : '');
     card.dataset.id = node.id;
