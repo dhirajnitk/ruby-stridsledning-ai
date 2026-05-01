@@ -100,9 +100,9 @@ def simulate_chase(tx=None, ty=None, destx=None, desty=None, mx=None, my=None, i
     
     for step in range(int(max_time / dt)):
         # 1. Target Movement Logic
-        dist_to_target = np.linalg.norm(t_pos)
+        dist_to_dest = np.linalg.norm(t_pos - target_dest)
         
-        if is_marv and dist_to_target < trigger_range:
+        if is_marv and dist_to_dest < trigger_range:
             jink_t += dt
             # Smooth sinusoidal lateral oscillation — creates S-curves visible on canvas
             jink_component = jink_magnitude * math.sin(2 * math.pi * jink_t / jink_period)
@@ -163,9 +163,9 @@ def generate_visualization():
     import random
     random.seed(42) 
     
-    # We don't strictly need to regenerate the static image for the user since 
-    # the frontend UI will handle it, but we can update the backend test code just in case.
-    pass
+    # Run scenarios for visualization
+    t_hist_std, m_hist_std, hit_std, miss_std = simulate_chase(is_marv=False)
+    t_hist_marv, m_hist_marv, hit_marv, miss_marv = simulate_chase(is_marv=True)
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 8))
     

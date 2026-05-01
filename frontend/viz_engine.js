@@ -243,16 +243,16 @@ function restoreSessionSnapshot() {
   if (!snapshot || !Array.isArray(snapshot.threats)) return false;
 
   const targetMode = snapshot.mode || MODE;
-  if (targetMode && targetMode !== currentTheater) {
-    currentTheater = targetMode;
-    const sel = document.getElementById('sel-theater');
-    if (sel) sel.value = currentTheater;
-    renderMap();
-    init3D();
-  } else {
-    renderMap();
-    init3D();
+  if (targetMode && targetMode !== MODE) {
+    window.location.href = window.location.pathname + '?theater=' + targetMode;
+    return false;
   }
+  
+  currentTheater = targetMode;
+  const sel = document.getElementById('sel-theater');
+  if (sel) sel.value = currentTheater;
+  renderMap();
+  init3D();
 
   initAmmo();
   Object.keys(snapshot.ammo || {}).forEach(id => { ammo[id] = snapshot.ammo[id]; });
@@ -1428,12 +1428,14 @@ class Interceptor {
       }
 
       if (this.lastLOS) {
-          const N = 3.5;
-          const rotation = new THREE.Quaternion().setFromUnitVectors(this.lastLOS, los);
-          const blendT = Math.min(N / 10, 1.0);
-          const identity = new THREE.Quaternion();
-          const navQ = identity.clone().slerp(rotation, blendT);
-          this.vel.applyQuaternion(navQ);
+          const N = 4.0;
+          const angle = this.lastLOS.angleTo(los);
+          if (angle > 0.00001) {
+              const axis = new THREE.Vector3().crossVectors(this.lastLOS, los).normalize();
+              if (axis.lengthSq() > 0) {
+                  this.vel.applyAxisAngle(axis, angle * N);
+              }
+          }
           if (this.vel.lengthSq() > 0) this.vel.normalize().multiplyScalar(flySpeed);
       }
       
@@ -1483,7 +1485,10 @@ class Interceptor {
     // threats collide visually on the 2D map even when interceptor is at different altitude.
     // 25000 game units = ~15 SVG units — ensures the circles visually overlap on screen.
     const dist = Math.hypot(this.pos.x - targetPos.x, this.pos.z - targetPos.z);
-    if (dist < 25000) {
+    const overshot = this._lastDist && (dist > this._lastDist) && (this._lastDist < 80000);
+    this._lastDist = dist;
+
+    if (dist < 25000 || overshot) {
       this.done = true;
       // Use engine pk_estimate if available (direct from /evaluate_advanced), else local table
       const pk = this._enginePk || getWeatherAdjustedPk(this._threatType, this._effKey, this.pos);
@@ -2522,6 +2527,13 @@ function init3D() {
   const container = document.getElementById('canvas-container');
   if (!container) { setInterval(updateSimulation, 16); return; }
 
+  if (renderer) {
+    renderer.dispose();
+    renderer.forceContextLoss();
+    const dom = renderer.domElement;
+    if (dom && dom.parentNode) dom.parentNode.removeChild(dom);
+  }
+
   // Use offsetWidth/Height which forces layout reflow; fall back to window dims
   const W = container.offsetWidth || (window.innerWidth - 240);
   const H = container.offsetHeight || (window.innerHeight - 260);
@@ -2531,7 +2543,7 @@ function init3D() {
   camera = new THREE.PerspectiveCamera(60, W / H, 1000, 10000000);
   // Center camera on boreal theater (~456, 391 units) or Sweden origin
   if (MODE === 'boreal') {
-    camera.position.set(759000, 1000000, 1852000);
+    camera.position.set(800000, 1200000, 2600000);
   } else {
     camera.position.set(0, 1000000, 1000000);
   }
@@ -2550,7 +2562,7 @@ function init3D() {
   });
 
   orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
-  if (MODE === 'boreal') orbitControls.target.set(759000, 0, 652000);
+  if (MODE === 'boreal') orbitControls.target.set(800000, 0, 640000);
   orbitControls.update();
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -2875,10 +2887,15 @@ function launchStandaloneWave() {
     return t;
   });
   if (typeof camera !== 'undefined' && typeof orbitControls !== 'undefined') {
-    const cx = MODE === 'sweden' ? 0 : to3X(456);
-    const cz = MODE === 'sweden' ? 0 : to3Z(391);
-    camera.position.set(cx, 900000, cz + 700000);
-    orbitControls.target.set(cx, 0, cz);
+    if (MODE === 'boreal') {
+        camera.position.set(800000, 1200000, 2600000);
+        orbitControls.target.set(800000, 0, 640000);
+    } else {
+        const cx = 0;
+        const cz = 0;
+        camera.position.set(cx, 900000, cz + 700000);
+        orbitControls.target.set(cx, 0, cz);
+    }
     orbitControls.update();
   }
   callEngine(newThreats).then(result => {

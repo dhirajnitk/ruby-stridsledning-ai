@@ -34,7 +34,6 @@ MODEL_NAME_ALIASES = {
     "heuristic": "heuristic",
     "hbase": "heuristic",
     "random": "heuristic",
-    "supreme_v4": "supreme_v4",
 }
 
 
