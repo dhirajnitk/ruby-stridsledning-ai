@@ -318,8 +318,9 @@ function buildAssets(theater){
 const THEATER_CENTERS = {
   // Sweden: Center of country around Stockholm (0,0). Camera looking North-West.
   sweden: { camX: 0, camY: 800000, camZ: 1600000, tgtX: 0, tgtZ: 0 },
-  // Boreal: Theater spans 0-1.6M X and 0-1.3M Z. Centering camera on middle.
-  boreal: { camX: 800000, camY: 850000, camZ: 2000000, tgtX: 800000, tgtZ: 650000 }
+  // Boreal: Theater spans X: 100k-1500k, Z: 40k-1240k. Camera positioned SW
+  // to frame all entities: bases (west), threats (east spawn), targets (scattered).
+  boreal: { camX: 800000, camY: 1200000, camZ: 2600000, tgtX: 800000, tgtZ: 640000 }
 };
 
 function setTheater(mode) {

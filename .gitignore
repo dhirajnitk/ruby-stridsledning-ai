@@ -1,30 +1,49 @@
 # Environments
 .venv/
-.venv_saab/
 env/
 venv/
-ENV/
-env.bak/
-venv.bak/
+
+# Dependencies
 node_modules/
 
-# Byte-compiled / optimized / DLL files
+# IDEs
+.idea/
+.vscode/
+.sixth
+
+# Python Artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 
-# IDEs and Editors
-.idea/
-.vscode/
-frontend_legacy
-.sixth
-.git
-.local_lib
-
-*.swp
-*.swo
-
-
-# Temporary and local files
-.DS_Store
+# Logs & Junk
 *.log
+.DS_Store
+Thumbs.db
+
+# LARGE BINARIES - SELECTIVE EXCLUSION
+# Ignore all videos and legacy assets
+video/
+frontend_legacy/
+scratch/
+presentations/
+playwright-report/
+test-results/
+
+# MODELS - WHITELIST STRATEGY
+# Ignore all models by default to prevent 1.0GB+ bloat
+models/*
+# Explicitly allow active tactical models
+!models/elite_v3_5.pth
+!models/supreme_v3_1.pth
+!models/supreme_v2.pth
+!models/hybrid_rl.pth
+!models/generalist_e10.pth
+!models/ppo_strategic_v4_25d.pth
+
+# Generated evaluation/training payloads
+data/evaluation/*.npz
+data/training/strategic_mega_corpus/*.npz
+
+# DATA (Keep ground truth, ignore temporary results)
+# data/results/

@@ -4,6 +4,66 @@ import torch.nn.functional as F
 import numpy as np
 import os, json
 
+
+MODEL_NAME_ALIASES = {
+    "elite": "elite_v3_5",
+    "elite_v3_5": "elite_v3_5",
+    "supreme3": "supreme_v3_1",
+    "supreme_v3_1": "supreme_v3_1",
+    "supreme2": "supreme_v2",
+    "supreme_v2": "supreme_v2",
+    "titan": "titan",
+    "titan12": "titan",
+    "titan_12": "titan",
+    "titan-12": "titan",
+    "supreme4": "supreme4",
+    "supreme_v4": "supreme4",
+    "supreme_v4_25d": "supreme4",
+    "chronos4": "chronos4",
+    "chronos_4": "chronos4",
+    "chronos-4": "chronos4",
+    "vanguard": "vanguard",
+    "twinoracle": "twinOracle",
+    "twin_oracle": "twinOracle",
+    "twin-oracle": "twinOracle",
+    "guardian": "guardian",
+    "hybrid": "hybrid_rl",
+    "hybrid_rl": "hybrid_rl",
+    "gene10": "generalist_e10",
+    "generalist_e10": "generalist_e10",
+    "heuristic": "heuristic",
+    "hbase": "heuristic",
+    "random": "heuristic",
+    "supreme_v4": "supreme_v4",
+}
+
+
+MODEL_SPECS = {
+    "elite_v3_5": {"arch": "elite18", "path": "models/elite_v3_5.pth", "input_dim": 18, "output_dim": 11},
+    "supreme_v3_1": {"arch": "chronos18", "path": "models/supreme_v3_1.pth", "input_dim": 18, "output_dim": 11},
+    "supreme_v2": {"arch": "resnet18", "path": "models/supreme_v2.pth", "input_dim": 18, "output_dim": 11},
+    "supreme4": {"arch": "direct25", "path": "models/ppo_strategic_v4_25d.pth", "input_dim": 25, "output_dim": 24},
+    "titan": {"arch": "titan25", "path": "models/titan.pth", "input_dim": 25, "output_dim": 24},
+    "chronos4": {"arch": "chronos25", "path": "models/chronos_v4_25d.pth", "input_dim": 25, "output_dim": 24},
+    "vanguard": {"arch": "direct25", "path": "models/vanguard.pth", "input_dim": 25, "output_dim": 24},
+    "twinOracle": {"arch": "direct25", "path": "models/twin_oracle.pth", "input_dim": 25, "output_dim": 24},
+    "guardian": {"arch": "direct25", "path": "models/guardian.pth", "input_dim": 25, "output_dim": 24},
+    "hybrid_rl": {"arch": "resnet18", "path": "models/hybrid_rl.pth", "input_dim": 18, "output_dim": 11},
+    "generalist_e10": {"arch": "mlp18", "path": "models/generalist_e10.pth", "input_dim": 18, "output_dim": 11},
+    "heuristic": {"arch": "heuristic", "path": None, "input_dim": 18, "output_dim": 11},
+}
+
+
+def resolve_model_name(model_name="elite_v3_5", default="elite_v3_5"):
+    if not model_name:
+        return default
+    normalized = str(model_name).strip().lower().replace(" ", "_").replace("-", "_")
+    if normalized in MODEL_NAME_ALIASES:
+        return MODEL_NAME_ALIASES[normalized]
+    if normalized in MODEL_NAME_ALIASES.values():
+        return normalized
+    return default
+
 # --- 1. ARCHITECTURES ---
 class ResBlock(nn.Module):
     def __init__(self, size):
@@ -60,52 +120,60 @@ class GeneralistMLP(nn.Module):
 class BorealInference:
     def __init__(self, model_name="elite_v3_5", device="cpu"):
         self.device = torch.device(device)
-        self.model_name = model_name.lower().replace(" ", "_")
+        self.model_name = resolve_model_name(model_name)
         mn = self.model_name
+        spec = MODEL_SPECS.get(mn, MODEL_SPECS["elite_v3_5"])
         
         # Load Scalers for Normalization
-        self.mean = np.zeros(25)
-        self.scale = np.ones(25)
+        self.mean = np.zeros(spec["input_dim"])
+        self.scale = np.ones(spec["input_dim"])
         params_path = "models/policy_network_params.json"
         if os.path.exists(params_path):
             with open(params_path, "r") as f:
                 p = json.load(f)
                 # DYNAMIC DIMENSION CHECK: Support 18-D or 25-D scalers
-                dim = 25 if "supreme_v4" in mn else 18
+                dim = spec["input_dim"]
                 self.mean = np.array(p["scaler_mean"][:dim]) if len(p.get("scaler_mean",[])) >= dim else np.zeros(dim)
                 self.scale = np.array(p["scaler_scale"][:dim]) if len(p.get("scaler_scale",[])) >= dim else np.ones(dim)
         
         # FIX B6: Proper per-model architecture mapping
         mn = self.model_name
-        if "supreme_v4" in mn:
+        if mn == "supreme4":
             from ppo_agent import BorealDirectEngine
-            self.model = BorealDirectEngine(input_dim=25, output_dim=11)
-            model_path = "models/ppo_strategic_v4_25d.pth"
-        elif "supreme_v3_1" in mn or "chronos" in mn:
+            self.model = BorealDirectEngine(input_dim=25, output_dim=24)
+        elif mn == "supreme_v3_1":
             self.model = ChronosGRU(18, 11)
-        elif "supreme_v2" in mn:
+        elif mn == "supreme_v2":
             self.model = StandardResNet(18, 11, width=64)
-        elif "titan" in mn:
+        elif mn == "titan":
             # Titan uses deep transformer — import at runtime to avoid circular deps
             try:
                 import sys, os as _os
                 _src = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
                 if _src not in sys.path: sys.path.insert(0, _src)
                 from ppo_titan_transformer import BorealTitanEngine
-                self.model = BorealTitanEngine(input_dim=18, output_dim=11)
+                self.model = BorealTitanEngine(input_dim=25, output_dim=24)
             except Exception:
-                self.model = TransformerResNet(18, 11)  # graceful fallback
-        elif "generalist" in mn:
+                self.model = TransformerResNet(25, 24)  # graceful fallback
+        elif mn == "chronos4":
+            self.model = ChronosGRU(25, 24)
+        elif mn == "vanguard":
+            self.model = BorealDirectEngine(input_dim=25, output_dim=24)
+        elif mn == "twinOracle":
+            self.model = BorealDirectEngine(input_dim=25, output_dim=24)
+        elif mn == "guardian":
+            self.model = BorealDirectEngine(input_dim=25, output_dim=24)
+        elif mn == "generalist_e10":
             self.model = GeneralistMLP(18, 11)
-        elif "hybrid" in mn:
+        elif mn == "hybrid_rl":
             # Hybrid RL uses a standard ResNet with depth-2 residual blocks
             self.model = StandardResNet(18, 11, width=128)
         else:
             # elite_v3_5, heuristic, etc.
             self.model = TransformerResNet(18, 11)
 
-        model_path = f"models/{self.model_name}.pth"
-        if os.path.exists(model_path):
+        model_path = spec["path"]
+        if model_path and os.path.exists(model_path):
             try:
                 self.model.load_state_dict(torch.load(model_path, map_location=self.device))
             except RuntimeError as e:

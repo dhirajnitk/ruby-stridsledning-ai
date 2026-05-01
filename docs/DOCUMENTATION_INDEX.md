@@ -14,6 +14,7 @@ This index provides a centralized map to the extensive architectural and tactica
 *   **[CORTEX_C2_REFERENCE.md](CORTEX_C2_REFERENCE.md)**: Comprehensive guide to the Operator Dashboard, including HITL and Manual Override.
 *   **[STRATEGIC_KINETIC_SYNC_V4.md](STRATEGIC_KINETIC_SYNC_V4.md)**: Details on the Proportional Navigation (PN) intercept logic and 5Hz sync loop.
 *   **[DASHBOARD_PATH_SYNC_DESIGN.md](DASHBOARD_PATH_SYNC_DESIGN.md)**: Design note for backend-authored target/interceptor path replay and collision rendering.
+*   **[LIVE_VIEW_INTERCEPT_PATH_FIX_REPORT.md](LIVE_VIEW_INTERCEPT_PATH_FIX_REPORT.md)**: Incident report for the local-path plus Pro-Nav fix that prevents mid-map disappearance.
 *   **[WEAPON_ASSIGNMENT_DOCTRINE.md](WEAPON_ASSIGNMENT_DOCTRINE.md)**: Explanation of cost-matrix tuning (Balanced/Fortress/Aggressive).
 *   **[LLM_INTEGRATION.md](LLM_INTEGRATION.md)**: Guide to the neural-driven SITREP reporting and commander-level advisory.
 

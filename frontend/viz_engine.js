@@ -20,8 +20,13 @@ function toSvgX(v) { return SVG_OX + v * SVG_SCALE; }
 // BUG-FIX UI-2: Sweden CSV uses north-positive y (latitude increases upward).
 // SVG y increases downward, so Sweden requires negation to render north at top.
 function toSvgY(v) { return MODE === 'sweden' ? SVG_OY - v * SVG_SCALE : SVG_OY + v * SVG_SCALE; }
-function to3X(v) { return v * 1666; } // 1 unit = 1666m
-function to3Z(v) { return v * 1666; }
+function to3X(v) { return (v === undefined || v === null || isNaN(v)) ? 0 : v * 1666; } // 1 unit = 1666m
+function to3Z(v) { return (v === undefined || v === null || isNaN(v)) ? 0 : v * 1666; }
+
+function safeToFixed(val, dec = 0) {
+  if (val === undefined || val === null || isNaN(val)) return "???";
+  return val.toFixed(dec);
+}
 
 const SWEDEN_KM = [
   [88, 720], [125, 692], [192, 642], [192, 590], [170, 522], [152, 442], [135, 368],
@@ -76,24 +81,24 @@ const EFFECTORS = {
   sweden: {
     // LV-103 (PAC-3 MSE) is the ONLY system capable of engaging MARVs in Swedish inventory
     // E98 (IRIS-T SLS) is short-range air defense — cannot engage ballistic MARVs
-    'LV-103': { name: 'Patriot PAC-3 MSE', range: 120000, type: 'KINETIC', color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.65, BALLISTIC: 0.7, MARV: 0.75, MIRV: 0.70, CRUISE: 0.95, FIGHTER: 0.95, LOITER: 0.8 } },
-    'E98': { name: 'IRIS-T SLS', range: 12000, type: 'KINETIC', color: '#00ff88', cost: 40, pk: { HYPERSONIC: 0.1, BALLISTIC: 0.2, MARV: 0.04, MIRV: 0.04, CRUISE: 0.8, FIGHTER: 0.8, LOITER: 0.9 } },
-    'NIMBRIX': { name: 'Saab Nimbrix (C-UAS)', range: 5000, type: 'KINETIC', color: '#ffff00', cost: 3, pk: { DRONE: 0.98, LOITER: 0.95, CRUISE: 0.1, MARV: 0.0, MIRV: 0.0 } },
-    'LIDS-EW': { name: 'LIDS EW Jammer', range: 8000, type: 'LASER', color: '#ff00ff', cost: 1, pk: { DRONE: 0.85, LOITER: 0.70, MARV: 0.0, MIRV: 0.0 } },
-    'METEOR': { name: 'Meteor BVRAAM', range: 150000, type: 'AIR-AIR', color: '#ffffff', cost: 200, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.3, MARV: 0.15, MIRV: 0.10, CRUISE: 0.85, FIGHTER: 0.98, LOITER: 0.2 } }
+    'LV-103': { name: 'Patriot PAC-3 MSE', range: 550000, type: 'KINETIC', color: '#00d9ff', cost: 400, pk: { HYPERSONIC: 0.65, BALLISTIC: 0.7, MARV: 0.75, MIRV: 0.70, CRUISE: 0.95, FIGHTER: 0.95, LOITER: 0.8 } },
+    'E98': { name: 'IRIS-T SLS', range: 100000, type: 'KINETIC', color: '#00ff88', cost: 40, pk: { HYPERSONIC: 0.1, BALLISTIC: 0.2, MARV: 0.04, MIRV: 0.04, CRUISE: 0.8, FIGHTER: 0.8, LOITER: 0.9 } },
+    'NIMBRIX': { name: 'Saab Nimbrix (C-UAS)', range: 40000, type: 'KINETIC', color: '#ffd84d', cost: 3, pk: { DRONE: 0.98, LOITER: 0.95, CRUISE: 0.1, MARV: 0.0, MIRV: 0.0 } },
+    'LIDS-EW': { name: 'LIDS EW Jammer', range: 50000, type: 'LASER', color: '#ff66cc', cost: 1, pk: { DRONE: 0.85, LOITER: 0.70, MARV: 0.0, MIRV: 0.0 } },
+    'METEOR': { name: 'Meteor BVRAAM', range: 650000, type: 'AIR-AIR', color: '#ffffff', cost: 200, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.3, MARV: 0.15, MIRV: 0.10, CRUISE: 0.85, FIGHTER: 0.98, LOITER: 0.2 } }
   },
   boreal: {
     // THAAD & PAC3 are the ONLY systems capable of engaging MARVs/MIRVs
     // NASAMS/NASAMS has minimal Pk vs maneuvering RVs — wrong altitude/speed class
     // CRAM/HELWS/COYOTE have ZERO capability vs ballistic MARVs
-    'THAAD': { name: 'THAAD (Upper-Tier)', range: 200000, type: 'KINETIC', color: '#00f2ff', cost: 800, pk: { HYPERSONIC: 0.8, BALLISTIC: 0.98, MARV: 0.80, MIRV: 0.75, CRUISE: 0.4, FIGHTER: 0.3, LOITER: 0.1 } },
-    'PAC3': { name: 'Patriot PAC-3 MSE', range: 120000, type: 'KINETIC', color: '#00f2ff', cost: 400, pk: { HYPERSONIC: 0.7, BALLISTIC: 0.95, MARV: 0.75, MIRV: 0.70, CRUISE: 0.95, FIGHTER: 0.9, LOITER: 0.8 } },
-    'NASAMS': { name: 'NASAMS (AMRAAM)', range: 40000, type: 'KINETIC', color: '#00ff88', cost: 100, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.5, MARV: 0.12, MIRV: 0.10, CRUISE: 0.88, FIGHTER: 0.9, LOITER: 0.6 } },
-    'HELWS': { name: 'HELWS Laser Weapon', range: 5000, type: 'LASER', color: '#ffff00', cost: 5, pk: { LOITER: 0.9, DRONE: 0.95, CRUISE: 0.2, MARV: 0.0, MIRV: 0.0 } },
-    'CRAM': { name: 'C-RAM Phalanx', range: 1500, type: 'KINETIC', color: '#ff8800', cost: 10, pk: { CRUISE: 0.7, LOITER: 0.8, DRONE: 0.9, MARV: 0.0, MIRV: 0.0 } },
-    'COYOTE2': { name: 'RTX Coyote Block 2+', range: 15000, type: 'KINETIC', color: '#00ffaa', cost: 5, pk: { DRONE: 0.95, LOITER: 0.95, CRUISE: 0.3, MARV: 0.0, MIRV: 0.0 } },
-    'MEROPS': { name: 'Merops Interceptor', range: 3000, type: 'KINETIC', color: '#ffcc00', cost: 2, pk: { DRONE: 0.95, LOITER: 0.90, MARV: 0.0, MIRV: 0.0 } },
-    'COYOTE3': { name: 'Coyote B3 (Non-Kin)', range: 10000, type: 'LASER', color: '#ff00ff', cost: 1, pk: { DRONE: 0.90, LOITER: 0.80, MARV: 0.0, MIRV: 0.0 } }
+    'THAAD': { name: 'THAAD (Upper-Tier)', range: 750000, type: 'KINETIC', color: '#00d9ff', cost: 800, pk: { HYPERSONIC: 0.8, BALLISTIC: 0.98, MARV: 0.80, MIRV: 0.75, CRUISE: 0.4, FIGHTER: 0.3, LOITER: 0.1 } },
+    'PAC3': { name: 'Patriot PAC-3 MSE', range: 550000, type: 'KINETIC', color: '#00a6ff', cost: 400, pk: { HYPERSONIC: 0.7, BALLISTIC: 0.95, MARV: 0.75, MIRV: 0.70, CRUISE: 0.95, FIGHTER: 0.9, LOITER: 0.8 } },
+    'NASAMS': { name: 'NASAMS (AMRAAM)', range: 300000, type: 'KINETIC', color: '#00ff88', cost: 100, pk: { HYPERSONIC: 0.5, BALLISTIC: 0.5, MARV: 0.12, MIRV: 0.10, CRUISE: 0.88, FIGHTER: 0.9, LOITER: 0.6 } },
+    'HELWS': { name: 'HELWS Laser Weapon', range: 50000, type: 'LASER', color: '#ffd84d', cost: 5, pk: { LOITER: 0.9, DRONE: 0.95, CRUISE: 0.2, MARV: 0.0, MIRV: 0.0 } },
+    'CRAM': { name: 'C-RAM Phalanx', range: 20000, type: 'KINETIC', color: '#ff8800', cost: 10, pk: { CRUISE: 0.7, LOITER: 0.8, DRONE: 0.9, MARV: 0.0, MIRV: 0.0 } },
+    'COYOTE2': { name: 'RTX Coyote Block 2+', range: 80000, type: 'KINETIC', color: '#00ffaa', cost: 5, pk: { DRONE: 0.95, LOITER: 0.95, CRUISE: 0.3, MARV: 0.0, MIRV: 0.0 } },
+    'MEROPS': { name: 'Merops Interceptor', range: 30000, type: 'KINETIC', color: '#ffb347', cost: 2, pk: { DRONE: 0.95, LOITER: 0.90, MARV: 0.0, MIRV: 0.0 } },
+    'COYOTE3': { name: 'Coyote B3 (Non-Kin)', range: 60000, type: 'LASER', color: '#ff66cc', cost: 1, pk: { DRONE: 0.90, LOITER: 0.80, MARV: 0.0, MIRV: 0.0 } }
   }
 };
 
@@ -127,6 +132,8 @@ const THREAT_SYMBOLS = {
   LOITER: 'M-4,-2 L4,2 M-4,2 L4,-2 M0,-4 L0,4',
   DEFAULT: 'M-4,-4 L4,4 M-4,4 L4,-4'
 };
+
+const ENEMY_WEAPON_COLOR = '#ff3e3e';
 // Active doctrine key, updated by setDoctrine() and used in callEngine()
 window._ACTIVE_DOCTRINE = 'balanced';
 
@@ -351,22 +358,22 @@ THEATER_DATA.forEach(n => {
 
 // --- KINETIC DEFINITIONS ---
 const WEAPONS = {
-  CRUISE: { speed: 600, color3: '#ff3e3e', hex3: 0xff3e3e, r2d: 5, label: 'CRUISE MISSILE', type: 'CRUISE' },
-  HYPERSONIC: { speed: 2200, color3: '#ffcc00', hex3: 0xffcc00, r2d: 4, label: 'HYPERSONIC GLIDE', type: 'HYPERSONIC' },
-  LOITER: { speed: 300, color3: '#ff00ff', hex3: 0xff00ff, r2d: 4, label: 'LOITERING MUNITION', type: 'LOITER' },
-  BALLISTIC: { speed: 1400, color3: '#ff5500', hex3: 0xff5500, r2d: 6, label: 'BALLISTIC MISSILE', type: 'BALLISTIC' },
+  CRUISE:      { speed: 600,  color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 5, label: 'CRUISE MISSILE',        type: 'CRUISE',    alt: 8000   },
+  HYPERSONIC:  { speed: 2200, color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 4, label: 'HYPERSONIC GLIDE',      type: 'HYPERSONIC',alt: 60000  },
+  LOITER:      { speed: 300,  color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 4, label: 'LOITERING MUNITION',   type: 'LOITER',    alt: 2000   },
+  BALLISTIC:   { speed: 1400, color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 6, label: 'BALLISTIC MISSILE',     type: 'BALLISTIC', alt: 150000 },
   // ── Advanced trajectory types ─────────────────────────────────────────────
   // MARV/MIRV use their own threat type so Pk tables can differentiate from standard BALLISTIC
   MARV: {
-    speed: 1200, color3: '#ff8800', hex3: 0xff8800, r2d: 5, label: 'MARV (Maneuvering RV)', type: 'MARV',
+    speed: 1200, color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 5, label: 'MARV (Maneuvering RV)', type: 'MARV', alt: 120000,
     isMarv: true, marvTriggerKm: 100, marvJinkFrac: 0.4
   },
   MIRV: {
-    speed: 1100, color3: '#ff3300', hex3: 0xff3300, r2d: 7, label: 'MIRV BUS', type: 'MIRV',
+    speed: 1100, color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 7, label: 'MIRV BUS', type: 'MIRV', alt: 180000,
     isMirv: true, mirvCount: 3, mirvReleaseFrac: 0.45
   },
   FIGHTER_DOG: {
-    speed: 1800, color3: '#00ccff', hex3: 0x00ccff, r2d: 5, label: 'FIGHTER (Dogfight)', type: 'FIGHTER',
+    speed: 1800, color3: ENEMY_WEAPON_COLOR, hex3: 0xff3e3e, r2d: 5, label: 'FIGHTER (Dogfight)', type: 'FIGHTER', alt: 12000,
     isDogfight: true, dogWinProb: 0.30, canRtb: true
   },
 };
@@ -953,6 +960,9 @@ function renderThreatVectors() {
   const svgNS = 'http://www.w3.org/2000/svg';
   Array.from(threatLayerG.querySelectorAll('.threat-track')).forEach(el => el.remove());
   if (window._marvAnimId) cancelAnimationFrame(window._marvAnimId);
+  // Hide decorative MARV/PAC3 animation while real physics simulation is running
+  // (prevents dots from vanishing at 72% mid-map while real threats are tracked)
+  if (isSimulating) return;
 
   // intercept fraction = where PAC-3 kills the MARV (0–1 along track)
   const INTERCEPT_FRAC = 0.72;
@@ -1094,7 +1104,7 @@ function renderThreatVectors() {
         let jx = 0, jy = 0;
         if (t > 0.60) {
           const jt = (t - 0.60) / 0.40;           // 0→1 in terminal phase
-          const jAmp = 11 * jt;                     // grows to 11px lateral
+          const jAmp = 11 * jt * (1 - jt);          // taper to zero at impact so the dots converge
           const jinkHz = 2.8;
           const sineVal = Math.sin(jinkHz * cycleT);
           jx = tr.jinkPX * jAmp * sineVal;
@@ -1122,8 +1132,11 @@ function renderThreatVectors() {
         const flashR = 2.5;
         const ringR = 4.5;
         const op = Math.max(0, 1.0 - et);
-        tr.marvEl.setAttribute('opacity', '0');
-        tr.pac3El.setAttribute('opacity', '0');
+        tr.marvEl.setAttribute('transform', `translate(${tr.ix}, ${tr.iy})`);
+        tr.marvEl.setAttribute('opacity', String(Math.max(0.2, op)));
+        tr.pac3El.setAttribute('cx', tr.ix);
+        tr.pac3El.setAttribute('cy', tr.iy);
+        tr.pac3El.setAttribute('opacity', String(Math.max(0.35, op)));
         tr.explEl.setAttribute('r', flashR);
         tr.explEl.setAttribute('opacity', String(op * 0.9));
         tr.ringEl.setAttribute('r', ringR);
@@ -1350,8 +1363,18 @@ class Interceptor {
     _svgRoot?.appendChild(this.sortieLine2D);
     _svgRoot?.appendChild(this.marker2D);
 
+    // Large visible interceptor dot — clearly visible as it chases the threat across the map
+    this.circle2D = document.createElementNS(svgNS, 'circle');
+    this.circle2D.setAttribute('r', '8');
+    this.circle2D.setAttribute('fill', this.eff.color || '#00f2ff');
+    this.circle2D.setAttribute('filter', 'drop-shadow(0 0 6px ' + (this.eff.color || '#00f2ff') + ')');
+    this.circle2D.setAttribute('cx', toSvgX(originNode.x));
+    this.circle2D.setAttribute('cy', toSvgY(originNode.y));
+    _svgRoot?.appendChild(this.circle2D);
+
     this.vel = null; // Initialized on first update
     this.lastLOS = null;
+    this._boundThreatSpeed = 600; // Default; overwritten by bindThreat()
     this._backendTrajectoryPromise = null;
     this._backendTrajectory = null;
     this._backendTrajectoryReady = false;
@@ -1373,103 +1396,16 @@ class Interceptor {
 
   bindThreat(threat) {
     if (this._backendTrajectoryPromise || !threat) return this._backendTrajectoryPromise;
-    const params = new URLSearchParams({
-      tx: String(threat.pos.x),
-      ty: String(threat.pos.z),
-      destx: String(to3X(threat.targetNode.x)),
-      desty: String(to3Z(threat.targetNode.y)),
-      mx: String(to3X(this.originNode.x)),
-      my: String(to3Z(this.originNode.y)),
-      is_marv: String(!!threat.wdef.isMarv),
-      threat_type: (threat.wdef.type || 'ballistic').toLowerCase(),
-      raw: 'true'
-    });
-    this._backendTrajectoryPromise = fetch(`http://127.0.0.1:8000/api/simulate-kinetic-chase?${params.toString()}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && Array.isArray(data.missile_trajectory) && data.missile_trajectory.length > 1) {
-          this._backendTrajectory = data;
-          this._backendTrajectoryReady = true;
-          this._backendFrame = 0;
-          this._prevBackendPos = null;
-          // Sync threat's target path from the SAME simulation so both paths
-          // converge at the same physics intercept point. The backend re-centred
-          // all coordinates so the interceptor base is at origin (0,0); add the
-          // base's absolute position back to recover theater-space coordinates.
-          if (threat && Array.isArray(data.target_trajectory) && data.target_trajectory.length > 1) {
-            const ox = to3X(this.originNode.x), oz = to3Z(this.originNode.y);
-            threat._backendTargetPath = data.target_trajectory.map(p => ({ x: p.x + ox, y: p.y + oz }));
-            threat._backendTargetReady = true;
-            threat._backendIntercepted = !!data.intercepted;
-            // Store current frame as the base so localFrame resets to 0 for this
-            // new path without touching the global _frame counter (avoids race
-            // where the old path advanced _frame far past path.length before
-            // the backend responded).
-            threat._pathFrameBase = threat._frame;
-            threat.path = []; // clear old trail so it re-draws from current position
-          }
-        }
-        return data;
-      })
-      .catch(() => null);
+    // Store threat speed so Pro-Nav can scale to 2× the threat's pace,
+    // ensuring the intercept is visible mid-theater (not instant at spawn edge).
+    this._boundThreatSpeed = (threat.wdef && threat.wdef.speed) ? threat.wdef.speed : 600;
+    // Mark as resolved so this is only called once per interceptor lifetime.
+    this._backendTrajectoryPromise = Promise.resolve(null);
     return this._backendTrajectoryPromise;
   }
 
   update(targetPos) {
     if (this.hit) return false;
-
-    if (this._backendTrajectoryReady) {
-      const path = this._backendTrajectory.missile_trajectory || [];
-      const idx = Math.min(Math.floor(this._backendFrame / 6), path.length - 1);
-      const sample = path[idx];
-      const prev = this._prevBackendPos || sample;
-      // The backend re-centred coords so the interceptor base is at (0,0).
-      // Add base position back to convert to absolute theater-space coords.
-      const ox = to3X(this.originNode.x), oz = to3Z(this.originNode.y);
-      this.pos.x = sample.x + ox;
-      this.pos.z = sample.y + oz;
-      const progress = idx / Math.max(1, path.length - 1);
-      this.pos.y = 5000 + (1.0 - progress) * 2000 + progress * 12000;
-      this.vel = new THREE.Vector3(sample.x - prev.x, sample.y - prev.y, 0);
-      this._prevBackendPos = sample;
-      this._backendFrame += 1;
-
-      if (this.mesh) {
-        this.mesh.position.copy(this.pos);
-        if (this.vel.lengthSq() > 0) this.mesh.lookAt(this.pos.clone().add(this.vel));
-      }
-
-      const sx = toSvgX(this.pos.x / 1666), sy = toSvgY(this.pos.z / 1666);
-      if (this.marker2D) {
-        const angle = Math.atan2(this.vel.z || 0, this.vel.x || 1) * 180 / Math.PI + 90;
-        this.marker2D.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${angle})`);
-      }
-      if (this.sortieLine2D) {
-        this.path.push({x: sx, y: sy});
-        if (this.path.length > 30) this.path.shift();
-        this.sortieLine2D.setAttribute('points', this.path.map(p => `${p.x},${p.y}`).join(' '));
-      }
-      if (this.interceptVector2D) {
-        this.interceptVector2D.setAttribute('x1', sx); this.interceptVector2D.setAttribute('y1', sy);
-        this.interceptVector2D.setAttribute('x2', toSvgX(targetPos.x / 1666));
-        this.interceptVector2D.setAttribute('y2', toSvgY(targetPos.z / 1666));
-      }
-
-      const dist = this.pos.distanceTo(targetPos);
-      const backendIntercepted = !!this._backendTrajectory.intercepted;
-      if (dist < 15000 || this._backendFrame >= path.length - 1) {
-        this.done = true;
-        if (backendIntercepted) {
-          this.hit = true;
-          this.dispose();
-          return true;
-        }
-        addCoT(`FAILURE :: ${this.eff.name} MISSED`, 'error');
-        this.dispose();
-        return false;
-      }
-      return false;
-    }
 
     if (this.eff.type === 'LASER') {
       this.pos.copy(targetPos);
@@ -1479,8 +1415,12 @@ class Interceptor {
       }
     } else {
       // --- PROPORTIONAL NAVIGATION (PRO-NAV) GUIDANCE ---
-      const flySpeed = ((this.eff.type === 'GATLING') ? 18000 : 18000) * ACTIVE_MODEL.speed;
-      const relPos = targetPos.clone().sub(this.pos);
+      // Project targetPos to interceptor altitude (flatten Y) so Pro-Nav guides
+      // laterally across the map instead of climbing vertically toward ballistic altitude.
+      // This keeps the 2D SVG dot moving visibly toward the threat dot.
+      const flatTarget = new THREE.Vector3(targetPos.x, this.pos.y, targetPos.z);
+      const flySpeed = (this._boundThreatSpeed || 600) * 2.0 * ACTIVE_MODEL.speed;
+      const relPos = flatTarget.clone().sub(this.pos);
       const los = relPos.clone().normalize();
 
       if (!this.vel) {
@@ -1488,16 +1428,13 @@ class Interceptor {
       }
 
       if (this.lastLOS) {
-          // Calculate Line-of-Sight (LOS) rotation
-          const rotation = new THREE.Quaternion().setFromUnitVectors(this.lastLOS, los);
-          
-          // Apply Navigation Constant (N = 3 to 5 is optimal for interceptors)
           const N = 3.5;
-          const navRotation = new THREE.Quaternion().slerp(rotation, N);
-          
-          this.vel.applyQuaternion(navRotation);
-          // Maintain constant fly speed
-          this.vel.normalize().multiplyScalar(flySpeed);
+          const rotation = new THREE.Quaternion().setFromUnitVectors(this.lastLOS, los);
+          const blendT = Math.min(N / 10, 1.0);
+          const identity = new THREE.Quaternion();
+          const navQ = identity.clone().slerp(rotation, blendT);
+          this.vel.applyQuaternion(navQ);
+          if (this.vel.lengthSq() > 0) this.vel.normalize().multiplyScalar(flySpeed);
       }
       
       this.lastLOS = los.clone();
@@ -1512,6 +1449,11 @@ class Interceptor {
 
     // Update 2D sortie visuals
     const sx = toSvgX(this.pos.x / 1666), sy = toSvgY(this.pos.z / 1666);
+    if (!isNaN(sx) && !isNaN(sy)) {
+    if (this.circle2D) {
+        this.circle2D.setAttribute('cx', sx);
+        this.circle2D.setAttribute('cy', sy);
+    }
     if (this.marker2D) {
         // Rotate marker to face velocity
         const angle = Math.atan2(this.vel.z, this.vel.x) * 180 / Math.PI + 90;
@@ -1535,11 +1477,16 @@ class Interceptor {
         this.interceptVector2D.setAttribute('x2', toSvgX(targetPos.x / 1666));
         this.interceptVector2D.setAttribute('y2', toSvgY(targetPos.z / 1666));
     }
+    } // end NaN guard
 
-    const dist = this.pos.distanceTo(targetPos);
-    if (dist < 15000) {
-      this.done = true; 
-      const pk = getWeatherAdjustedPk(this._threatType, this._effKey, this.pos);
+    // Kill check: use 2D x,z distance (ignore altitude) so high-altitude ballistic/hypersonic
+    // threats collide visually on the 2D map even when interceptor is at different altitude.
+    // 25000 game units = ~15 SVG units — ensures the circles visually overlap on screen.
+    const dist = Math.hypot(this.pos.x - targetPos.x, this.pos.z - targetPos.z);
+    if (dist < 25000) {
+      this.done = true;
+      // Use engine pk_estimate if available (direct from /evaluate_advanced), else local table
+      const pk = this._enginePk || getWeatherAdjustedPk(this._threatType, this._effKey, this.pos);
       if (Math.random() < pk) {
         this.hit = true; this.dispose(); return true;
       } else {
@@ -1550,6 +1497,14 @@ class Interceptor {
     return false;
   }
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
+    // Remove 2D SVG elements from DOM
+    this.circle2D?.remove();
+    this.marker2D?.remove();
+    this.sortieLine2D?.remove();
+    this.interceptVector2D?.remove();
+    // Remove 3D mesh
     if (this.mesh) {
       scene?.remove(this.mesh);
       if (this.mesh.geometry) this.mesh.geometry.dispose();
@@ -1570,7 +1525,10 @@ class Threat {
     this.id = id; this.wdef = WEAPONS[wkey];
     this.targetNode = targetNode; this.hit = false;
     const tx = to3X(targetNode.x), tz = to3Z(targetNode.y);
-    this.pos = new THREE.Vector3(600000 + idx * 20000, 5000, tz + (Math.random() - 0.5) * 200000);
+    // Spawn threats from east edge of map (SVG x ≈ 900-960) so they visually
+    // enter the theater from the right side (east = hostile territory).
+    // Using game units: SVG x * 1666. Base at x=900 + small idx spread.
+    this.pos = new THREE.Vector3(1500000 + idx * 10000, 5000, tz + (Math.random() - 0.5) * 120000);
     this.vel = new THREE.Vector3(tx, 5000, tz).sub(this.pos).normalize().multiplyScalar(this.wdef.speed);
     this.interceptors = [];
 
@@ -1597,6 +1555,9 @@ class Threat {
     this.circle2D.setAttribute('fill', this.wdef.color3);
     this.circle2D.setAttribute('filter', 'drop-shadow(0 0 4px ' + this.wdef.color3 + ')');
     this.circle2D.style.cursor = 'pointer';
+    // Initialise position off right-edge so threat never flashes at SVG (0,0)
+    this.circle2D.setAttribute('cx', toSvgX(this.pos.x / 1666));
+    this.circle2D.setAttribute('cy', toSvgY(this.pos.z / 1666));
 
     // THREAT EXHAUST (Game-Engine style)
     this.exhaustG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -1662,36 +1623,46 @@ class Threat {
 
   _loadBackendTargetPath() {
     if (this._backendTargetPromise || this.wdef.isMirv || this.wdef.isDogfight) return this._backendTargetPromise;
-    // Record the spawn position so we can add it back when rendering this
-    // pre-bind path. The backend re-centres around mx=0,my=0 for the initial
-    // call (no interceptor assigned yet), so sample coords are relative to
-    // the threat's own spawn location — we restore absolute theater coords
-    // by adding the spawn position back.
-    const spawnX = this.pos.x, spawnZ = this.pos.z;
-    const params = new URLSearchParams({
-      tx: String(this.pos.x),
-      ty: String(this.pos.z),
-      destx: String(to3X(this.targetNode.x)),
-      desty: String(to3Z(this.targetNode.y)),
-      mx: String(this.pos.x), // use threat spawn as origin so path starts here
-      my: String(this.pos.z),
-      is_marv: String(!!this.wdef.isMarv),
-      threat_type: (this.wdef.type || 'ballistic').toLowerCase(),
-      raw: 'true'
-    });
-    this._backendTargetPromise = fetch(`http://127.0.0.1:8000/api/simulate-kinetic-chase?${params.toString()}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && Array.isArray(data.target_trajectory) && data.target_trajectory.length > 1) {
-          // Restore absolute theater-space coords: backend re-centred to threat spawn = origin
-          this._backendTargetPath = data.target_trajectory.map(p => ({ x: p.x + spawnX, y: p.y + spawnZ }));
-          this._backendTargetReady = true;
-          this._backendIntercepted = !!data.intercepted;
-          this._pathFrameBase = 0; // frame offset when this path was installed
+    // Generate the threat's initial flight path LOCALLY — no backend call needed.
+    // The backend simulate_chase() had a 90-second simulation limit which only
+    // covered ~25% of the theater, causing both threat and interceptor to vanish
+    // mid-map. Interceptor guidance uses Pro-Nav at 2× threat speed instead.
+    // This method generates a straight-line (or MARV-jink) path from spawn to target
+    // at the weapon's correct speed. The interceptor chases the real threat position.
+    const startX = this.pos.x, startZ = this.pos.z;
+    const endX = to3X(this.targetNode.x), endZ = to3Z(this.targetNode.y);
+    const totalDist = Math.hypot(endX - startX, endZ - startZ);
+    const speed = this.wdef.speed || 600;
+    // Total sim-frames to cross the theater at weapon speed
+    const totalFrames = Math.max(60, Math.ceil(totalDist / speed));
+    // Reader samples path at localFrame/6, so one point per 6 frames
+    const nPts = Math.ceil(totalFrames / 6) + 2;
+    const path = [];
+    for (let i = 0; i <= nPts; i++) {
+      const t = i / nPts;
+      let px = startX + (endX - startX) * t;
+      let pz = startZ + (endZ - startZ) * t;
+      // MARV: add sinusoidal jink in terminal phase (t > marvJinkFrac)
+      if (this.wdef.isMarv) {
+        const jinkStart = 1 - (this.wdef.marvTriggerKm || 100) * 1000 / Math.max(1, totalDist);
+        if (t > jinkStart) {
+          const phase = (t - jinkStart) / (1 - jinkStart);
+          const jinkAmp = totalDist * 0.015; // ~1.5% of total distance
+          const perp = Math.hypot(endZ - startZ, endX - startX) > 0
+            ? { x: -(endZ - startZ) / totalDist, z: (endX - startX) / totalDist }
+            : { x: 0, z: 1 };
+          const jink = Math.sin(phase * Math.PI * 4) * jinkAmp; // 2 full S-curves
+          px += perp.x * jink;
+          pz += perp.z * jink;
         }
-        return data;
-      })
-      .catch(() => null);
+      }
+      path.push({ x: px, y: pz }); // y in path = Z in 3D space
+    }
+    this._backendTargetPath = path;
+    this._backendTargetReady = true;
+    this._backendIntercepted = false; // outcome resolved via Pro-Nav Pk check, not self-termination
+    this._pathFrameBase = 0;
+    this._backendTargetPromise = Promise.resolve(null); // prevent re-entry
     return this._backendTargetPromise;
   }
   update() {
@@ -1703,8 +1674,8 @@ class Threat {
     if (useBackendTarget) {
       const path = this._backendTargetPath;
       // _pathFrameBase lets us re-sync to a new path without resetting the global
-      // _frame counter (avoids the bindThreat race: when the interceptor-assigned
-      // path arrives, _frame stays monotonic but the index resets via the base).
+      // _frame counter (avoids path-index drift when the frame counter has already
+      // advanced before sampling begins).
       const localFrame = this._frame - (this._pathFrameBase || 0);
       const idx = Math.min(Math.floor(localFrame / 6), path.length - 1);
       const sample = path[idx];
@@ -1741,19 +1712,17 @@ class Threat {
       if (this.mesh) this.mesh.position.copy(this.pos);
 
       if (idx >= path.length - 1) {
+        // If interceptors are still chasing, freeze at end-of-path and let
+        // updateSimulation() handle the kill/miss verdict (avoids double-dispose race).
+        if (this.interceptors.length > 0) return;
         if (this._backendIntercepted) {
+          // Already counted and blasted by updateSimulation — just clean up the dot.
           this._state = 'killed';
-          createBlast(this.pos, 0x00f2ff, this.interceptors[0]?.originNode || null);
-          blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#00f2ff');
-          addCoT(`NEUTRALIZED ${this.wdef.label} — INTERCEPT CONFIRMED`, 'success');
-          stats.intercepted++;
-          updateAccuracyDisplay();
           this.done = true; this.hit = true;
-          // dispose() cleans up mesh + SVG immediately; trail lingers 3s via opacity
           setTimeout(() => this.dispose(), 100);
         } else {
           this._state = 'impact';
-          createBlast(this.pos, 0xff3e3e, this.interceptors[0]?.originNode || null);
+          createBlast(this.pos, 0xff3e3e, null);
           blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#ff3e3e');
           missMarkerSvg(this.pos.x / 1666, this.pos.z / 1666);
           addCoT(`IMPACT AT ${this.targetNode.name} — DEFENSE BREACH`, 'alert');
@@ -1772,7 +1741,7 @@ class Threat {
       const trigM = (this.wdef.marvTriggerKm || 100) * 1000;
       if (distToTgt <= trigM && !this.marvActive) {
         this.marvActive = true;
-        addCoT(`⚡ MARV TERMINAL JINK — ${this.id} (${(distToTgt / 1000).toFixed(0)}km out)`, 'alert');
+        addCoT(`⚡ MARV TERMINAL JINK — ${this.id} (${safeToFixed(distToTgt / 1000, 0)}km out)`, 'alert');
       }
       if (this.marvActive) {
         // Persistent Sinusoidal Jink (Aligned with Backend Physics: 3.8s period)
@@ -1811,6 +1780,13 @@ class Threat {
           const child = new Threat(`${this.id}-MRV${ci}`, 'BALLISTIC', childNode, ci + 100);
           child.pos.copy(this.pos); // spawn from bus position
           child.vel = new THREE.Vector3(to3X(childNode.x), 5000, to3Z(childNode.y)).sub(child.pos).normalize().multiplyScalar(1600);
+          // Reset the backend path request that fired with the wrong index-based spawn
+          // position (600000 + (ci+100)*20000). Re-request from the correct bus position.
+          child._backendTargetPromise = null;
+          child._backendTargetReady = false;
+          child._backendTargetPath = null;
+          child._spawnPos = this.pos.clone();
+          child._loadBackendTargetPath();
           threats.push(child);
           stats.totalThreats++;
           addCoT(`  MRV-${ci} → ${childNode.name}`, 'info');
@@ -1842,15 +1818,6 @@ class Threat {
         } else {
           this.dogOutcome = 'KILL';
           addCoT(`✈ DOGFIGHT [${this.id}] — FIGHTER KILLED IN MERGE`, 'success');
-          if (dist < 10) {
-            this.hit = true;
-            stats.impacts++;
-            cityHealth = Math.max(0, cityHealth - 5);
-            addCoT(`IMPACT DETECTED: ${this.id} STRUCK TARGET`, 'alert');
-            createBlast(this.pos, 0xff3e3e);
-            updateAccuracyDisplay();
-            return;
-          }
           blastSvg(this.pos.x / 1666, this.pos.z / 1666, '#00ccff');
           stats.intercepted++;
           updateAccuracyDisplay();
@@ -1860,14 +1827,14 @@ class Threat {
       }
     }
 
-    // ── RTB: retreating — check if it has left the theatre ───────────
+    // ── RTB: retreating — cull once off-map boundary (SVG 0-1000 x 0-780 + buffer)
     if (this.rtbActive) {
       this.pos.add(this.vel);
       this.circle2D?.setAttribute('cx', toSvgX(this.pos.x / 1666));
       this.circle2D?.setAttribute('cy', toSvgY(this.pos.z / 1666));
       if (this.mesh) this.mesh.position.copy(this.pos);
-      const distFromSpawn = this.pos.distanceTo(this._spawnPos);
-      if (distFromSpawn > this._spawnPos.distanceTo(new THREE.Vector3(to3X(this.targetNode.x), 5000, to3Z(this.targetNode.y))) * 1.2) {
+      const svgX = this.pos.x / 1666, svgZ = this.pos.z / 1666;
+      if (svgX > 1100 || svgX < -100 || svgZ > 900 || svgZ < -100) {
         addCoT(`✈ RTB COMPLETE — ${this.id} CLEARED THEATRE`, 'info');
         this.dispose();
       }
@@ -1911,6 +1878,8 @@ class Threat {
     }
 
     if (this.mesh) this.mesh.position.copy(this.pos);
+    // NOTE: interceptor updates are handled by updateSimulation() — do NOT call
+    // int.update() here as well, that would double-step velocity each frame.
   }
   dispose() {
     if (this._disposed) return;
@@ -1924,7 +1893,7 @@ class Threat {
     this.projection2D?.remove();
     if (this.mesh) { scene?.remove(this.mesh); this.mesh.geometry.dispose(); this.mesh.material.dispose(); this.mesh = null; }
 
-    // Dispose all interceptors in the salvo
+    // Dispose all assigned interceptors to prevent 3D mesh and SVG leaks
     this.interceptors.forEach(int => int.dispose());
     this.interceptors = [];
 
@@ -2103,10 +2072,16 @@ function launchWave(retries) {
     // Map scenario weapon types to visualization keys
     let wkey = 'BALLISTIC';
     if (tData.type === 'fast-mover') wkey = 'HYPERSONIC';
+    if (tData.type === 'hypersonic') wkey = 'HYPERSONIC'; // boreal scenario type
     if (tData.type === 'drone') wkey = 'LOITER';
     if (tData.type === 'fighter') wkey = 'CRUISE';
+    if (tData.type === 'decoy') wkey = 'CRUISE'; // treat decoys as small cruise-speed objects
 
-    const tgt = THEATER_DATA.find(n => n.id === tData.target_id) || THEATER_DATA[0];
+    // Match by id first (Sweden GT); fall back to first-word name match (Boreal GT has no target_id)
+    const _fw = s => (s || '').toLowerCase().replace(/[^a-z]/g, ' ').trim().split(' ')[0];
+    const tgt = THEATER_DATA.find(n => n.id === tData.target_id)
+             || THEATER_DATA.find(n => _fw(n.name).length > 2 && _fw(n.name) === _fw(tData.target_name))
+             || THEATER_DATA[0];
     const tId = tData.id || `T-${currentScenarioIdx}-${i}`;
 
     if (!window.isMirror) {
@@ -2148,10 +2123,15 @@ function launchWave(retries) {
 
 // --- NEURAL MODEL ROSTER (Multi-Theater Audited) ---
 const MODEL_PROFILES = {
+  supreme4: { name: "SUPREME V4 (25D PPO) 👑", brain: "DIRECT 25-D", logic: "DIRECT ACTION", pkBoreal: 1.000, pkSweden: 1.000, speed: 1.25 },
+  titan: { name: "TITAN-12 (25D TRANSFORMER) 🌪️", brain: "SELF-ATTENTION", logic: "MULTI-VECTOR", pkBoreal: 0.714, pkSweden: 0.714, speed: 1.1 },
+  chronos4: { name: "CHRONOS-4 (25D GRU) 👁️", brain: "CHRONOS GRU", logic: "SEQUENCE", pkBoreal: 0.714, pkSweden: 0.714, speed: 1.05 },
+  vanguard: { name: "VANGUARD (25D SHIELD) 🛡️", brain: "DIRECT 25-D", logic: "SHIELD", pkBoreal: 1.000, pkSweden: 1.000, speed: 1.2 },
+  twinOracle: { name: "TWIN ORACLE (25D CONSENSUS) 🔁", brain: "DIRECT 25-D", logic: "CONSENSUS", pkBoreal: 1.000, pkSweden: 1.000, speed: 1.2 },
+  guardian: { name: "GUARDIAN (25D SAFETY) ✨", brain: "DIRECT 25-D", logic: "SAFETY", pkBoreal: 1.000, pkSweden: 1.000, speed: 1.2 },
   elite: { name: "ELITE V3.5 (Final Boss) 👑", brain: "TRANSFORMER-RESNET", logic: "DIRECT ACTION", pkBoreal: 0.978, pkSweden: 0.982, speed: 1.2 },
   supreme3: { name: "SUPREME V3.1 (Chronos) 👁️", brain: "CHRONOS GRU", logic: "SEQUENCE", pkBoreal: 0.942, pkSweden: 0.951, speed: 1.05 },
   supreme2: { name: "SUPREME V2 (Legacy) 🏛️", brain: "RESNET-64", logic: "HYBRID", pkBoreal: 0.891, pkSweden: 0.902, speed: 1.0 },
-  titan: { name: "TITAN TRANSFORMER 🌪️", brain: "SELF-ATTENTION", logic: "MULTI-VECTOR", pkBoreal: 0.908, pkSweden: 0.916, speed: 1.1 },
   hybrid: { name: "HYBRID RL V8.4 🛡️", brain: "RESNET-128", logic: "HUNGARIAN", pkBoreal: 0.875, pkSweden: 0.885, speed: 1.0 },
   genE10: { name: "GENERALIST E10 🧬", brain: "POLICY-ONLY", logic: "DIRECT ACTION", pkBoreal: 0.930, pkSweden: 0.930, speed: 1.0 },
   heuristic: { name: "HEURISTIC (Triage-Aware) ⚙️", brain: "CLASS-AWARE LOGIC", logic: "TRIAGE-AWARE", pkBoreal: 0.738, pkSweden: 0.752, speed: 0.9 },
@@ -2178,8 +2158,8 @@ window.setModel = (key) => {
   const badge = document.getElementById('arch-badge');
   if (badge) {
     badge.innerText = ACTIVE_MODEL.brain;
-    badge.style.borderColor = key === 'elite' ? '#ffcc00' : '#00f2ff';
-    badge.style.color = key === 'elite' ? '#ffcc00' : '#00f2ff';
+    badge.style.borderColor = ['supreme4', 'titan', 'chronos4', 'vanguard', 'twinOracle', 'guardian', 'elite'].includes(key) ? '#ffcc00' : '#00f2ff';
+    badge.style.color = ['supreme4', 'titan', 'chronos4', 'vanguard', 'twinOracle', 'guardian', 'elite'].includes(key) ? '#ffcc00' : '#00f2ff';
   }
 
   const lvModel = document.getElementById('lv-active-model');
@@ -2290,7 +2270,10 @@ function updateSimulation() {
   threats.forEach(t => {
     if (t.hit) return;
     anyAlive = true; t.update();
-    const dist = t.pos.distanceTo(new THREE.Vector3(to3X(t.targetNode.x), 5000, to3Z(t.targetNode.y)));
+    // Use 2D x,z distance to target node (ignore altitude) — ensures ballistic and
+    // hypersonic threats trigger impact when laterally overhead the target, even at
+    // high altitude where 3D distance would remain >>3000.
+    const dist = Math.hypot(t.pos.x - to3X(t.targetNode.x), t.pos.z - to3Z(t.targetNode.y));
 
     // Auto-Engagement Logic with Range Scaling
     // FIX: Re-engage if salvo count requirement increases (e.g. jink start)
@@ -2299,18 +2282,29 @@ function updateSimulation() {
         const candidates = [];
         Object.keys(BASES).forEach(baseId => {
           if (ammo[baseId] <= 0) return;
-          const basePos = new THREE.Vector3(to3X(BASES[baseId].x), 5000, to3Z(BASES[baseId].y));
-          const dToBase = t.pos.distanceTo(basePos);
-          Object.keys(EFFECTORS[MODE]).forEach(effKey => {
+          const base = BASES[baseId];
+          const basePos = new THREE.Vector3(to3X(base.x), 5000, to3Z(base.y));
+          // Use 2D lateral distance (ignore altitude) so high-altitude BALLISTIC/HYPERSONIC
+          // threats don't exceed effector range purely due to altitude component.
+          const dToBase = Math.hypot(t.pos.x - basePos.x, t.pos.z - basePos.z);
+          (base.effectors || []).forEach(effKey => {
             const eff = EFFECTORS[MODE][effKey];
+            if (!eff) return;
             if (dToBase > eff.range) return; // outside this effector's reach
-            const pk = getWeatherAdjustedPk(t.wdef.type, effKey, t.pos);
-            // Engine bonus: +50 utility if engine recommended this effector type
+            const basePk = getWeatherAdjustedPk(t.wdef.type, effKey, t.pos);
+            // Engine integration: use pk_estimate directly when engine recommends this effector+base
             const engKey = t.engineAssignment ? (ENGINE_EFF_MAP[MODE]?.[t.engineAssignment.effector] || null) : null;
-            const engineBonus = (engKey && effKey === engKey) ? 50 : 0;
+            const engBaseName = (t.engineAssignment?.base || '').toLowerCase();
+            const isEngineMatch = engKey === effKey && engBaseName &&
+              (BASES[baseId]?.name || '').toLowerCase().split(' ').some(w => w.length > 3 && engBaseName.includes(w));
+            const enginePkEst = (isEngineMatch && t.engineAssignment?.pk_estimate > 0)
+              ? t.engineAssignment.pk_estimate : null;
+            // Use engine Pk if it is higher (engine has mission-context; cap at 0.99)
+            const pk = enginePkEst ? Math.min(0.99, Math.max(basePk, enginePkEst)) : basePk;
+            const engineBonus = isEngineMatch ? 50 : 0;
             // Utility: kill probability primary, engine recommendation bonus, distance tiebreak
             const utility = (pk * 100) - (dToBase / 100000) + engineBonus;
-            candidates.push({ baseId, effKey, dToBase, pk, utility });
+            candidates.push({ baseId, effKey, dToBase, pk, utility, enginePk: enginePkEst });
           });
         });
 
@@ -2332,10 +2326,11 @@ function updateSimulation() {
           int._effKey = cand.effKey;
           int.bindThreat(t);
           int._threatType = t.wdef.type;
+          int._enginePk = cand.enginePk || null; // engine pk_estimate passed through
           t.interceptors.push(int);
           stats.fired++; fired++;
           if (fired === 1) {
-            addCoT(`AUTO-ENGAGED ${t.id} → ${EFFECTORS[MODE][cand.effKey].name} from ${BASES[cand.baseId].name} (${(cand.dToBase / 1000).toFixed(0)}km)`, 'success');
+            addCoT(`AUTO-ENGAGED ${t.id} → ${EFFECTORS[MODE][cand.effKey].name} from ${BASES[cand.baseId].name} (${safeToFixed(cand.dToBase / 1000, 0)}km)`, 'success');
           } else {
             addCoT(`⚡ SALVO +${fired} ${t.id} → ${EFFECTORS[MODE][cand.effKey].name} from ${BASES[cand.baseId].name}`, 'success');
           }
@@ -2349,7 +2344,8 @@ function updateSimulation() {
           Object.keys(BASES).forEach(baseId => {
             if (ammo[baseId] <= 0) return;
             const bp = new THREE.Vector3(to3X(BASES[baseId].x), 5000, to3Z(BASES[baseId].y));
-            const d = t.pos.distanceTo(bp);
+            // Use 2D lateral distance to avoid altitude excluding high-altitude threats
+            const d = Math.hypot(t.pos.x - bp.x, t.pos.z - bp.z);
             Object.keys(EFFECTORS[MODE]).forEach(effKey => {
               const eff = EFFECTORS[MODE][effKey];
               if (d > eff.range) return;
@@ -2386,6 +2382,7 @@ function updateSimulation() {
       if (int.update(t.pos)) {
         threatNeutralized = true;
         hitSourceNode = int.originNode || null;
+        t._backendIntercepted = true; // signal Threat.update() that it was killed
         return false; // Remove this interceptor
       }
       return !int.done;
@@ -2398,7 +2395,8 @@ function updateSimulation() {
         spawnDebris(t.pos); // BDA Overlay
         stats.intercepted++;
         addCoT(`NEUTRALIZED ${t.id}`, 'success');
-        t.dispose();
+        t.hit = true; // stop Threat.update() immediately so dot doesn't keep moving past blast
+        setTimeout(() => t.dispose(), 350);
         updateAccuracyDisplay();
       }
     } else if (!t._disposed && dist < 3000) {
@@ -2907,7 +2905,8 @@ window.launchStandaloneWave = launchStandaloneWave;
 function addCoT(msg, type) {
   if (!cotFeed) return;
   const p = document.createElement('p'); p.className = `cot-item ${type}`; p.innerText = `> ${msg}`;
-  cotFeed.prepend(p);
+  cotFeed.appendChild(p);
+  cotFeed.scrollTop = cotFeed.scrollHeight;
   if (window._addCoTHook) window._addCoTHook(msg, type);
 }
 
@@ -2961,7 +2960,9 @@ function boot() {
     .catch(e => console.warn("BENCHMARK FETCH FAILED :: USING ENGINE DEFAULTS", e));
 
   // GROUND TRUTH SCENARIO FETCH (1000 SEQUENCES)
-  fetch('/data/ground_truth_scenarios.json')
+  // Load theater-specific ground truth — boreal scenarios use boreal node names/targets
+  const _gtFile = (MODE === 'boreal') ? '/data/boreal_ground_truth_scenarios.json' : '/data/ground_truth_scenarios.json';
+  fetch(_gtFile)
     .then(r => r.json())
     .then(data => {
       groundTruthData = data;

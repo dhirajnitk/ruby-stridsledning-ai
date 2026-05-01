@@ -19,11 +19,13 @@ import asyncio
 import random
 import uvicorn
 import numpy as np
+import torch
 from fastapi.responses import StreamingResponse
 
 # 1. CORE MODELS & LOGIC
 from core.models import Effector, Base, Threat, GameState, EFFECTORS, load_battlefield_state
 from core.engine import evaluate_threats_advanced
+from core.inference import BorealInference, resolve_model_name
 from simulate_interception import simulate_chase
 
 # 2. CONSTANTS & CONFIG
@@ -470,9 +472,15 @@ async def websocket_logs(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
         while True:
+            try:
+                await websocket.send_text("[HEARTBEAT]")
+            except RuntimeError:
+                # Connection closed mid-send, exit gracefully
+                break
             await asyncio.sleep(15)
-            await websocket.send_text("[HEARTBEAT]")
     except WebSocketDisconnect:
+        pass
+    finally:
         ws_manager.disconnect(websocket)
 
 @app.post("/evaluate_advanced")
@@ -531,21 +539,12 @@ async def evaluate_threats_endpoint(request: TacticalRequest):
     # --- STRATEGIC EVALUATION (Global Stream) ---
     doctrine_weights = None
     rl_val = 0.0
+    resolved_model = resolve_model_name(request.model_id)
     
-    if request.use_rl and request.model_id != "heuristic":
-        model_map = {
-            "elite": "elite_v3_5",
-            "supreme3": "supreme_v3_1",
-            "supreme2": "supreme_v2",
-            "titan": "titan",
-            "hybrid": "hybrid_rl",
-            "genE10": "generalist_e10"
-        }
-        actual_model = model_map.get(request.model_id, "elite_v3_5")
+    if request.use_rl and resolved_model != "heuristic":
         try:
-            from core.inference import BorealInference
             from core.engine import extract_rl_features
-            inference_engine = BorealInference(model_name=actual_model)
+            inference_engine = BorealInference(model_name=resolved_model)
             features = extract_rl_features(game_state, active_threats)
             
             # Predict
@@ -761,6 +760,7 @@ from fastapi.staticfiles import StaticFiles
 # Mount the frontend directory to serve the Strategic Hub and CZML streams
 app.mount("/data", StaticFiles(directory="data"), name="data")
 app.mount("/video", StaticFiles(directory="video"), name="video")
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 app.mount("/", StaticFiles(directory="frontend"), name="static")
 
 if __name__ == "__main__":

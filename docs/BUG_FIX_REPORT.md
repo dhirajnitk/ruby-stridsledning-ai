@@ -372,6 +372,18 @@ This correctly models theater-level strategic coverage rather than platform-leve
 
 ---
 
+### BUG-23: Threat and interceptor shared the backend path and vanished mid-map
+
+**File:** `frontend/viz_engine.js`
+
+**Symptom:** Threats and interceptors appeared to follow the same trajectory in the dashboard and live view, then both disappeared in the middle of the theater without a visible collision.
+
+**Root Cause:** `Interceptor.bindThreat()` was copying backend `target_trajectory` data into the threat's path state. The backend simulation is capped at 90 seconds, which only covers part of the full theater, so both objects reached the end of the sampled path and were disposed before a real intercept could occur.
+
+**Fix:** Removed the backend override from `bindThreat()`. Threats now keep their local path, and interceptors use Pro-Nav against the live threat position with speed scaled from the bound threat.
+
+---
+
 ## Summary Table
 
 | # | Bug | File | Severity | Category |
@@ -400,3 +412,4 @@ This correctly models theater-level strategic coverage rather than platform-leve
 | 22 | Engine tuple treated as dict | agent_backend.py | Critical | API |
 | 22b | EFFECTORS wrong positional arg order | core/engine.py | Critical | Data |
 | 22c | Engine ranges too small for theater | core/engine.py | High | Scale |
+| 23 | Shared backend path caused mid-map disappearance | viz_engine.js | High | Sync |

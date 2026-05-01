@@ -9,8 +9,8 @@ test.describe('cortex_c2.html — CORTEX-C2 Console', () => {
   test.beforeEach(async ({ page }) => {
     await mockBackend(page);
     await page.goto('/cortex_c2.html');
-    // Wait for at least the header to be attached
-    await page.waitForSelector('header', { timeout: 6000 });
+    // Wait for the console controls to be ready.
+    await page.waitForSelector('#model-select', { timeout: 6000 });
   });
 
   // ── Nav links
@@ -72,7 +72,7 @@ test.describe('cortex_c2.html — CORTEX-C2 Console', () => {
 
   // ── Scenario cards
   test('three scenario cards are rendered', async ({ page }) => {
-    await expect(page.locator('.sc-card')).toHaveCount(3);
+    await expect(page.locator('.sc-card')).toHaveCount(5);
   });
 
   test('"Clean picture" scenario card is active by default', async ({ page }) => {
@@ -110,7 +110,7 @@ test.describe('cortex_c2.html — CORTEX-C2 Console', () => {
   });
 
   test('3D KINETIC button in tactical panel opens kinetic_3d.html', async ({ page }) => {
-    const btn = page.locator('.tactical-open-btn');
+    const btn = page.getByRole('button', { name: /3D KINETIC/i });
     await expect(btn).toBeVisible();
     await expect(btn).toContainText(/3D KINETIC/i);
   });

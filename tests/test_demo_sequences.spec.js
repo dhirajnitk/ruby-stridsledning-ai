@@ -17,6 +17,8 @@ const { mockBackend } = require('./helpers/mockApi');
 // ─── local alias ───────────────────────────────────────────────────────────
 const P = (page, ms) => page.waitForTimeout(ms);
 
+test.setTimeout(240_000);
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SEQUENCE 1 — STRATEGIC PORTAL OVERVIEW  (~60 s)
 // Walk through the portal, toggle SWEDEN/BOREAL theater, explore each card,

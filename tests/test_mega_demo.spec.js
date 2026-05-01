@@ -215,7 +215,7 @@ test('SAAB Mega Demo — enhanced feature tour', async ({ page }) => {
 
   // -- ACT 5: BOREAL KINETIC CHASE — MARV deep-link autorun -----------------
   console.log('\n  == ACT 5: BOREAL KINETIC CHASE ==');
-  await page.goto('/frontend/kinetic_chase.html?v=20260428b&base=10&threat=marv&dir=north&autorun=1', { waitUntil: 'domcontentloaded' });
+  await page.goto('/kinetic_chase.html?v=20260428b&base=10&threat=marv&dir=north&autorun=1', { waitUntil: 'domcontentloaded' });
   await P(page, 5000);
 
   // -- ACT 6: BOREAL TACTICAL — override + ambush demo ----------------------

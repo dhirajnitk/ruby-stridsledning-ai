@@ -81,11 +81,11 @@ test.describe('tactical_legacy.html — Legacy Tactical (boreal)', () => {
   });
 
   // ── Model selector
-  test('model-select dropdown is present with 9 options', async ({ page }) => {
+  test('model-select dropdown is present with 14 options', async ({ page }) => {
     const sel = page.locator('#model-select');
     await expect(sel).toBeVisible();
     const count = await sel.locator('option').count();
-    expect(count).toBe(9);
+    expect(count).toBe(14);
   });
 
   test('model selector includes ELITE V3.5 option', async ({ page }) => {

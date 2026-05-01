@@ -126,6 +126,7 @@
     #canvas-container { flex:1; overflow:hidden; cursor:crosshair; position:relative; }
     #canvas-container canvas { width:100%!important; height:100%!important; }
     #blast-overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+    #threat-layer-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
 
     /* Threat Telemetry Panel */
     #threat-telem {
@@ -271,6 +272,11 @@
   <!-- Canvas + Telemetry -->
   <div id="center-row">
     <div id="canvas-container">
+      <!-- game-coordinate overlay: threat dots, trails, interceptor markers -->
+      <svg id="threat-layer-svg" xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 1000 780" preserveAspectRatio="xMidYMid meet" overflow="visible">
+        <g id="threat-layer-2d"></g>
+      </svg>
       <svg id="blast-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
@@ -308,7 +314,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="viz_engine.js?v=20260429b"></script>
+<script src="viz_engine.js?v=20260430e"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────
 // live_view.html V6 — wired on top of viz_engine.js globals:

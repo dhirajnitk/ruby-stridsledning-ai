@@ -25,6 +25,8 @@ const MIN_REAL_BASES  = 5;              // CSV has many more — just sanity che
 // ─── helper: wait + pause (simulates human reading) ─────────────────────────
 const P = (page, ms) => page.waitForTimeout(ms);
 
+test.setTimeout(240_000);
+
 // ─── helper: capture the next response matching a URL pattern ───────────────
 function waitForApiResponse(page, urlSubstr) {
   return page.waitForResponse(

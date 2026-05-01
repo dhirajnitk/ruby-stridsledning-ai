@@ -430,6 +430,7 @@ async function runSimulation(scenario, customParams = null) {
 function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, samBaseIdx, historyPath = []) {
   let frame = 0;
   const totalFrames = Math.max(tPath.length, mPath.length);
+  let resultCleanupTimer = null;
 
   // Dynamic bounding box — use engagement paths + SAM origin ONLY.
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -529,6 +530,10 @@ function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, 
       // Reset range display to show initial standoff range (not final closing distance)
       if (_lastVect) { sVectD.textContent = `STANDOFF: ${_lastVect.rangKm}km`; }
       else { sVectD.textContent = 'RANGE: preset'; }
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      if (_syncAnimId) { cancelAnimationFrame(_syncAnimId); _syncAnimId = null; }
+      _syncActive = false;
+      _syncData = null;
       if (hit) {
         const lastT = tPath[tPath.length-1];
         ctx.fillStyle = 'rgba(255,100,50,0.55)';
@@ -536,6 +541,11 @@ function animateChase(tPath, mPath, hit, missDist, isCustom, defBase, allBases, 
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.beginPath(); ctx.arc(mapX(lastT.x), mapY(lastT.y), 10, 0, Math.PI*2); ctx.fill();
       }
+      if (resultCleanupTimer) clearTimeout(resultCleanupTimer);
+      resultCleanupTimer = setTimeout(() => {
+        ctx.clearRect(0, 0, W, H);
+        drawBaseMarker();
+      }, hit ? 900 : 600);
       return;
     }
 

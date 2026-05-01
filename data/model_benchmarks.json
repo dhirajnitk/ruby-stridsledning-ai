@@ -1,5 +1,35 @@
 {
   "boreal": {
+    "supreme4": {
+      "pk": 1.0,
+      "success": "959/1000",
+      "desc": "GOAT: Supreme V4 / 25D PPO. Best strategic correlation."
+    },
+    "vanguard": {
+      "pk": 1.0,
+      "success": "959/1000",
+      "desc": "GOAT: Vanguard / 25D direct-action shield."
+    },
+    "twinOracle": {
+      "pk": 1.0,
+      "success": "959/1000",
+      "desc": "GOAT: Twin Oracle / consensus direct-action core."
+    },
+    "guardian": {
+      "pk": 1.0,
+      "success": "955/1000",
+      "desc": "GOAT: Guardian / safety-first 25D model."
+    },
+    "titan": {
+      "pk": 0.714,
+      "success": "808/1000",
+      "desc": "VALIDATED: Titan-12 / 25D transformer family."
+    },
+    "chronos4": {
+      "pk": 0.714,
+      "success": "844/1000",
+      "desc": "VALIDATED: Chronos-4 / 25D sequence model."
+    },
     "elite": {
       "pk": 0.980,
       "success": "1,000/1,000",
@@ -14,11 +44,6 @@
       "pk": 0.898,
       "success": "316/1,000",
       "desc": "LEGACY: ResNet-64 / Hybrid."
-    },
-    "titan": {
-      "pk": 0.912,
-      "success": "331/1,000",
-      "desc": "SWARM MASTER: Self-Att / Multi-Vec."
     },
     "hybrid": {
       "pk": 0.880,
@@ -47,6 +72,36 @@
     }
   },
   "sweden": {
+    "supreme4": {
+      "pk": 1.0,
+      "success": "959/1000",
+      "desc": "GOAT: Supreme V4 / 25D PPO. Best strategic correlation."
+    },
+    "vanguard": {
+      "pk": 1.0,
+      "success": "959/1000",
+      "desc": "GOAT: Vanguard / 25D direct-action shield."
+    },
+    "twinOracle": {
+      "pk": 1.0,
+      "success": "959/1000",
+      "desc": "GOAT: Twin Oracle / consensus direct-action core."
+    },
+    "guardian": {
+      "pk": 1.0,
+      "success": "955/1000",
+      "desc": "GOAT: Guardian / safety-first 25D model."
+    },
+    "titan": {
+      "pk": 0.714,
+      "success": "808/1000",
+      "desc": "VALIDATED: Titan-12 / 25D transformer family."
+    },
+    "chronos4": {
+      "pk": 0.714,
+      "success": "844/1000",
+      "desc": "VALIDATED: Chronos-4 / 25D sequence model."
+    },
     "elite": {
       "pk": 0.982,
       "success": "1,000/1,000",
@@ -61,11 +116,6 @@
       "pk": 0.902,
       "success": "345/1,000",
       "desc": "LEGACY: Balanced National Logic."
-    },
-    "titan": {
-      "pk": 0.916,
-      "success": "368/1,000",
-      "desc": "ANTI-SATURATION: Self-Attention."
     },
     "hybrid": {
       "pk": 0.885,

@@ -125,9 +125,13 @@
     <div id="alert-container" style="position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; display: flex; flex-direction: column; gap: 10px; align-items: center;"></div>
     <main id="app-grid">
         <!-- TOP HEADER -->
-        <header style="display:flex; justify-content:space-between; align-items:center; padding:0 2rem; background:rgba(5,12,20,0.9); border-bottom:1px solid var(--border-color); height: 70px;">
+        <header style="display:flex; justify-content:space-between; align-items:center; padding:0 2rem; background:rgba(5,12,20,0.9); border-bottom:1px solid var(--border-color); height: 70px; position: sticky; top: 0; z-index: 1000;">
             <div class="logo" style="display:flex; align-items:center; gap:2rem;">
                 <h1 id="main-title" style="font-family: 'Orbitron'; font-size: 1rem; letter-spacing: 4px; background: linear-gradient(90deg, #fff, var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BOREAL STRATEGIC COMMAND</h1>
+                <div style="display:flex; gap:10px; margin-left:1rem;">
+                    <a id="btn-engage-marv1" href="kinetic_chase.html?v=20260430e&base=10&threat=marv&dir=north&autorun=1" class="action-btn" style="background:rgba(248,81,73,0.1); border-color:var(--accent-red); color:var(--accent-red); padding:4px 12px; font-size:0.55rem; text-decoration:none;">ENGAGE MARV-1</a>
+                    <a href="kinetic_3d.html" target="_blank" class="action-btn" style="background:rgba(63,185,80,0.1); border-color:var(--accent-green); color:var(--accent-green); padding:4px 12px; font-size:0.55rem; text-decoration:none;">3D KINETIC</a>
+                </div>
                 <div id="live-feed-header" style="width:240px; height:45px; border:1px solid rgba(0,242,255,0.3); border-radius:4px; overflow:hidden; position:relative; background: #000;">
                     <video autoplay muted loop style="width:100%; height:100%; object-fit:cover; opacity:0.6;">
                         <source src="/video/AI_Prevents_Missile_Strike.mp4" type="video/mp4">
@@ -154,38 +158,17 @@
             <div class="scanline"></div>
             <div class="module-header" style="position:absolute; top:1rem; left:1rem; right:1rem; z-index:10;">
                 <h2 id="map-title">Strategic Map :: <span id="theater-label">Baltic Theater</span></h2>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                          <button id="btn-kinetic-3d" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,255,136,0.1); border-color:var(--accent-green); color:var(--accent-green);">🎯 3D KINETIC SIM ↗</button>
-                          <button id="btn-live-audit" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,242,255,0.1); border-color:var(--accent-blue); color:var(--accent-blue);">Launch Live 3D Audit ↗</button>
-                    <!-- Deep-link buttons: pre-populate kinetic_chase with each MARV engagement -->
-                          <a id="btn-engage-marv1" href="kinetic_chase.html?v=20260428b&base=10&threat=marv&dir=north&autorun=1"
-                       style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px;
-                              background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
-                       🔴 ENGAGE MARV-1 (CAL) ↗</a>
-                          <a id="btn-engage-marv2" href="kinetic_chase.html?v=20260428b&base=11&threat=marv&dir=north&autorun=1"
-                       style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px;
-                              background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
-                       🔴 ENGAGE MARV-2 (SOL) ↗</a>
-                          <a id="btn-engage-marv3" href="kinetic_chase.html?v=20260428b&base=9&threat=marv&dir=north&autorun=1"
-                       style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px;
-                              background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
-                       🔴 ENGAGE MARV-3 (MER) ↗</a>
-                    <a href="swarm_physics.html"
-                       style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(0,242,255,0.5);border-radius:4px;
-                              background:rgba(0,242,255,0.08);color:#00f2ff;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
-                       ⚡ SWARM DEFENSE ↗</a>
-                </div>
             </div>
             <svg id="baltic-map" viewBox="0 0 1000 780" style="width:100%; height:100%; background:#050a0f;">
                 <image id="map-bg-image" href="" x="0" y="0" width="1000" height="780" preserveAspectRatio="xMidYMid slice" opacity="0.55" style="filter:saturate(0.7) brightness(0.75)"/>
                 <g id="map-geometry"></g>
                 <g id="base-icons"></g>
-                <g id="threat-layer-2d"></g>
                 <!-- Animated Radar Sweep -->
                 <g id="radar-sweep">
                     <line x1="500" y1="390" x2="500" y2="0" stroke="rgba(0, 242, 255, 0.15)" stroke-width="2" />
                     <polygon points="500,390 500,0 450,0" fill="url(#radarGrad)" opacity="0.4" />
                 </g>
+              <g id="threat-layer-2d"></g>
                 <defs>
                     <linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style="stop-color:rgba(0,242,255,0); stop-opacity:0" />
@@ -194,34 +177,6 @@
                 </defs>
             </svg>
 
-            <!-- TACTICAL LEGEND (Premium Hi-Fi Symbology) -->
-            <div id="tactical-legend" style="position:absolute; bottom:1.5rem; left:1.5rem; background:rgba(5,12,20,0.85); backdrop-filter:blur(12px); border:1px solid rgba(0,242,255,0.25); border-radius:6px; padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px; pointer-events:none; z-index:100; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
-                <div style="font-family:'Orbitron'; font-size:0.5rem; color:var(--accent-blue); letter-spacing:1.5px; grid-column:1/span 2; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:6px; margin-bottom:4px;">TACTICAL SYMBOLOGY</div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-8 7,-4 7,4 0,8 -7,4 -7,-4" fill="none" stroke="var(--accent-blue)" stroke-width="1.5"/></svg>
-                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">AIR BASE</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-8 10,8 0,4 -10,8" fill="var(--accent-blue)" opacity="0.9"/></svg>
-                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">GRIPEN (DELTA)</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-10 6,2 0,-2 -6,2" fill="var(--accent-red)" opacity="0.9"/></svg>
-                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">CRUISE MISSILE</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-10 5,0 0,10 -5,0" fill="var(--accent-red)" opacity="0.9"/></svg>
-                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">HYPERSONIC (DIAMOND)</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <svg width="16" height="16" viewBox="-10 -10 20 20"><path d="M-6,-6 L6,6 M6,-6 L-6,6" stroke="var(--accent-red)" stroke-width="2.5" opacity="0.9"/></svg>
-                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">LOITER / DRONE</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <svg width="16" height="16" viewBox="-10 -10 20 20"><circle cx="0" cy="0" r="3.5" fill="var(--accent-green)"/></svg>
-                    <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">SAM INTERCEPT</span>
-                </div>
-            </div>
         </section>
 
         <!-- LEFT COLUMN: ENGAGEMENT MONITOR -->
@@ -356,10 +311,15 @@
                 <div style="font-size:0.5rem; color:#888; letter-spacing:2px;">NEURAL ARCHITECTURE</div>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <select id="sel-model-core" style="background:rgba(0,242,255,0.15); border:2px solid rgba(0,242,255,0.4); color:#00f2ff; font-family:'Orbitron',sans-serif; font-size:0.55rem; padding:6px 12px; border-radius:4px; outline:none; cursor:pointer; font-weight:bold; text-shadow: 0 0 5px rgba(0,242,255,0.5);">
+                      <option value="supreme4">Supreme V4 · 25D PPO</option>
+                      <option value="titan">Titan-12 · 25D Transformer</option>
+                      <option value="chronos4">Chronos-4 · 25D GRU</option>
+                      <option value="vanguard">Vanguard · 25D Shield</option>
+                      <option value="twinOracle">Twin Oracle · 25D Consensus</option>
+                      <option value="guardian">Guardian · 25D Safety</option>
                         <option value="elite">Elite V4.0 · TRANSFORMER-RESNET</option>
                         <option value="supreme3">Supreme V4.1 · GRU (Chronos-Prime)</option>
                         <option value="supreme2">Boreal Prime V2.0</option>
-                        <option value="titan">Titan-X · LSTM</option>
                         <option value="hybrid">Hybrid RL V9.0</option>
                         <option value="genE10">Generalist E12</option>
                         <option value="heuristic" selected>Heuristic (Triage-Aware)</option>
@@ -384,13 +344,59 @@
                 <button id="btn-launch" class="mission-btn primary" style="margin-bottom:6px;">Initialize Intercept</button>
                 <button id="btn-reset"  class="mission-btn secondary">Clear Theatre</button>
             </div>
+
+            <div style="grid-column:1 / span 3; display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:0.2rem 0 0.6rem; border-top:1px solid rgba(255,255,255,0.06);">
+               <div style="font-size:0.5rem; color:#888; letter-spacing:2px; margin-right:0.4rem;">OPERATIONS LAUNCH PAD</div>
+               <button id="btn-kinetic-3d" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,255,136,0.1); border-color:var(--accent-green); color:var(--accent-green);">🎯 3D KINETIC SIM ↗</button>
+               <button id="btn-live-audit" style="font-size:0.6rem; padding:6px 15px; background:rgba(0,242,255,0.1); border-color:var(--accent-blue); color:var(--accent-blue);">Launch Live 3D Audit ↗</button>
+               <a id="btn-engage-marv1" href="kinetic_chase.html?v=20260430e&base=10&threat=marv&dir=north&autorun=1"
+                 style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px; background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
+                 🔴 ENGAGE MARV-1 (CAL) ↗</a>
+               <a id="btn-engage-marv2" href="kinetic_chase.html?v=20260430e&base=11&threat=marv&dir=north&autorun=1"
+                 style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px; background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
+                 🔴 ENGAGE MARV-2 (SOL) ↗</a>
+               <a id="btn-engage-marv3" href="kinetic_chase.html?v=20260430e&base=9&threat=marv&dir=north&autorun=1"
+                 style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(255,102,0,0.5);border-radius:4px; background:rgba(255,102,0,0.08);color:#ff6600;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
+                 🔴 ENGAGE MARV-3 (MER) ↗</a>
+               <a href="swarm_physics.html"
+                 style="font-size:0.55rem;padding:5px 11px;border:1px solid rgba(0,242,255,0.5);border-radius:4px; background:rgba(0,242,255,0.08);color:#00f2ff;text-decoration:none;white-space:nowrap;display:flex;align-items:center;">
+                 ⚡ SWARM DEFENSE ↗</a>
+            </div>
+
+            <div id="tactical-legend" style="grid-column:1 / span 3; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px 14px; background:rgba(5,12,20,0.78); backdrop-filter:blur(12px); border:1px solid rgba(0,242,255,0.18); border-radius:8px; padding:12px 14px; box-shadow:0 8px 30px rgba(0,0,0,0.35);">
+              <div style="font-family:'Orbitron'; font-size:0.5rem; color:var(--accent-blue); letter-spacing:1.5px; grid-column:1 / span 3; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:6px; margin-bottom:4px;">TACTICAL SYMBOLOGY</div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-8 7,-4 7,4 0,8 -7,4 -7,-4" fill="none" stroke="var(--accent-blue)" stroke-width="1.5"/></svg>
+                <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">AIR BASE</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-8 10,8 0,4 -10,8" fill="var(--accent-blue)" opacity="0.9"/></svg>
+                <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">GRIPEN (DELTA)</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-10 6,2 0,-2 -6,2" fill="var(--accent-red)" opacity="0.9"/></svg>
+                <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">CRUISE MISSILE</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="-10 -10 20 20"><polygon points="0,-10 5,0 0,10 -5,0" fill="var(--accent-red)" opacity="0.9"/></svg>
+                <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">HYPERSONIC (DIAMOND)</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="-10 -10 20 20"><path d="M-6,-6 L6,6 M6,-6 L-6,6" stroke="var(--accent-red)" stroke-width="2.5" opacity="0.9"/></svg>
+                <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">LOITER / DRONE</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="16" height="16" viewBox="-10 -10 20 20"><circle cx="0" cy="0" r="3.5" fill="var(--accent-green)"/></svg>
+                <span style="font-size:0.45rem; color:#ccc; font-family:'JetBrains Mono';">SAM INTERCEPT</span>
+              </div>
+            </div>
         </footer>
 
     </main>
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="viz_engine.js?v=20260429b"></script>
+    <script src="viz_engine.js?v=20260430e"></script>
     <script>
     // ── Dashboard init: theater mode, backend status badge ──────────────────────
     (function() {
@@ -746,7 +752,7 @@
     if (btn3d) {
       btn3d.addEventListener('click', () => {
         const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
-        window.open(`kinetic_3d.html?v=20260428b&theater=${mode}`, '_blank');
+        window.open(`kinetic_3d.html?v=20260430e&theater=${mode}`, '_blank');
       });
     }
 
@@ -755,7 +761,7 @@
     if (btnLiveAudit) {
       btnLiveAudit.addEventListener('click', () => {
         const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
-        window.open(`live_view.html?v=20260428b&mode=${mode}`, '_blank');
+        window.open(`live_view.html?v=20260430e&mode=${mode}`, '_blank');
       });
     }
 
@@ -764,7 +770,7 @@
       const mode = new URLSearchParams(window.location.search).get('mode') || 'boreal';
       const lv = document.getElementById('nav-live-view');
       const tac = document.getElementById('nav-tactical-hdr');
-      if (lv)  lv.href  = `live_view.html?v=20260428b&mode=${mode}`;
+      if (lv)  lv.href  = `live_view.html?v=20260430e&mode=${mode}`;
       if (tac) tac.href = `tactical_legacy.html?mode=${mode}`;
     })();
 
